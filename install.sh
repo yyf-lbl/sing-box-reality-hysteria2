@@ -167,10 +167,13 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           
           # Retrieve the server IP address
           server_ip=$(curl -s https://api.ipify.org)
-          
+          echo ""
+          echo ""
+          show_notice "sing-box client config file:"
           # Generate the link
           echo ""
           echo ""
+          cat /root/sbconfig_client.json
           show_notice "Reality Client Config Common Link:" 
           echo ""
           echo ""
@@ -311,7 +314,7 @@ uuid=$(/root/sing-box generate uuid)
 short_id=$(/root/sing-box generate rand --hex 8)
 
 # Ask for listen port
-read -p "Enter desired listen port (default: 443): " listen_port
+read -p "Enter Reality desired listen port (default: 443): " listen_port
 listen_port=${listen_port:-443}
 echo ""
 # Ask for server name (sni)
@@ -319,7 +322,7 @@ read -p "Enter server name/SNI (default: telewebion.com): " server_name
 server_name=${server_name:-telewebion.com}
 echo ""
 # hysteria2
-echo "Start configuring Reality config..."
+echo "Start configuring Hysteria2 config..."
 echo ""
 # Generate hysteria necessary values
 hy_password=$(/root/sing-box generate rand --hex 8)
