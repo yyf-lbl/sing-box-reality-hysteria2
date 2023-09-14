@@ -1,13 +1,12 @@
-# sing-REALITY-Box
-One click REALITY installer on sing-box core
+# sing-Box-reality-hysteria2
+One click reality and hysteria2 installer on sing-box core
 
-# sing-REALITY-box
-
-sing-REALITY-box is the first one-click installer script to install REALITY on sing-box core !
 ## Features
 
 - Easy installation and configuration
-- Ability to choose the desired port and SNI
+- No need for a domain name, just use a self-signed certificate to sign any domain.
+- Ability to choose the desired reality port and SNI
+- Ability to choose the desired hysteria2 port
 - Real easy to use for the end-users
 
 ## Prerequisites
@@ -26,15 +25,10 @@ Also updating the repo's is highly recommended (apt update && apt upgrade)
 
 
 ```bash
-bash <(curl -fsSL https://github.com/deathline94/sing-REALITY-Box/raw/main/sing-REALITY-box.sh)
+bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/install.sh)
 
 ```
 
-## Props
-
-Huge props goes out to iSegaro for all he does . this script is the automation of his 
-tutorial . keep up the work \m/ . find him on Twitter at @iSegaro
-
-## Contact me
-
-You can find me on twitter at @NamelesGhoul for requests and questions
+## Credit
+- [sing-reality-box](https://github.com/deathline94/sing-REALITY-Box)
+- [sing-box](https://github.com/SagerNet/sing-box)
