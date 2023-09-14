@@ -10,9 +10,18 @@ print_with_delay() {
     done
     echo
 }
+#notice
+show_notice() {
+    local message="$1"
 
+    echo "#######################################################################################################################"
+    echo "                                                                                                                       "
+    echo "                                ${message}                                                                             "
+    echo "                                                                                                                       "
+    echo "#######################################################################################################################"
+}
 # Introduction animation
-print_with_delay "sing-REALITY-box by DEATHLINE | @NamelesGhoul" 0.1
+print_with_delay "sing-reality-hy2-box by MAREEP | @MAREEP" 0.1
 echo ""
 echo ""
 
@@ -35,7 +44,7 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # Check if reality.json, sing-box, and sing-box.service already exist
-if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.key.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
+if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.key.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
 
     echo "Reality files already exist."
     echo ""
@@ -50,122 +59,196 @@ if [ -f "/root/reality.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.
 
     case $choice in
         1)
-	            	echo "Reinstalling..."
-	            	# Uninstall previous installation
-	            	systemctl stop sing-box
-	            	systemctl disable sing-box > /dev/null 2>&1
-	           	rm /etc/systemd/system/sing-box.service
-	            	rm /root/reality.json
-	            	rm /root/sing-box
+          show_notice "Reinstalling..."
+          # Uninstall previous installation
+          systemctl stop sing-box
+          systemctl disable sing-box > /dev/null 2>&1
+          rm /etc/systemd/system/sing-box.service
+          rm /root/sbconfig_server.json
+          rm /root/sing-box
 	
-	            	# Proceed with installation
-	            	;;
+          # Proceed with installation
+        ;;
         2)
-            		echo "Modifying..."
-			# Get current listen port
-			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
+          #Reality modify
+          show_notice "Starting Modifying Reality config..."
+          # Get current listen port
+          current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
 
-			# Ask for listen port
-			read -p "Enter desired listen port (Current port is $current_listen_port): " listen_port
-			listen_port=${listen_port:-$current_listen_port}
+          # Ask for listen port
+          read -p "Enter desired listen port (Current port is $current_listen_port): " listen_port
+          listen_port=${listen_port:-$current_listen_port}
 
-			# Get current server name
-			current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
+          # Get current server name
+          current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbconfig_server.json)
 
-			# Ask for server name (sni)
-			read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
-			server_name=${server_name:-$current_server_name}
+          # Ask for server name (sni)
+          read -p "Enter server name/SNI (Current value is $current_server_name): " server_name
+          server_name=${server_name:-$current_server_name}
+          echo ""
+          # modifying hysteria2 configuration
+          echo "Starting Modifying Hysteria2 config..."
+          echo ""
+          # Get current listen port
+          hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
 
-			# Modify reality.json with new settings
-			jq --arg listen_port "$listen_port" --arg server_name "$server_name" '.inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/reality.json > /root/reality_modified.json
-			mv /root/reality_modified.json /root/reality.json
+          # Ask for listen port
+          read -p "Enter desired hysteria2 listen port (Current port is $hy_current_listen_port): " hy_listen_port
+          hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
 
-			# Restart sing-box service
-			systemctl restart sing-box
-			echo ""
-			echo ""
-			echo "New Link:"
-			echo ""
-			echo ""
-			# Get current listen port
-			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
+          # Modify reality.json with new settings
+          jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/sbconfig_server.json > /root/sb_modified.json
+          mv /root/sb_modified.json /root/sbconfig_server.json
+          jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port"  '.outbounds[2].listen_port = ($hy_listen_port | tonumber) | .outbounds[1].listen_port = ($listen_port | tonumber) | .outbounds[1].tls.server_name = $server_name' /root/sbconfig_server.json > /root/sb_cli_modified.json
+          mv /root/sb_cli_modified.json /root/sbconfig_client.json
+          # Restart sing-box service
+          systemctl restart sing-box
+          echo ""
+          echo ""
+          show_notice "Reality Client Config Common Link:"
+          echo ""
+          echo ""
+          # Get current listen port
+          current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
 
-			# Get current server name
-			current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
+          # Get current server name
+          current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbconfig_server.json)
 
-			# Get the UUID
-			uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/reality.json)
+          # Get the UUID
+          uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbconfig_server.json)
 
-			# Get the public key from the file, decoding it from base64
-			public_key=$(base64 --decode /root/public.key.b64)
-			
-			# Get the short ID
-			short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
-			
-			# Retrieve the server IP address
-			server_ip=$(curl -s https://api.ipify.org)
-			
-			# Generate the link
-			server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
-			
-			echo "$server_link"
-			echo ""
-			echo ""
-			exit 0
-            		;;
-	3)
-			echo "Showing current link..."
-			
-			# Get current listen port
-			current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/reality.json)
+          # Get the public key from the file, decoding it from base64
+          public_key=$(base64 --decode /root/public.key.b64)
 
-			# Get current server name
-			current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/reality.json)
+          # Get the short ID
+          short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbconfig_server.json)
 
-			# Get the UUID
-			uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/reality.json)
+          # Retrieve the server IP address
+          server_ip=$(curl -s https://api.ipify.org)
 
-			# Get the public key from the file, decoding it from base64
-			public_key=$(base64 --decode /root/public.key.b64)
-			
-			# Get the short ID
-			short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/reality.json)
-			
-			# Retrieve the server IP address
-			server_ip=$(curl -s https://api.ipify.org)
-			
-			# Generate the link
-			server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
-			echo ""
-			echo ""
-			echo "$server_link"
-			echo ""
-			echo ""
-			exit 0
-			;;	
-        4)
-	            	echo "Uninstalling..."
-	            	# Stop and disable sing-box service
-	            	systemctl stop sing-box
-	            	systemctl disable sing-box > /dev/null 2>&1
-	
-	            	# Remove files
-	            	rm /etc/systemd/system/sing-box.service
-	            	rm /root/reality.json
-	            	rm /root/sing-box
-			rm /root/public.key.b64
-		    	echo "DONE!"
-	            	exit 0
-	            	;;
-	        	*)
-	            	echo "Invalid choice. Exiting."
-	            	exit 1
-	            	;;
-	    esac
+          # Generate the link
+          server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
+          
+          echo "$server_link"
+
+          # Get current listen port
+          hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
+          # Get current server name
+          hy_current_server_name=$(openssl x509 -noout -subject -in /root/self-cert/cert.pem | sed -n '/^subject/s/^.*CN=//p')
+          # Get the password
+          hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbconfig_server.json)
+          # Generate the link
+          hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
+          echo ""
+          echo ""
+          show_notice "Hysteria2 Client Config Common Link:" 
+          echo ""
+          echo ""
+          echo "$hy_server_link"
+          echo ""
+          echo ""
+          exit 0
+        ;;
+      3)
+          # Get current listen port
+          current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
+
+          # Get current server name
+          current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbconfig_server.json)
+
+          # Get the UUID
+          uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbconfig_server.json)
+
+          # Get the public key from the file, decoding it from base64
+          public_key=$(base64 --decode /root/public.key.b64)
+          
+          # Get the short ID
+          short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbconfig_server.json)
+          
+          # Retrieve the server IP address
+          server_ip=$(curl -s https://api.ipify.org)
+          
+          # Generate the link
+          echo ""
+          echo ""
+          show_notice "Reality Client Config Common Link:" 
+          echo ""
+          echo ""
+          server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
+          echo ""
+          echo ""
+          echo "$server_link"
+          echo ""
+          echo ""
+          # Print the server details
+          show_notice "Reality Client Config Common Config:" 
+          echo ""
+          echo ""
+          echo "Server IP: $server_ip"
+          echo "Listen Port: $current_listen_port"
+          echo "Server Name: $current_server_name"
+          echo "Public Key: $public_key"
+          echo "Short ID: $short_id"
+          echo "UUID: $uuid"
+          echo ""
+          echo ""
+          # Get current listen port
+          hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
+          # Get current server name
+          hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
+          # Get the password
+          hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbconfig_server.json)
+          # Generate the link
+          hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
+          show_notice "Hysteria Client Config Common Link:" 
+          echo ""
+          echo ""
+          echo "$hy_server_link"
+          echo ""
+          echo ""   
+          # Print the server details
+          show_notice "Hysteria Client Config Common Config:" 
+          echo ""
+          echo ""  
+          echo "Server IP: $server_ip"
+          echo "Listen Port: $hy_current_listen_port"
+          echo "password: $hy_password"
+          echo "Server Name (SNI): $hy_current_server_name"
+          echo "Insecure: True"
+          echo ""
+          echo ""
+          exit 0
+      ;;	
+      4)
+          echo "Uninstalling..."
+          # Stop and disable sing-box service
+          systemctl stop sing-box
+          systemctl disable sing-box > /dev/null 2>&1
+
+          # Remove files
+          rm /etc/systemd/system/sing-box.service
+          rm /root/sbconfig_server.json
+          rm /root/sing-box
+          rm /root/public.key.b64
+          rm /root/self-cert/private.key
+          rm /root/self-cert/cert.pem
+          rm /root/sbconfig_client.json
+          echo "DONE!"
+          exit 0
+          ;;
+      *)
+          echo "Invalid choice. Exiting."
+          exit 1
+          ;;
+	esac
 	fi
 
+
 # Fetch the latest (including pre-releases) release version number from GitHub API
-latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
+# 正式版
+#latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
+#beta版本
+latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
 latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
 echo "Latest version: $latest_version"
 
@@ -206,13 +289,15 @@ rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
 # Set the permissions
 chown root:root /root/sing-box
 chmod +x /root/sing-box
-
-
+echo ""
+# reality
+echo "Start configuring Reality config..."
+echo ""
 # Generate key pair
 echo "Generating key pair..."
 key_pair=$(/root/sing-box generate reality-keypair)
 echo "Key pair generation complete."
-echo
+echo ""
 
 # Extract private key and public key
 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
@@ -232,15 +317,33 @@ echo ""
 # Ask for server name (sni)
 read -p "Enter server name/SNI (default: telewebion.com): " server_name
 server_name=${server_name:-telewebion.com}
+echo ""
+# hysteria2
+echo "Start configuring Reality config..."
+echo ""
+# Generate hysteria necessary values
+hy_password=$(/root/sing-box generate rand --hex 8)
+
+# Ask for listen port
+read -p "Enter desired hysteria2 listen port (default: 8443): " hy_listen_port
+hy_listen_port=${hy_listen_port:-8443}
+echo ""
+
+# Ask for self-signed certificate domain
+read -p "Enter the domain name for a self-signed certificate (default: bing.com): " hy_server_name
+hy_server_name=${hy_server_name:-bing.com}
+mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key && openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+echo "self-signed certificate generated"
 
 # Retrieve the server IP address
 server_ip=$(curl -s https://api.ipify.org)
 
 # Create reality.json using jq
-jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg server_ip "$server_ip" '{
+jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
   "log": {
-    "level": "info",
-    "timestamp": true
+    "level": "error",
+    "timestamp": true,
+    "output": "/root/sing-box.log"
   },
   "inbounds": [
     {
@@ -270,6 +373,25 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pr
           "short_id": [$short_id]
         }
       }
+    },
+    {
+        "type": "hysteria2",
+        "tag": "hy2-in",
+        "listen": "::",
+        "listen_port": ($hy_listen_port | tonumber),
+        "users": [
+            {
+                "password": $hy_password
+            }
+        ],
+        "tls": {
+            "enabled": true,
+            "alpn": [
+                "h3"
+            ],
+            "certificate_path": "/root/self-cert/cert.pem",
+            "key_path": "/root/self-cert/private.key"
+        }
     }
   ],
   "outbounds": [
@@ -282,7 +404,199 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pr
       "tag": "block"
     }
   ]
-}' > /root/reality.json
+}' > /root/sbconfig_server.json
+
+
+# Create reality.json using jq
+jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg public_key "$public_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg hy_server_name "$hy_server_name" --arg server_ip "$server_ip" '{
+  "dns": {
+    "rules": [
+      {
+        "clash_mode": "global",
+        "server": "remote"
+      },
+      {
+        "clash_mode": "direct",
+        "server": "local"
+      },
+      {
+        "outbound": [
+          "any"
+        ],
+        "server": "local"
+      },
+      {
+        "geosite": "cn",
+        "server": "local"
+      }
+    ],
+    "servers": [
+      {
+        "address": "https://doh.pub/dns-query",
+        "detour": "select",
+        "tag": "remote"
+      },
+      {
+        "address": "https://223.5.5.5/dns-query",
+        "detour": "direct",
+        "tag": "local"
+      }
+    ],
+    "strategy": "ipv4_only"
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090",
+      "secret": "",
+      "store_selected": true
+    }
+  },
+  "inbounds": [
+    {
+      "auto_route": true,
+      "domain_strategy": "ipv4_only",
+      "endpoint_independent_nat": true,
+      "inet4_address": "172.19.0.1/30",
+      "mtu": 9000,
+      "sniff": true,
+      "sniff_override_destination": true,
+      "strict_route": true,
+      "type": "tun"
+    },
+    {
+      "domain_strategy": "ipv4_only",
+      "listen": "127.0.0.1",
+      "listen_port": 2333,
+      "sniff": true,
+      "sniff_override_destination": true,
+      "tag": "socks-in",
+      "type": "socks",
+      "users": []
+    },
+    {
+      "domain_strategy": "ipv4_only",
+      "listen": "127.0.0.1",
+      "listen_port": 2334,
+      "sniff": true,
+      "sniff_override_destination": true,
+      "tag": "mixed-in",
+      "type": "mixed",
+      "users": []
+    }
+  ],
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "outbounds": [
+    {
+      "tag": "select",
+      "type": "selector",
+      "default": "urltest",
+      "outbounds": [
+        "urltest",
+        "sing-box-reality",
+        "sing-box-hysteria2"
+      ]
+    },
+    {
+      "type": "vless",
+      "tag": "sing-box-reality",
+      "uuid": $uuid,
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": $server_ip,
+      "server_port": ($listen_port | tonumber),
+      "tls": {
+        "enabled": true,
+        "server_name": $server_name,
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": $public_key,
+          "short_id": $short_id,
+        }
+      }
+    },
+    {
+            "type": "hysteria2",
+            "server": $server_ip,
+            "server_port": ($hy_listen_port | tonumber),
+            "insecure": true,
+            "up_mbps": 30,
+            "down_mbps": 150,
+            "password": $hy_password,
+            "tls": {
+                "enabled": true,
+                "server_name": $hy_server_name,
+                "alpn": [
+                    "h3"
+                ]
+            }
+        },
+    {
+      "tag": "direct",
+      "type": "direct"
+    },
+    {
+      "tag": "block",
+      "type": "block"
+    },
+    {
+      "tag": "dns-out",
+      "type": "dns"
+    },
+    {
+      "tag": "urltest",
+      "type": "urltest",
+      "outbounds": [
+        "sing-box-reality",
+        "sing-box-hysteria2"
+      ]
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "rules": [
+      {
+        "geosite": "category-ads-all",
+        "outbound": "block"
+      },
+      {
+        "outbound": "dns-out",
+        "protocol": "dns"
+      },
+      {
+        "clash_mode": "direct",
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "global",
+        "outbound": "select"
+      },
+      {
+        "geoip": [
+          "cn",
+          "private"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "geosite": "geolocation-!cn",
+        "outbound": "select"
+      },
+      {
+        "geosite": "cn",
+        "outbound": "direct"
+      }
+    ]
+  }
+}' > /root/sbconfig_client.json
+
 
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
@@ -294,7 +608,7 @@ User=root
 WorkingDirectory=/root
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sing-box run -c /root/reality.json
+ExecStart=/root/sing-box run -c /root/sbconfig_server.json
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -304,20 +618,31 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 
+
 # Check configuration and start the service
-if /root/sing-box check -c /root/reality.json; then
+if /root/sing-box check -c /root/sbconfig_server.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
     systemctl daemon-reload
     systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
     systemctl restart sing-box
 
-# Generate the link
-
-    server_link="vless://$uuid@$server_ip:$listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
+    echo ""
+    echo ""
+    show_notice "Sing-Box Client Configuration for Reality and Hysteria2:" 
+    echo ""
+    echo ""
+    cat /root/sbconfig_client.json
+    echo ""
+    echo ""
+    server_link="vless://$uuid@$server_ip:$listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-REALITY"
 
     # Print the server details
-    echo
+    echo ""
+    echo ""
+    show_notice "Reality Common configuration" 
+    echo ""
+    echo ""
     echo "Server IP: $server_ip"
     echo "Listen Port: $listen_port"
     echo "Server Name: $server_name"
@@ -326,13 +651,34 @@ if /root/sing-box check -c /root/reality.json; then
     echo "UUID: $uuid"
     echo ""
     echo ""
-    echo "Here is the link for v2rayN and v2rayNG :"
+    show_notice "Reality link for Shadowrocket or v2rayN or nekoray or other clients:" 
     echo ""
     echo ""
     echo "$server_link"
     echo ""
     echo ""
-else
-    echo "Error in configuration. Aborting."
-fi
 
+    hy_server_link="hy2://$hy_password@$server_ip:$hy_listen_port?insecure=1&sni=$hy_server_name#SING-BOX-HY2"
+
+    # Print the server details
+    show_notice "Hysteria2 Common Configuration:" 
+    echo ""
+    echo ""
+    echo "Server IP: $server_ip"
+    echo "Listen Port: $hy_listen_port"
+    echo "password: $hy_password"
+    echo "Server Name (SNI): $hy_server_name"
+    echo "Insecure: True"
+    echo ""
+    echo ""
+    show_notice "Hysteria2 Link for Nekoray" 
+    echo ""
+    echo ""
+    echo "$hy_server_link"
+    echo ""
+    echo ""
+
+
+else
+    echo "Error in configuration. Aborting"
+fi
