@@ -91,14 +91,25 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           echo ""
           # Get current listen port
           hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
-
+          
           # Ask for listen port
           read -p "Enter desired hysteria2 listen port (Current port is $hy_current_listen_port): " hy_listen_port
           hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
 
+          # Ask for hysteria server name (sni)
+          # hy_current_server_name=$(openssl x509 -noout -subject -in /root/self-cert/cert.pem | sed -n '/^subject/s/^.*CN=//p')
+          # read -p "Enter hysteria2 server name/SNI (Current value is $hy_current_server_name): " hy_server_name
+          # hy_server_name=${hy_server_name:-$hy_current_server_name}
+          # if [ "$hy_server_name" != "$hy_current_server_name" ]; then
+          #     mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key && openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+          #     echo ""
+          # fi
+
           # Modify reality.json with new settings
           jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/sbconfig_server.json > /root/sb_modified.json
           mv /root/sb_modified.json /root/sbconfig_server.json
+          # jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_server_name "$hy_server_name" --arg hy_listen_port "$hy_listen_port"  '.outbounds[2].tls.server_name = $hy_server_name | .outbounds[2].listen_port = ($hy_listen_port | tonumber) | .outbounds[1].listen_port = ($listen_port | tonumber) | .outbounds[1].tls.server_name = $server_name' /root/sbconfig_server.json > /root/sb_cli_modified.json
+          # mv /root/sb_cli_modified.json /root/sbconfig_client.json
           jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port"  '.outbounds[2].listen_port = ($hy_listen_port | tonumber) | .outbounds[1].listen_port = ($listen_port | tonumber) | .outbounds[1].tls.server_name = $server_name' /root/sbconfig_server.json > /root/sb_cli_modified.json
           mv /root/sb_cli_modified.json /root/sbconfig_client.json
           # Restart sing-box service
