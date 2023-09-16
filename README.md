@@ -23,11 +23,18 @@ Also updating the repo's is highly recommended (apt update && apt upgrade)
 - This script uses 443 as the default port number . change it if you want when the script asks you to.
 - this script uses "telewebion.com" as the SNI . change it to your desired SNI when the script asks you to.
 
-
 ```bash
 bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/install.sh)
-
 ```
+|项目||
+|:--|:--|
+|程序|**/root/sing-box**|
+|服务端配置|**/root/sbconfig_server.json**|
+|客户端配置|**/root/sbconfig_client.json**|
+|重启|`systemctl restart sing-box`|
+|状态|`systemctl status sing-box`|
+|查看日志|`journalctl -u sing-box -o cat -e`|
+|实时日志|`journalctl -u sing-box -o cat -f`|
 
 ## Credit
 - [sing-reality-box](https://github.com/deathline94/sing-REALITY-Box)
