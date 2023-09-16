@@ -446,7 +446,7 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pu
     ],
     "servers": [
       {
-        "address": "https://doh.pub/dns-query",
+        "address": "https://1.1.1.1/dns-query",
         "detour": "select",
         "tag": "remote"
       },
