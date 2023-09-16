@@ -540,13 +540,15 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pu
             "type": "hysteria2",
             "server": $server_ip,
             "server_port": ($hy_listen_port | tonumber),
-            "insecure": true,
+            "tag": "sing-box-hysteria2",
+            
             "up_mbps": 30,
             "down_mbps": 150,
             "password": $hy_password,
             "tls": {
                 "enabled": true,
                 "server_name": $hy_server_name,
+                "insecure": true,
                 "alpn": [
                     "h3"
                 ]
