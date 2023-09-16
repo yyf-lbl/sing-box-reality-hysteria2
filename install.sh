@@ -46,14 +46,14 @@ fi
 # Check if reality.json, sing-box, and sing-box.service already exist
 if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.key.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
 
-    echo "Reality files already exist."
+    echo "sing-box-reality-hysteria2已经安装"
     echo ""
-    echo "Please choose an option:"
+    echo "请选择选项:"
     echo ""
-    echo "1. Reinstall"
-    echo "2. Modify"
-    echo "3. Show Current Link"
-    echo "4. Uninstall"
+    echo "1. 重新安装"
+    echo "2. 修改"
+    echo "3. 显示客户端配置"
+    echo "4. 卸载"
     echo ""
     read -p "Enter your choice (1-4): " choice
 
@@ -71,7 +71,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
         ;;
         2)
           #Reality modify
-          show_notice "Starting Modifying Reality config..."
+          show_notice "开始修改reality端口号和域名"
           # Get current listen port
           current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
 
@@ -87,7 +87,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           server_name=${server_name:-$current_server_name}
           echo ""
           # modifying hysteria2 configuration
-          echo "Starting Modifying Hysteria2 config..."
+          show_notice "开始修改hysteria2端口号"
           echo ""
           # Get current listen port
           hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
@@ -116,7 +116,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           systemctl restart sing-box
           echo ""
           echo ""
-          show_notice "Reality Client Config Common Link:"
+          show_notice "Reality 客户端通用链接"
           echo ""
           echo ""
           # Get current listen port
@@ -152,7 +152,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
           echo ""
           echo ""
-          show_notice "Hysteria2 Client Config Common Link:" 
+          show_notice "Hysteria2 客户端通用链接" 
           echo ""
           echo ""
           echo "$hy_server_link"
@@ -180,12 +180,12 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           server_ip=$(curl -s https://api.ipify.org)
           echo ""
           echo ""
-          show_notice "sing-box client config file:"
+          show_notice "sing-box 客户端配置文件"
           # Generate the link
           echo ""
           echo ""
           cat /root/sbconfig_client.json
-          show_notice "Reality Client Config Common Link:" 
+          show_notice "Reality 客户端通用链接" 
           echo ""
           echo ""
           server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
@@ -195,7 +195,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           echo ""
           echo ""
           # Print the server details
-          show_notice "Reality Client Config Common Config:" 
+          show_notice "Reality 客户端参数" 
           echo ""
           echo ""
           echo "Server IP: $server_ip"
@@ -214,14 +214,14 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbconfig_server.json)
           # Generate the link
           hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
-          show_notice "Hysteria Client Config Common Link:" 
+          show_notice "Hysteria2 客户端通用链接" 
           echo ""
           echo ""
           echo "$hy_server_link"
           echo ""
           echo ""   
           # Print the server details
-          show_notice "Hysteria Client Config Common Config:" 
+          show_notice "Hysteria2 客户端参数" 
           echo ""
           echo ""  
           echo "Server IP: $server_ip"
@@ -643,7 +643,7 @@ if /root/sing-box check -c /root/sbconfig_server.json; then
 
     echo ""
     echo ""
-    show_notice "Sing-Box Client Configuration for Reality and Hysteria2:" 
+    show_notice "Sing-Box 客户端配置文件" 
     echo ""
     echo ""
     cat /root/sbconfig_client.json
@@ -654,7 +654,7 @@ if /root/sing-box check -c /root/sbconfig_server.json; then
     # Print the server details
     echo ""
     echo ""
-    show_notice "Reality Common configuration" 
+    show_notice "Reality 客户端参数" 
     echo ""
     echo ""
     echo "Server IP: $server_ip"
@@ -665,7 +665,7 @@ if /root/sing-box check -c /root/sbconfig_server.json; then
     echo "UUID: $uuid"
     echo ""
     echo ""
-    show_notice "Reality link for Shadowrocket or v2rayN or nekoray or other clients:" 
+    show_notice "Hysteria2 客户端通用链接" 
     echo ""
     echo ""
     echo "$server_link"
@@ -675,7 +675,7 @@ if /root/sing-box check -c /root/sbconfig_server.json; then
     hy_server_link="hy2://$hy_password@$server_ip:$hy_listen_port?insecure=1&sni=$hy_server_name#SING-BOX-HY2"
 
     # Print the server details
-    show_notice "Hysteria2 Common Configuration:" 
+    show_notice "Hysteria2 客户端参数" 
     echo ""
     echo ""
     echo "Server IP: $server_ip"
@@ -685,7 +685,7 @@ if /root/sing-box check -c /root/sbconfig_server.json; then
     echo "Insecure: True"
     echo ""
     echo ""
-    show_notice "Hysteria2 Link for Nekoray" 
+    show_notice "Hysteria2 通用链接" 
     echo ""
     echo ""
     echo "$hy_server_link"
