@@ -21,7 +21,7 @@ To use sing-REALITY-box, simply execute the following command on your Linux mach
 Also updating the repo's is highly recommended (apt update && apt upgrade)
 - This script uses JQ which will be automaticaly installed
 - This script uses 443 as the default port number . change it if you want when the script asks you to.
-- this script uses "www.lovelive-anime.jp" as the SNI . change it to your desired SNI when the script asks you to.
+- this script uses "itunes.apple.com" as the SNI . change it to your desired SNI when the script asks you to.
 
 ```bash
 bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/install.sh)
@@ -31,6 +31,7 @@ bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/
 |程序|**/root/sing-box**|
 |服务端配置|**/root/sbconfig_server.json**|
 |客户端配置|**/root/sbconfig_client.json**|
+|sb日志|**/root/sing-box.log**|
 |重启|`systemctl restart sing-box`|
 |状态|`systemctl status sing-box`|
 |查看日志|`journalctl -u sing-box -o cat -e`|
