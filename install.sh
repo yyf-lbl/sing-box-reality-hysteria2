@@ -51,7 +51,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
     echo "请选择选项:"
     echo ""
     echo "1. 重新安装"
-    echo "2. 修改"
+    echo "2. 修改配置"
     echo "3. 显示客户端配置"
     echo "4. 卸载"
     echo ""
@@ -329,8 +329,8 @@ read -p "Enter Reality desired listen port (default: 443): " listen_port
 listen_port=${listen_port:-443}
 echo ""
 # Ask for server name (sni)
-read -p "Enter server name/SNI (default: www.lovelive-anime.jp): " server_name
-server_name=${server_name:-www.lovelive-anime.jp}
+read -p "Enter server name/SNI (default: itunes.apple.com): " server_name
+server_name=${server_name:-itunes.apple.com}
 echo ""
 # hysteria2
 echo "Start configuring Hysteria2 config..."
