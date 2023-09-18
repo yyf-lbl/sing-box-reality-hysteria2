@@ -609,7 +609,13 @@ jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg pu
         "geosite": "cn",
         "outbound": "direct"
       }
-    ]
+    ],
+    "geoip": {
+            "download_detour": "select"
+        },
+    "geosite": {
+            "download_detour": "select"
+        }
   }
 }' > /root/sbconfig_client.json
 
