@@ -355,9 +355,9 @@ server_ip=$(curl -s https://api.ipify.org)
 # Create reality.json using jq
 jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
   "log": {
-    "level": "error",
-    "timestamp": true,
-    "output": "/root/sing-box.log"
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
   },
   "inbounds": [
     {
