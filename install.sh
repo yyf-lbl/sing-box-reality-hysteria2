@@ -25,23 +25,75 @@ print_with_delay "sing-reality-hy2-box by MAREEP | @MAREEP" 0.1
 echo ""
 echo ""
 
+install_base(){
+  # Check if jq is installed, and install it if not
+  if ! command -v jq &> /dev/null; then
+      echo "jq is not installed. Installing..."
+      if [ -n "$(command -v apt)" ]; then
+          apt update > /dev/null 2>&1
+          apt install -y jq > /dev/null 2>&1
+      elif [ -n "$(command -v yum)" ]; then
+          yum install -y epel-release
+          yum install -y jq
+      elif [ -n "$(command -v dnf)" ]; then
+          dnf install -y jq
+      else
+          echo "Cannot install jq. Please install jq manually and rerun the script."
+          exit 1
+      fi
+  fi
+}
 
-# Check if jq is installed, and install it if not
-if ! command -v jq &> /dev/null; then
-    echo "jq is not installed. Installing..."
-    if [ -n "$(command -v apt)" ]; then
-        apt update > /dev/null 2>&1
-        apt install -y jq > /dev/null 2>&1
-    elif [ -n "$(command -v yum)" ]; then
-        yum install -y epel-release
-        yum install -y jq
-    elif [ -n "$(command -v dnf)" ]; then
-        dnf install -y jq
-    else
-        echo "Cannot install jq. Please install jq manually and rerun the script."
-        exit 1
-    fi
-fi
+download_sing_box(){
+  # Fetch the latest (including pre-releases) release version number from GitHub API
+  # 正式版
+  #latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
+  #beta版本
+  latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
+  latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
+  echo "Latest version: $latest_version"
+
+  # Detect server architecture
+  arch=$(uname -m)
+  echo "Architecture: $arch"
+
+  # Map architecture names
+  case ${arch} in
+      x86_64)
+          arch="amd64"
+          ;;
+      aarch64)
+          arch="arm64"
+          ;;
+      armv7l)
+          arch="armv7"
+          ;;
+  esac
+
+  # Prepare package names
+  package_name="sing-box-${latest_version}-linux-${arch}"
+
+  # Prepare download URL
+  url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
+
+  # Download the latest release package (.tar.gz) from GitHub
+  curl -sLo "/root/${package_name}.tar.gz" "$url"
+
+
+  # Extract the package and move the binary to /root
+  tar -xzf "/root/${package_name}.tar.gz" -C /root
+  mv "/root/${package_name}/sing-box" /root/
+
+  # Cleanup the package
+  rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
+
+  # Set the permissions
+  chown root:root /root/sing-box
+  chmod +x /root/sing-box
+  echo ""
+}
+
+install_base
 
 # Check if reality.json, sing-box, and sing-box.service already exist
 if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root/public.key.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
@@ -257,42 +309,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           systemctl stop sing-box
           systemctl disable sing-box > /dev/null 2>&1
           rm /root/sing-box
-          # Fetch the latest (including pre-releases) release version number from GitHub API
-          # 正式版
-          #latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
-          #beta版本
-          latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
-          latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
-          echo "Latest version: $latest_version"
-          # Detect server architecture
-          arch=$(uname -m)
-          echo "Architecture: $arch"
-          # Map architecture names
-          case ${arch} in
-              x86_64)
-                  arch="amd64"
-                  ;;
-              aarch64)
-                  arch="arm64"
-                  ;;
-              armv7l)
-                  arch="armv7"
-                  ;;
-          esac
-          # Prepare package names
-          package_name="sing-box-${latest_version}-linux-${arch}"
-          # Prepare download URL
-          url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-          # Download the latest release package (.tar.gz) from GitHub
-          curl -sLo "/root/${package_name}.tar.gz" "$url"
-          # Extract the package and move the binary to /root
-          tar -xzf "/root/${package_name}.tar.gz" -C /root
-          mv "/root/${package_name}/sing-box" /root/
-          # Cleanup the package
-          rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
-          # Set the permissions
-          chown root:root /root/sing-box
-          chmod +x /root/sing-box
+          download_sing_box
           # Check configuration and start the service
           if /root/sing-box check -c /root/sbconfig_server.json; then
               echo "Configuration checked successfully. Starting sing-box service..."
@@ -311,53 +328,8 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
 	esac
 	fi
 
+download_sing_box
 
-# Fetch the latest (including pre-releases) release version number from GitHub API
-# 正式版
-#latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
-#beta版本
-latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
-latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
-echo "Latest version: $latest_version"
-
-# Detect server architecture
-arch=$(uname -m)
-echo "Architecture: $arch"
-
-# Map architecture names
-case ${arch} in
-    x86_64)
-        arch="amd64"
-        ;;
-    aarch64)
-        arch="arm64"
-        ;;
-    armv7l)
-        arch="armv7"
-        ;;
-esac
-
-# Prepare package names
-package_name="sing-box-${latest_version}-linux-${arch}"
-
-# Prepare download URL
-url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-
-# Download the latest release package (.tar.gz) from GitHub
-curl -sLo "/root/${package_name}.tar.gz" "$url"
-
-
-# Extract the package and move the binary to /root
-tar -xzf "/root/${package_name}.tar.gz" -C /root
-mv "/root/${package_name}/sing-box" /root/
-
-# Cleanup the package
-rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
-
-# Set the permissions
-chown root:root /root/sing-box
-chmod +x /root/sing-box
-echo ""
 # reality
 echo "Start configuring Reality config..."
 echo ""
