@@ -24,7 +24,7 @@ show_notice() {
 print_with_delay "sing-reality-hy2-box by MAREEP | @MAREEP" 0.1
 echo ""
 echo ""
-
+# install base
 install_base(){
   # Check if jq is installed, and install it if not
   if ! command -v jq &> /dev/null; then
@@ -90,6 +90,76 @@ download_sing_box(){
   # Set the permissions
   chown root:root /root/sing-box
   chmod +x /root/sing-box
+  echo ""
+}
+
+
+# client configuration
+show_client_configuration() {
+  # Get current listen port
+  current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
+  # Get current server name
+  current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbconfig_server.json)
+  # Get the UUID
+  uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbconfig_server.json)
+  # Get the public key from the file, decoding it from base64
+  public_key=$(base64 --decode /root/public.key.b64)
+  # Get the short ID
+  short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbconfig_server.json)
+  # Retrieve the server IP address
+  server_ip=$(curl -s https://api.ipify.org)
+  echo ""
+  echo ""
+  show_notice "sing-box 客户端配置文件"
+  # Generate the link
+  echo ""
+  echo ""
+  cat /root/sbconfig_client.json
+  show_notice "Reality 客户端通用链接" 
+  echo ""
+  echo ""
+  server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
+  echo ""
+  echo ""
+  echo "$server_link"
+  echo ""
+  echo ""
+  # Print the server details
+  show_notice "Reality 客户端通用参数" 
+  echo ""
+  echo ""
+  echo "服务器ip: $server_ip"
+  echo "监听端口: $current_listen_port"
+  echo "域名SNI: $current_server_name"
+  echo "Public Key: $public_key"
+  echo "Short ID: $short_id"
+  echo "UUID: $uuid"
+  echo ""
+  echo ""
+  # Get current listen port
+  hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
+  # Get current server name
+  hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
+  # Get the password
+  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbconfig_server.json)
+  # Generate the link
+  hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
+  show_notice "Hysteria2 客户端通用链接" 
+  echo ""
+  echo ""
+  echo "$hy_server_link"
+  echo ""
+  echo ""   
+  # Print the server details
+  show_notice "Hysteria2 客户端通用参数" 
+  echo ""
+  echo ""  
+  echo "服务器ip: $server_ip"
+  echo "端口号: $hy_current_listen_port"
+  echo "password: $hy_password"
+  echo "域名SNI: $hy_current_server_name"
+  echo "跳过证书验证: True"
+  echo ""
   echo ""
 }
 
@@ -167,123 +237,13 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           mv /root/sb_cli_modified.json /root/sbconfig_client.json
           # Restart sing-box service
           systemctl restart sing-box
-          echo ""
-          echo ""
-          show_notice "Reality 客户端通用链接"
-          echo ""
-          echo ""
-          # Get current listen port
-          current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
-
-          # Get current server name
-          current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbconfig_server.json)
-
-          # Get the UUID
-          uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbconfig_server.json)
-
-          # Get the public key from the file, decoding it from base64
-          public_key=$(base64 --decode /root/public.key.b64)
-
-          # Get the short ID
-          short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbconfig_server.json)
-
-          # Retrieve the server IP address
-          server_ip=$(curl -s https://api.ipify.org)
-
-          # Generate the link
-          server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
-          
-          echo "$server_link"
-
-          # Get current listen port
-          hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
-          # Get current server name
-          hy_current_server_name=$(openssl x509 -noout -subject -in /root/self-cert/cert.pem | sed -n '/^subject/s/^.*CN=//p')
-          # Get the password
-          hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbconfig_server.json)
-          # Generate the link
-          hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
-          echo ""
-          echo ""
-          show_notice "Hysteria2 客户端通用链接" 
-          echo ""
-          echo ""
-          echo "$hy_server_link"
-          echo ""
-          echo ""
+          # show client configuration
+          show_client_configuration
           exit 0
         ;;
-      3)
-          # Get current listen port
-          current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
-
-          # Get current server name
-          current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbconfig_server.json)
-
-          # Get the UUID
-          uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbconfig_server.json)
-
-          # Get the public key from the file, decoding it from base64
-          public_key=$(base64 --decode /root/public.key.b64)
-          
-          # Get the short ID
-          short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbconfig_server.json)
-          
-          # Retrieve the server IP address
-          server_ip=$(curl -s https://api.ipify.org)
-          echo ""
-          echo ""
-          show_notice "sing-box 客户端配置文件"
-          # Generate the link
-          echo ""
-          echo ""
-          cat /root/sbconfig_client.json
-          show_notice "Reality 客户端通用链接" 
-          echo ""
-          echo ""
-          server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-TCP"
-          echo ""
-          echo ""
-          echo "$server_link"
-          echo ""
-          echo ""
-          # Print the server details
-          show_notice "Reality 客户端参数" 
-          echo ""
-          echo ""
-          echo "Server IP: $server_ip"
-          echo "Listen Port: $current_listen_port"
-          echo "Server Name: $current_server_name"
-          echo "Public Key: $public_key"
-          echo "Short ID: $short_id"
-          echo "UUID: $uuid"
-          echo ""
-          echo ""
-          # Get current listen port
-          hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
-          # Get current server name
-          hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
-          # Get the password
-          hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbconfig_server.json)
-          # Generate the link
-          hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
-          show_notice "Hysteria2 客户端通用链接" 
-          echo ""
-          echo ""
-          echo "$hy_server_link"
-          echo ""
-          echo ""   
-          # Print the server details
-          show_notice "Hysteria2 客户端参数" 
-          echo ""
-          echo ""  
-          echo "Server IP: $server_ip"
-          echo "Listen Port: $hy_current_listen_port"
-          echo "password: $hy_password"
-          echo "Server Name (SNI): $hy_current_server_name"
-          echo "Insecure: True"
-          echo ""
-          echo ""
+      3)  
+          # show client configuration
+          show_client_configuration
           exit 0
       ;;	
       4)
@@ -675,56 +635,7 @@ if /root/sing-box check -c /root/sbconfig_server.json; then
     systemctl start sing-box
     systemctl restart sing-box
 
-    echo ""
-    echo ""
-    show_notice "Sing-Box 客户端配置文件" 
-    echo ""
-    echo ""
-    cat /root/sbconfig_client.json
-    echo ""
-    echo ""
-    server_link="vless://$uuid@$server_ip:$listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-REALITY"
-
-    # Print the server details
-    echo ""
-    echo ""
-    show_notice "Reality 客户端参数" 
-    echo ""
-    echo ""
-    echo "Server IP: $server_ip"
-    echo "Listen Port: $listen_port"
-    echo "Server Name: $server_name"
-    echo "Public Key: $public_key"
-    echo "Short ID: $short_id"
-    echo "UUID: $uuid"
-    echo ""
-    echo ""
-    show_notice "Hysteria2 客户端通用链接" 
-    echo ""
-    echo ""
-    echo "$server_link"
-    echo ""
-    echo ""
-
-    hy_server_link="hy2://$hy_password@$server_ip:$hy_listen_port?insecure=1&sni=$hy_server_name#SING-BOX-HY2"
-
-    # Print the server details
-    show_notice "Hysteria2 客户端参数" 
-    echo ""
-    echo ""
-    echo "Server IP: $server_ip"
-    echo "Listen Port: $hy_listen_port"
-    echo "password: $hy_password"
-    echo "Server Name (SNI): $hy_server_name"
-    echo "Insecure: True"
-    echo ""
-    echo ""
-    show_notice "Hysteria2 通用链接" 
-    echo ""
-    echo ""
-    echo "$hy_server_link"
-    echo ""
-    echo ""
+    show_client_configuration
 
 
 else
