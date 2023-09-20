@@ -54,6 +54,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
     echo "2. 修改配置"
     echo "3. 显示客户端配置"
     echo "4. 卸载"
+    echo "5. 更新sing-box内核"
     echo ""
     read -p "Enter your choice (1-4): " choice
 
@@ -249,6 +250,59 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           rm /root/sbconfig_client.json
           echo "DONE!"
           exit 0
+          ;;
+      5)
+          show_notice "Update Sing-box..."
+          # Uninstall previous installation
+          systemctl stop sing-box
+          systemctl disable sing-box > /dev/null 2>&1
+          rm /root/sing-box
+          # Fetch the latest (including pre-releases) release version number from GitHub API
+          # 正式版
+          #latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
+          #beta版本
+          latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
+          latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
+          echo "Latest version: $latest_version"
+          # Detect server architecture
+          arch=$(uname -m)
+          echo "Architecture: $arch"
+          # Map architecture names
+          case ${arch} in
+              x86_64)
+                  arch="amd64"
+                  ;;
+              aarch64)
+                  arch="arm64"
+                  ;;
+              armv7l)
+                  arch="armv7"
+                  ;;
+          esac
+          # Prepare package names
+          package_name="sing-box-${latest_version}-linux-${arch}"
+          # Prepare download URL
+          url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
+          # Download the latest release package (.tar.gz) from GitHub
+          curl -sLo "/root/${package_name}.tar.gz" "$url"
+          # Extract the package and move the binary to /root
+          tar -xzf "/root/${package_name}.tar.gz" -C /root
+          mv "/root/${package_name}/sing-box" /root/
+          # Cleanup the package
+          rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
+          # Set the permissions
+          chown root:root /root/sing-box
+          chmod +x /root/sing-box
+          # Check configuration and start the service
+          if /root/sing-box check -c /root/sbconfig_server.json; then
+              echo "Configuration checked successfully. Starting sing-box service..."
+              systemctl daemon-reload
+              systemctl enable sing-box > /dev/null 2>&1
+              systemctl start sing-box
+              systemctl restart sing-box
+          fi
+          echo ""  
+          exit 1
           ;;
       *)
           echo "Invalid choice. Exiting."
