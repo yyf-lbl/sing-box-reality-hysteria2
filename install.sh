@@ -178,7 +178,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
     echo "4. 卸载"
     echo "5. 更新sing-box内核"
     echo ""
-    read -p "Enter your choice (1-4): " choice
+    read -p "Enter your choice (1-5): " choice
 
     case $choice in
         1)
@@ -266,9 +266,9 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
       5)
           show_notice "Update Sing-box..."
           # Uninstall previous installation
-          systemctl stop sing-box
-          systemctl disable sing-box > /dev/null 2>&1
-          rm /root/sing-box
+          # systemctl stop sing-box
+          # systemctl disable sing-box > /dev/null 2>&1
+          # rm /root/sing-box
           download_sing_box
           # Check configuration and start the service
           if /root/sing-box check -c /root/sbconfig_server.json; then
