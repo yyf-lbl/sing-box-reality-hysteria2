@@ -130,10 +130,10 @@ show_client_configuration() {
   echo ""
   echo "服务器ip: $server_ip"
   echo "监听端口: $current_listen_port"
+  echo "UUID: $uuid"
   echo "域名SNI: $current_server_name"
   echo "Public Key: $public_key"
   echo "Short ID: $short_id"
-  echo "UUID: $uuid"
   echo ""
   echo ""
   # Get current listen port
@@ -161,6 +161,93 @@ show_client_configuration() {
   echo "跳过证书验证: True"
   echo ""
   echo ""
+  show_notice "clash-meta配置参数"
+cat << EOF
+
+port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+unified-delay: true
+global-client-fingerprint: chrome
+dns:
+  enable: true
+  listen: :53
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  default-nameserver: 
+    - 223.5.5.5
+    - 8.8.8.8
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  fallback:
+    - https://1.0.0.1/dns-query
+    - tls://dns.google
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+
+proxies:        
+  - name: Reality
+    type: vless
+    server: $server_ip
+    port: $current_listen_port
+    uuid: $uuid
+    network: tcp
+    udp: true
+    tls: true
+    flow: xtls-rprx-vision
+    servername: $current_server_name
+    client-fingerprint: chrome
+    reality-opts:
+      public-key: $public_key
+      short-id: $short_id
+
+  - name: Hysteria2
+    type: hysteria2
+    server: $server_ip
+    port: $hy_current_listen_port
+    #  up和down均不写或为0则使用BBR流控
+    # up: "30 Mbps" # 若不写单位，默认为 Mbps
+    # down: "200 Mbps" # 若不写单位，默认为 Mbps
+    password: $hy_password
+    sni: $hy_current_server_name
+    skip-cert-verify: true
+    fingerprint: chrome
+    alpn:
+      - h3
+
+proxy-groups:
+  - name: 节点选择
+    type: select
+    proxies:
+      - 自动选择
+      - Reality
+      - Hysteria2
+      - DIRECT
+
+  - name: 自动选择
+    type: url-test #选出延迟最低的机场节点
+    use:
+      - chromego    #proxy-providers中的名字，默认即可
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+    proxies:
+      - Reality
+      - Hysteria2
+
+rules:
+    - GEOIP,LAN,DIRECT
+    - GEOIP,CN,DIRECT
+    - MATCH,节点选择
+
+EOF
+
 }
 
 install_base
