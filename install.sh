@@ -232,14 +232,13 @@ proxy-groups:
 
   - name: 自动选择
     type: url-test #选出延迟最低的机场节点
-    use:
-      - chromego    #proxy-providers中的名字，默认即可
-    url: "http://www.gstatic.com/generate_204"
-    interval: 300
-    tolerance: 50
     proxies:
       - Reality
       - Hysteria2
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+
 
 rules:
     - GEOIP,LAN,DIRECT
