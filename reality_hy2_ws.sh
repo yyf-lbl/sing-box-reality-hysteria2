@@ -144,7 +144,7 @@ show_client_configuration() {
   # Get the short ID
   short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
   # Retrieve the server IP address
-  server_ip=$(curl -s https://api.ipify.org)
+  server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
   echo ""
   echo ""
   show_notice "sing-box 客户端配置文件"
@@ -230,6 +230,7 @@ mode: rule
 log-level: info
 unified-delay: true
 global-client-fingerprint: chrome
+ipv6: true
 dns:
   enable: true
   listen: :53
@@ -425,10 +426,6 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           ;;
       5)
           show_notice "Update Sing-box..."
-          # Uninstall previous installation
-          # systemctl stop sing-box
-          # systemctl disable sing-box > /dev/null 2>&1
-          # rm /root/sbox/sing-box
           download_singbox
           # Check configuration and start the service
           if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
@@ -537,7 +534,7 @@ rm -rf argo.log
 
 
 # Retrieve the server IP address
-server_ip=$(curl -s https://api.ipify.org)
+server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 
 # Create reality.json using jq
 jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
@@ -552,9 +549,6 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
       "tag": "vless-in",
       "listen": "::",
       "listen_port": ($listen_port | tonumber),
-      "sniff": true,
-      "sniff_override_destination": true,
-      "domain_strategy": "ipv4_only",
       "users": [
         {
           "uuid": $uuid,
@@ -626,41 +620,87 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
 
 # Create reality.json using jq
 jq -n --arg listen_port "$listen_port" --arg argo "$argo" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg public_key "$public_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg hy_server_name "$hy_server_name" --arg server_ip "$server_ip" '{
-  "dns": {
-    "rules": [
-      {
-        "clash_mode": "global",
-        "server": "remote"
-      },
-      {
-        "clash_mode": "direct",
-        "server": "local"
-      },
-      {
-        "outbound": [
-          "any"
+    "dns": {
+        "servers": [
+            {
+                "tag": "remote",
+                "address": "https://1.1.1.1/dns-query",
+                "detour": "select"
+            },
+            {
+                "tag": "local",
+                "address": "https://223.5.5.5/dns-query",
+                "detour": "direct"
+            },
+            {
+                "address": "rcode://success",
+                "tag": "block"
+            }
         ],
-        "server": "local"
-      },
-      {
-        "geosite": "cn",
-        "server": "local"
-      }
+        "rules": [
+            {
+                "outbound": [
+                    "any"
+                ],
+                "server": "local"
+            },
+            {
+                "disable_cache": true,
+                "geosite": [
+                    "category-ads-all"
+                ],
+                "server": "block"
+            },
+            {
+                "clash_mode": "global",
+                "server": "remote"
+            },
+            {
+                "clash_mode": "direct",
+                "server": "local"
+            },
+            {
+                "geosite": "cn",
+                "server": "local"
+            }
+        ],
+        "strategy": "prefer_ipv4"
+    },
+    "inbounds": [
+        {
+            "type": "tun",
+            "inet4_address": "172.19.0.1/30",
+            "inet6_address": "2001:0470:f9da:fdfa::1/64",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "stack": "mixed",
+            "strict_route": true,
+            "mtu": 9000,
+            "endpoint_independent_nat": true,
+            "auto_route": true
+        },
+        {
+            "type": "socks",
+            "tag": "socks-in",
+            "listen": "127.0.0.1",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "listen_port": 2333,
+            "users": []
+        },
+        {
+            "type": "mixed",
+            "tag": "mixed-in",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "listen": "127.0.0.1",
+            "listen_port": 2334,
+            "users": []
+        }
     ],
-    "servers": [
-      {
-        "address": "https://1.1.1.1/dns-query",
-        "detour": "select",
-        "tag": "remote"
-      },
-      {
-        "address": "https://223.5.5.5/dns-query",
-        "detour": "direct",
-        "tag": "local"
-      }
-    ],
-    "strategy": "ipv4_only"
-  },
   "experimental": {
     "clash_api": {
       "external_controller": "127.0.0.1:9090",
@@ -668,39 +708,6 @@ jq -n --arg listen_port "$listen_port" --arg argo "$argo" --arg vmess_uuid "$vme
       "store_selected": true
     }
   },
-  "inbounds": [
-    {
-      "auto_route": true,
-      "domain_strategy": "ipv4_only",
-      "endpoint_independent_nat": true,
-      "inet4_address": "172.19.0.1/30",
-      "mtu": 9000,
-      "sniff": true,
-      "sniff_override_destination": true,
-      "strict_route": true,
-      "type": "tun"
-    },
-    {
-      "domain_strategy": "ipv4_only",
-      "listen": "127.0.0.1",
-      "listen_port": 2333,
-      "sniff": true,
-      "sniff_override_destination": true,
-      "tag": "socks-in",
-      "type": "socks",
-      "users": []
-    },
-    {
-      "domain_strategy": "ipv4_only",
-      "listen": "127.0.0.1",
-      "listen_port": 2334,
-      "sniff": true,
-      "sniff_override_destination": true,
-      "tag": "mixed-in",
-      "type": "mixed",
-      "users": []
-    }
-  ],
   "log": {
     "disabled": false,
     "level": "info",
