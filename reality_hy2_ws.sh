@@ -110,7 +110,6 @@ download_singbox(){
 # download singbox and cloudflared
 download_cloudflared(){
   arch=$(uname -m)
-  echo "Architecture: $arch"
   # Map architecture names
   case ${arch} in
       x86_64)
@@ -465,6 +464,7 @@ echo "开始配置Reality"
 echo ""
 # Generate key pair
 echo "自动生成基本参数"
+echo ""
 key_pair=$(/root/sbox/sing-box generate reality-keypair)
 echo "Key pair生成完成"
 echo ""
@@ -496,7 +496,7 @@ echo ""
 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
 # Ask for listen port
-read -p "Enter desired hysteria2 listen port (default: 8443): " hy_listen_port
+read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
 hy_listen_port=${hy_listen_port:-8443}
 echo ""
 
@@ -504,6 +504,7 @@ echo ""
 read -p "输入自签证书域名 (default: bing.com): " hy_server_name
 hy_server_name=${hy_server_name:-bing.com}
 mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key && openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+echo ""
 echo "自签证书生成完成"
 echo ""
 # vmess ws
