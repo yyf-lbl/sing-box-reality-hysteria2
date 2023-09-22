@@ -1,36 +1,37 @@
-# sing-Box-reality-hysteria2
-One click reality and hysteria2 installer on sing-box core
+# 简介
+- Reality Hysteria2一键安装脚本
+- Reality Hysteria2 vmess ws一键安装脚本
+  
+## 功能
 
-## Features
+- 无脑回车一键安装或者自定义安装
+- 完全无需域名，使用自签证书部署hy2，使用cloudflared tunnel支持vmess ws优选ip
+- 支持修改reality端口号和域名，hysteria2端口号
+- 无脑生成sing-box，clash-meta，v2rayN，nekoray等通用链接格式
 
-- Easy installation and configuration
-- No need for a domain name, just use a self-signed certificate to sign any domain.
-- Ability to choose the desired reality port and SNI
-- Ability to choose the desired hysteria2 port
-- Real easy to use for the end-users
-
-## Prerequisites
+## 需求
 
 - Linux operating system
 - Bash shell
 - Internet connection
 
-## Usage
+## 使用教程
 
-To use sing-REALITY-box, simply execute the following command on your Linux machine:
-Also updating the repo's is highly recommended (apt update && apt upgrade)
-- This script uses JQ which will be automaticaly installed
-- This script uses 443 as the default port number . change it if you want when the script asks you to.
-- this script uses "itunes.apple.com" as the SNI . change it to your desired SNI when the script asks you to.
-
+### reality和hysteria2二合一脚本
 ```bash
 bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/install.sh)
 ```
+### reality和hysteria2 wss三合一脚本
+```bash
+bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)
+```
+
+
 |项目||
 |:--|:--|
-|程序|**/root/sing-box**|
-|服务端配置|**/root/sbconfig_server.json**|
-|客户端配置|**/root/sbconfig_client.json**|
+|程序|**/root/sbox/sing-box**|
+|服务端配置|**/root/sbox/sbconfig_server.json**|
+|客户端配置|**/root/sbox/sbconfig_client.json**|
 |重启|`systemctl restart sing-box`|
 |状态|`systemctl status sing-box`|
 |查看日志|`journalctl -u sing-box -o cat -e`|
