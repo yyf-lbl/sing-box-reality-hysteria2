@@ -97,7 +97,7 @@ download_singbox(){
 
   # Extract the package and move the binary to /root
   tar -xzf "/root/${package_name}.tar.gz" -C /root
-  mv "/root/${package_name}/sing-box" /root/
+  mv "/root/${package_name}/sing-box" /root/sbox
 
   # Cleanup the package
   rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
