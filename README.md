@@ -1,5 +1,4 @@
 # 简介
-- Reality Hysteria2一键安装脚本
 - Reality Hysteria2 vmess ws一键安装脚本
   
 ## 功能
@@ -17,10 +16,6 @@
 
 ## 使用教程
 
-### reality和hysteria2二合一脚本
-```bash
-bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/install.sh)
-```
 ### reality和hysteria2 wss三合一脚本
 ```bash
 bash <(curl -fsSL https://github.com/vveg26/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)
