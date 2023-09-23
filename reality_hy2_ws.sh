@@ -597,6 +597,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     echo "4. 卸载"
     echo "5. 更新sing-box内核"
     echo "6. 手动重启cloudflared（vps重启之后需要执行一次这个来更新vmess）"
+    echo "7. 套warp解锁流媒体"
     echo ""
     read -p "Enter your choice (1-6): " choice
 
@@ -682,6 +683,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
       6)
           regenarte_cloudflared_argo
           echo "重新启动完成，查看新的vmess客户端信息"
+          show_client_configuration
           exit 1
           ;;
       *)
