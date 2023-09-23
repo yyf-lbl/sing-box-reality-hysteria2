@@ -147,11 +147,6 @@ show_client_configuration() {
   server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
   echo ""
   echo ""
-  show_notice "sing-box 客户端配置文件"
-  # Generate the link
-  echo ""
-  echo ""
-  cat /root/sbox/sbconfig_client.json
   show_notice "Reality 客户端通用链接" 
   echo ""
   echo ""
@@ -326,6 +321,247 @@ rules:
 
 EOF
 
+show_notice "sing-box客户端配置参数"
+cat << EOF
+{
+    "dns": {
+        "servers": [
+            {
+                "tag": "remote",
+                "address": "https://1.1.1.1/dns-query",
+                "detour": "select"
+            },
+            {
+                "tag": "local",
+                "address": "https://223.5.5.5/dns-query",
+                "detour": "direct"
+            },
+            {
+                "address": "rcode://success",
+                "tag": "block"
+            }
+        ],
+        "rules": [
+            {
+                "outbound": [
+                    "any"
+                ],
+                "server": "local"
+            },
+            {
+                "disable_cache": true,
+                "geosite": [
+                    "category-ads-all"
+                ],
+                "server": "block"
+            },
+            {
+                "clash_mode": "global",
+                "server": "remote"
+            },
+            {
+                "clash_mode": "direct",
+                "server": "local"
+            },
+            {
+                "geosite": "cn",
+                "server": "local"
+            }
+        ],
+        "strategy": "prefer_ipv4"
+    },
+    "inbounds": [
+        {
+            "type": "tun",
+            "inet4_address": "172.19.0.1/30",
+            "inet6_address": "2001:0470:f9da:fdfa::1/64",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "stack": "mixed",
+            "strict_route": true,
+            "mtu": 9000,
+            "endpoint_independent_nat": true,
+            "auto_route": true
+        },
+        {
+            "type": "socks",
+            "tag": "socks-in",
+            "listen": "127.0.0.1",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "listen_port": 2333,
+            "users": []
+        },
+        {
+            "type": "mixed",
+            "tag": "mixed-in",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "listen": "127.0.0.1",
+            "listen_port": 2334,
+            "users": []
+        }
+    ],
+  "experimental": {
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090",
+      "secret": "",
+      "store_selected": true
+    }
+  },
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "outbounds": [
+    {
+      "tag": "select",
+      "type": "selector",
+      "default": "urltest",
+      "outbounds": [
+        "urltest",
+        "sing-box-reality",
+        "sing-box-hysteria2",
+        "sing-box-vmess"
+      ]
+    },
+    {
+      "type": "vless",
+      "tag": "sing-box-reality",
+      "uuid": "$uuid",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "$server_ip",
+      "server_port": $current_listen_port,
+      "tls": {
+        "enabled": true,
+        "server_name": "$current_server_name",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "$public_key",
+          "short_id": "$short_id"
+        }
+      }
+    },
+    {
+            "type": "hysteria2",
+            "server": "$server_ip",
+            "server_port": $hy_current_listen_port,
+            "tag": "sing-box-hysteria2",
+            
+            "up_mbps": 100,
+            "down_mbps": 100,
+            "password": "$hy_password",
+            "tls": {
+                "enabled": true,
+                "server_name": "$hy_current_server_name",
+                "insecure": true,
+                "alpn": [
+                    "h3"
+                ]
+            }
+        },
+        {
+            "server": "speed.cloudflare.com",
+            "server_port": 443,
+            "tag": "sing-box-vmess",
+            "tls": {
+                "enabled": true,
+                "server_name": "$argo",
+                "insecure": true,
+                "utls": {
+                    "enabled": true,
+                    "fingerprint": "chrome"
+                }
+            },
+            "transport": {
+                "headers": {
+                    "Host": [
+                        "$argo"
+                    ]
+                },
+                "path": "$ws_path",
+                "type": "ws"
+            },
+            "type": "vmess",
+            "security": "auto",
+            "uuid": "$vmess_uuid"
+        },
+    {
+      "tag": "direct",
+      "type": "direct"
+    },
+    {
+      "tag": "block",
+      "type": "block"
+    },
+    {
+      "tag": "dns-out",
+      "type": "dns"
+    },
+    {
+      "tag": "urltest",
+      "type": "urltest",
+      "outbounds": [
+        "sing-box-reality",
+        "sing-box-hysteria2",
+        "sing-box-vmess"
+      ]
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "rules": [
+      {
+        "geosite": "category-ads-all",
+        "outbound": "block"
+      },
+      {
+        "outbound": "dns-out",
+        "protocol": "dns"
+      },
+      {
+        "clash_mode": "direct",
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "global",
+        "outbound": "select"
+      },
+      {
+        "geoip": [
+          "cn",
+          "private"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "geosite": "geolocation-!cn",
+        "outbound": "select"
+      },
+      {
+        "geosite": "cn",
+        "outbound": "direct"
+      }
+    ],
+    "geoip": {
+            "download_detour": "select"
+        },
+    "geosite": {
+            "download_detour": "select"
+        }
+  }
+}
+EOF
+
 }
 uninstall_singbox() {
             echo "Uninstalling..."
@@ -342,13 +578,14 @@ uninstall_singbox() {
           rm /root/sbox/public.key.b64
           rm /root/self-cert/private.key
           rm /root/self-cert/cert.pem
-          rm /root/sbox/sbconfig_client.json
+          rm -rf /root/self-cert/
+          rm -rf /root/sbox/
           echo "DONE!"
 }
 install_base
 
 # Check if reality.json, sing-box, and sing-box.service already exist
-if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
+if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/root/sbox/argo.txt.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
 
     echo "sing-box-reality-hysteria2已经安装"
     echo ""
@@ -372,7 +609,14 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           rm /etc/systemd/system/sing-box.service
           rm /root/sbox/sbconfig_server.json
           rm /root/sbox/sing-box
-	
+          rm /root/sbox/cloudflared-linux
+          rm /root/sbox/argo.txt.b64
+          rm /root/sbox/public.key.b64
+          rm /root/self-cert/private.key
+          rm /root/self-cert/cert.pem
+          rm -rf /root/self-cert/
+          rm -rf /root/sbox/
+          
           # Proceed with installation
         ;;
         2)
@@ -405,10 +649,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           # Modify reality.json with new settings
           jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/sbox/sbconfig_server.json > /root/sb_modified.json
           mv /root/sb_modified.json /root/sbox/sbconfig_server.json
-          # jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_server_name "$hy_server_name" --arg hy_listen_port "$hy_listen_port"  '.outbounds[2].tls.server_name = $hy_server_name | .outbounds[2].listen_port = ($hy_listen_port | tonumber) | .outbounds[1].listen_port = ($listen_port | tonumber) | .outbounds[1].tls.server_name = $server_name' /root/sbox/sbconfig_server.json > /root/sb_cli_modified.json
-          # mv /root/sb_cli_modified.json /root/sbox/sbconfig_client.json
-          jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port"  '.outbounds[2].listen_port = ($hy_listen_port | tonumber) | .outbounds[1].listen_port = ($listen_port | tonumber) | .outbounds[1].tls.server_name = $server_name' /root/sbox/sbconfig_server.json > /root/sb_cli_modified.json
-          mv /root/sb_cli_modified.json /root/sbox/sbconfig_client.json
+
           # Restart sing-box service
           systemctl restart sing-box
           # show client configuration
@@ -617,245 +858,6 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
   ]
 }' > /root/sbox/sbconfig_server.json
 
-
-# Create reality.json using jq
-jq -n --arg listen_port "$listen_port" --arg argo "$argo" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg public_key "$public_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg hy_server_name "$hy_server_name" --arg server_ip "$server_ip" '{
-    "dns": {
-        "servers": [
-            {
-                "tag": "remote",
-                "address": "https://1.1.1.1/dns-query",
-                "detour": "select"
-            },
-            {
-                "tag": "local",
-                "address": "https://223.5.5.5/dns-query",
-                "detour": "direct"
-            },
-            {
-                "address": "rcode://success",
-                "tag": "block"
-            }
-        ],
-        "rules": [
-            {
-                "outbound": [
-                    "any"
-                ],
-                "server": "local"
-            },
-            {
-                "disable_cache": true,
-                "geosite": [
-                    "category-ads-all"
-                ],
-                "server": "block"
-            },
-            {
-                "clash_mode": "global",
-                "server": "remote"
-            },
-            {
-                "clash_mode": "direct",
-                "server": "local"
-            },
-            {
-                "geosite": "cn",
-                "server": "local"
-            }
-        ],
-        "strategy": "prefer_ipv4"
-    },
-    "inbounds": [
-        {
-            "type": "tun",
-            "inet4_address": "172.19.0.1/30",
-            "inet6_address": "2001:0470:f9da:fdfa::1/64",
-            "sniff": true,
-            "sniff_override_destination": true,
-            "domain_strategy": "prefer_ipv4",
-            "stack": "mixed",
-            "strict_route": true,
-            "mtu": 9000,
-            "endpoint_independent_nat": true,
-            "auto_route": true
-        },
-        {
-            "type": "socks",
-            "tag": "socks-in",
-            "listen": "127.0.0.1",
-            "sniff": true,
-            "sniff_override_destination": true,
-            "domain_strategy": "prefer_ipv4",
-            "listen_port": 2333,
-            "users": []
-        },
-        {
-            "type": "mixed",
-            "tag": "mixed-in",
-            "sniff": true,
-            "sniff_override_destination": true,
-            "domain_strategy": "prefer_ipv4",
-            "listen": "127.0.0.1",
-            "listen_port": 2334,
-            "users": []
-        }
-    ],
-  "experimental": {
-    "clash_api": {
-      "external_controller": "127.0.0.1:9090",
-      "secret": "",
-      "store_selected": true
-    }
-  },
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "outbounds": [
-    {
-      "tag": "select",
-      "type": "selector",
-      "default": "urltest",
-      "outbounds": [
-        "urltest",
-        "sing-box-reality",
-        "sing-box-hysteria2",
-        "sing-box-vmess"
-      ]
-    },
-    {
-      "type": "vless",
-      "tag": "sing-box-reality",
-      "uuid": $uuid,
-      "flow": "xtls-rprx-vision",
-      "packet_encoding": "xudp",
-      "server": $server_ip,
-      "server_port": ($listen_port | tonumber),
-      "tls": {
-        "enabled": true,
-        "server_name": $server_name,
-        "utls": {
-          "enabled": true,
-          "fingerprint": "chrome"
-        },
-        "reality": {
-          "enabled": true,
-          "public_key": $public_key,
-          "short_id": $short_id,
-        }
-      }
-    },
-    {
-            "type": "hysteria2",
-            "server": $server_ip,
-            "server_port": ($hy_listen_port | tonumber),
-            "tag": "sing-box-hysteria2",
-            
-            "up_mbps": 30,
-            "down_mbps": 150,
-            "password": $hy_password,
-            "tls": {
-                "enabled": true,
-                "server_name": $hy_server_name,
-                "insecure": true,
-                "alpn": [
-                    "h3"
-                ]
-            }
-        },
-        {
-            "server": "speed.cloudflare.com",
-            "server_port": 443,
-            "tag": "sing-box-vmess",
-            "tls": {
-                "enabled": true,
-                "server_name": $argo,
-                "insecure": true,
-                "utls": {
-                    "enabled": true,
-                    "fingerprint": "chrome"
-                }
-            },
-            "transport": {
-                "headers": {
-                    "Host": [
-                        $argo
-                    ]
-                },
-                "path": $ws_path,
-                "type": "ws"
-            },
-            "type": "vmess",
-            "security": "auto",
-            "uuid": $vmess_uuid
-        },
-    {
-      "tag": "direct",
-      "type": "direct"
-    },
-    {
-      "tag": "block",
-      "type": "block"
-    },
-    {
-      "tag": "dns-out",
-      "type": "dns"
-    },
-    {
-      "tag": "urltest",
-      "type": "urltest",
-      "outbounds": [
-        "sing-box-reality",
-        "sing-box-hysteria2",
-        "sing-box-vmess"
-      ]
-    }
-  ],
-  "route": {
-    "auto_detect_interface": true,
-    "rules": [
-      {
-        "geosite": "category-ads-all",
-        "outbound": "block"
-      },
-      {
-        "outbound": "dns-out",
-        "protocol": "dns"
-      },
-      {
-        "clash_mode": "direct",
-        "outbound": "direct"
-      },
-      {
-        "clash_mode": "global",
-        "outbound": "select"
-      },
-      {
-        "geoip": [
-          "cn",
-          "private"
-        ],
-        "outbound": "direct"
-      },
-      {
-        "geosite": "geolocation-!cn",
-        "outbound": "select"
-      },
-      {
-        "geosite": "cn",
-        "outbound": "direct"
-      }
-    ],
-    "geoip": {
-            "download_detour": "select"
-        },
-    "geosite": {
-            "download_detour": "select"
-        }
-  }
-}' > /root/sbox/sbconfig_client.json
 
 
 # Create sing-box.service
