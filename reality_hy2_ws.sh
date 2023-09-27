@@ -175,14 +175,10 @@ show_client_configuration() {
   # Get the password
   hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
   # Generate the link
-  hy_server_link="hy2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name#SING-BOX-HY2"
-  hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port/?insecure=1&sni=$hy_current_server_name"
+  
+  hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
 
   show_notice "Hysteria2 客户端通用链接" 
-  echo ""
-  echo "nekoray hysteria2通用链接格式"
-  echo ""
-  echo "$hy_server_link"
   echo ""
   echo "官方 hysteria2通用链接格式"
   echo ""
