@@ -196,7 +196,23 @@ show_client_configuration() {
   echo "跳过证书验证: True"
   echo ""
   echo ""
+  show_notice "Hysteria2 客户端yaml文件" 
+cat << EOF
 
+server: $server_ip:$hy_current_listen_port
+
+auth: $hy_password
+
+tls:
+  sni: $hy_current_server_name
+  insecure: true
+
+fastOpen: true
+
+socks5:
+  listen: 127.0.0.1:50000
+
+EOF
 
   argo=$(base64 --decode /root/sbox/argo.txt.b64)
   vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
