@@ -207,6 +207,11 @@ tls:
   sni: $hy_current_server_name
   insecure: true
 
+# 可自己修改对应带宽，不添加则默认为bbr，否则使用hy2的brutal拥塞控制
+# bandwidth:
+#   up: 100 mbps
+#   down: 100 mbps
+
 fastOpen: true
 
 socks5:
