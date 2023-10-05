@@ -21,7 +21,7 @@ show_notice() {
     echo "#######################################################################################################################"
 }
 # Introduction animation
-print_with_delay "sing-reality-hy2-box by 绵阿羊" 0.05
+print_with_delay "sing-reality-hy2-box" 0.05
 echo ""
 echo ""
 # install base
