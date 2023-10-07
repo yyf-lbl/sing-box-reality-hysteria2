@@ -215,7 +215,7 @@ tls:
 fastOpen: true
 
 socks5:
-  listen: 127.0.0.1:50000
+  listen: 127.0.0.1:5080
 
 EOF
 
