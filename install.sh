@@ -212,8 +212,8 @@ proxies:
     server: $server_ip
     port: $hy_current_listen_port
     #  up和down均不写或为0则使用BBR流控
-    # up: "30 Mbps" # 若不写单位，默认为 Mbps
-    # down: "200 Mbps" # 若不写单位，默认为 Mbps
+    # up: "50 Mbps" # 若不写单位，默认为 Mbps
+    # down: "500 Mbps" # 若不写单位，默认为 Mbps
     password: $hy_password
     sni: $hy_current_server_name
     skip-cert-verify: true
@@ -280,7 +280,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
         ;;
         2)
           #Reality modify
-          show_notice "开始修改reality端口号和域名"
+          show_notice "开始修改reality端口和域名"
           # Get current listen port
           current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbconfig_server.json)
 
@@ -296,7 +296,7 @@ if [ -f "/root/sbconfig_server.json" ] && [ -f "/root/sing-box" ] && [ -f "/root
           server_name=${server_name:-$current_server_name}
           echo ""
           # modifying hysteria2 configuration
-          show_notice "开始修改hysteria2端口号"
+          show_notice "开始修改hysteria2端口"
           echo ""
           # Get current listen port
           hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbconfig_server.json)
