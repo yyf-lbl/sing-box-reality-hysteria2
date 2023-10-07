@@ -620,7 +620,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     echo "3. 显示客户端配置"
     echo "4. 卸载"
     echo "5. 更新sing-box内核"
-    echo "6. 手动重启cloudflared（vps重启之后需要执行一次这个来更新vmess）"
+    echo "6. 手动重启cloudflared"
     echo ""
     read -p "Enter your choice (1-6): " choice
 
@@ -645,29 +645,29 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
         ;;
         2)
           #Reality modify
-          show_notice "开始修改reality端口号和域名"
+          show_notice "开始修改reality端口和域名"
           # Get current listen port
           current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
 
           # Ask for listen port
-          read -p "请输入想要修改的端口号 (当前端口号为 $current_listen_port): " listen_port
+          read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
           listen_port=${listen_port:-$current_listen_port}
 
           # Get current server name
           current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
 
           # Ask for server name (sni)
-          read -p "请输入想要偷取的域名 (当前域名为 $current_server_name): " server_name
+          read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
           server_name=${server_name:-$current_server_name}
           echo ""
           # modifying hysteria2 configuration
-          show_notice "开始修改hysteria2端口号"
+          show_notice "开始修改hysteria2端口"
           echo ""
           # Get current listen port
           hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
           
           # Ask for listen port
-          read -p "请属于想要修改的端口号 (当前端口号为 $hy_current_listen_port): " hy_listen_port
+          read -p "请属于想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
           hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
 
           # Modify reality.json with new settings
@@ -745,11 +745,11 @@ short_id=$(/root/sbox/sing-box generate rand --hex 8)
 echo "uuid和短id 生成完成"
 echo ""
 # Ask for listen port
-read -p "请输入Reality端口号 (default: 443): " listen_port
+read -p "请输入Reality端口 (default: 443): " listen_port
 listen_port=${listen_port:-443}
 echo ""
 # Ask for server name (sni)
-read -p "请输入想要偷取的域名 (default: itunes.apple.com): " server_name
+read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
 server_name=${server_name:-itunes.apple.com}
 echo ""
 # hysteria2
@@ -775,10 +775,10 @@ echo "开始配置vmess"
 echo ""
 # Generate hysteria necessary values
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
-read -p "请输入vmess端口，默认为18443(和tunnel通信用不会暴露在外): " vmess_port
-vmess_port=${vmess_port:-18443}
+read -p "请输入vmess端口，默认为15555: " vmess_port
+vmess_port=${vmess_port:-15555}
 echo ""
-read -p "ws路径 (无需加斜杠,默认随机生成): " ws_path
+read -p "ws路径 (默认随机生成): " ws_path
 ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
 
 pid=$(pgrep -f cloudflared)
