@@ -642,11 +642,9 @@ download_cloudflared(){
   echo ""
 }
   mkdir -p "/root/sbox/"
-    download_singbox
-    download_cloudflared
+    
 install_singbox() {
     echo "欢迎安装 Sing-box 服务，请继续..."
-     mkdir -p "/root/sbox/"
     download_singbox
     download_cloudflared
  # 安装所需协议
@@ -845,8 +843,9 @@ menu() {
     case $choice in
         1)  # 安装sing-box
             install_base
-            install_singbox
-            check_and_start_service
+	    download_singbox
+            download_cloudflared
+            install_singbox            
             ;;
         2)  # 修改配置
             show_notice "开始修改reality端口和域名"
