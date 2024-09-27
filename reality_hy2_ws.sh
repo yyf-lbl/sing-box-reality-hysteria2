@@ -678,6 +678,7 @@ else
     echo "Error in configuration. Aborting"
 fi
 }
+
 # 卸载sing-box
 uninstall_singbox() {
     echo "Uninstalling..."    
