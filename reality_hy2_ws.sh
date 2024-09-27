@@ -657,12 +657,12 @@ install_singbox() {
             install_vmess
             ;;
         3)
-            install_hysteria2
+            install_hysteria
             ;;
         4)
             install_vless
             install_vmess
-            install_hysteria2
+            install_hysteria
             ;;
         *)
             echo "无效的选择。"
