@@ -25,13 +25,6 @@ install_vless() {
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
     server_name=${server_name:-itunes.apple.com}
 
-    # 获取Hysteria和VMess的配置
-    read -p "请输入HY Listen Port: " hy_listen_port
-    read -p "请输入HY Password: " hy_password
-    read -p "请输入VMess Port: " vmess_port
-    read -p "请输入VMess UUID: " vmess_uuid
-    read -p "请输入WS Path: " ws_path
-
     # 生成配置文件
     cat <<EOF > /root/sbox/sbconfig_server.json
 {
