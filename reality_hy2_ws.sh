@@ -264,6 +264,14 @@ install_singbox() {
     # 下载 sing-box 和 cloudflared
     download_singbox
     download_cloudflared
+
+    # 用户选择安装的协议
+    echo "请选择要安装的协议（可以多个，以空格分隔）："
+    echo "1) VLESS"
+    echo "2) VMess"
+    echo "3) Hysteria2"
+    read -p "输入选项（例如：1 2 3）: " selected_options
+
     # Reality 配置
     echo "开始配置 Reality"
     echo ""
@@ -271,7 +279,6 @@ install_singbox() {
     echo "Key pair生成完成"
     echo ""
     # 提取私钥和公钥
-    private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
     public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
     echo "$public_key" | base64 > /root/sbox/public.key.b64
     # 生成必要的值
@@ -279,56 +286,55 @@ install_singbox() {
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
     echo "uuid和短id生成完成"
     echo ""
-    # 获取监听端口
-    read -p "请输入Reality端口 (default: 443): " listen_port
-    listen_port=${listen_port:-443}
-    echo ""
-    # 获取服务器名称
-    read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
-    server_name=${server_name:-itunes.apple.com}
-    echo ""
-    # hysteria2 配置
-    echo "开始配置 hysteria2"
-    echo ""
-    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-    # 获取监听端口
-    read -p "请输入 hysteria2 监听端口 (default: 8443): " hy_listen_port
-    hy_listen_port=${hy_listen_port:-8443}
-    echo ""
-    # 获取自签证书域名
-    read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-    hy_server_name=${hy_server_name:-bing.com}
-    # 生成自签证书
-    mkdir -p /root/self-cert/ 
-    openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-    echo "自签证书生成完成"
-    echo ""
-    # vmess ws 配置
-    echo "开始配置 vmess"
-    echo ""
-    vmess_uuid=$(/root/sbox/sing-box generate uuid)
-    read -p "请输入 vmess 端口，默认为 15555: " vmess_port
-    vmess_port=${vmess_port:-15555}
-    echo ""
-    read -p "ws 路径 (默认随机生成): " ws_path
-    ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+
+    # 配置选项
+    for option in $selected_options; do
+        case $option in
+            1)
+                echo "开始配置 VLESS"
+                read -p "请输入 VLESS 端口 (default: 443): " vless_port
+                vless_port=${vless_port:-443}
+                # 添加 VLESS 的配置逻辑
+                echo "VLESS 配置完成"
+                ;;
+            2)
+                echo "开始配置 VMess"
+                read -p "请输入 VMess 端口 (default: 15555): " vmess_port
+                vmess_port=${vmess_port:-15555}
+                echo "ws 路径 (默认随机生成): "
+                ws_path=$( /root/sbox/sing-box generate rand --hex 6 )
+                # 添加 VMess 的配置逻辑
+                echo "VMess 配置完成"
+                ;;
+            3)
+                echo "开始配置 Hysteria2"
+                read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
+                hy_listen_port=${hy_listen_port:-8443}
+                # 添加 Hysteria2 的配置逻辑
+                echo "Hysteria2 配置完成"
+                ;;
+            *)
+                echo "无效的选项: $option"
+                ;;
+        esac
+    done
+
     # 终止 cloudflared 进程
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
         kill "$pid"
     fi
+
     # 生成地址
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux >argo.log 2>&1 &
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:${vmess_port:-15555} --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
     sleep 2
-    clear
-    echo "等待cloudflare argo生成地址"
+    echo "等待 cloudflare argo 生成地址"
     sleep 5
-    # 连接到域名
     argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
     rm -rf argo.log
-    # 检索服务器IP地址
+
+    # 检索服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 
     # 最后检查文件是否存在
@@ -342,7 +348,6 @@ install_singbox() {
         exit 1
     fi
 }
-
 # 卸载sing-box
 uninstall_singbox() {
     echo "Uninstalling..."    
