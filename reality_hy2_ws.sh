@@ -353,7 +353,7 @@ install_singbox() {
 }
  # 检查配置并启动服务
 check_and_start_service() { 
- # Create reality.json using jq
+ # # 使用jq创建reality.json
 jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
   "log": {
     "disabled": false,
@@ -567,5 +567,5 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     esac
 fi
 
-# 使用jq创建reality.json
+
 
