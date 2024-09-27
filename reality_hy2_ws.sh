@@ -105,41 +105,33 @@ regenarte_cloudflared_argo() {
 }
 # 下载 Sing-Box 和 Cloudflared
 download_singbox() {
-  # 获取系统架构
   arch=$(uname -m)
   echo "Architecture: $arch"
-  # 根据系统架构映射名称
   case ${arch} in
-      x86_64)
-          arch="amd64"  # 64位架构
-          ;;
-      aarch64)
-          arch="arm64"  # ARM 64位架构
-          ;;
-      armv7l)
-          arch="armv7"  # ARM 32位架构
-          ;;
+      x86_64) arch="amd64";;
+      aarch64) arch="arm64";;
+      armv7l) arch="armv7";;
   esac
-  # 从 GitHub API 获取最新版本（包括预发行版本）
-  # beta版本
+
   latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
-  latest_version=${latest_version_tag#v}  # 去掉版本号前的 'v'
+  latest_version=${latest_version_tag#v}
   echo "Latest version: $latest_version"
-  # 准备软件包名称
+
   package_name="sing-box-${latest_version}-linux-${arch}"
-  # 准备下载 URL
   url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-  # 从 GitHub 下载最新发布的包 (.tar.gz)
+  
+  mkdir -p /root/sbox
   curl -sLo "/root/${package_name}.tar.gz" "$url"
-  # 解压缩包并将二进制文件移动到 /root
   tar -xzf "/root/${package_name}.tar.gz" -C /root
+  ls /root/${package_name}  # 查看解压内容
   mv "/root/${package_name}/sing-box" /root/sbox
-  # 清理下载的包
+  if [ -f /root/sbox/sing-box ]; then echo "File moved successfully."; fi
+  
   rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
-  # 设置权限
   chown root:root /root/sbox/sing-box
   chmod +x /root/sbox/sing-box
 }
+
 # 下载 Cloudflared
 download_cloudflared() {
   # 获取系统架构
