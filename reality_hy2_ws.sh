@@ -1,79 +1,58 @@
 #!/bin/bash
+# 函数：安装VLESS
 install_vless() {
-    echo "开始配置Reality"
-    echo "自动生成基本参数"
-    echo ""
-
+    echo "开始配置Reality..." 
+    # 自动生成密钥对
     key_pair=$(/root/sbox/sing-box generate reality-keypair)
     if [ $? -ne 0 ]; then
         echo "生成密钥对失败"
         return 1
     fi
-    echo "Key pair生成完成"
-    echo ""
-
+    echo "密钥对生成完成"
     private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
     public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
-
     echo "$public_key" | base64 > /root/sbox/public.key.b64
-
+    # 生成UUID和短ID
     uuid=$(/root/sbox/sing-box generate uuid)
-    if [ $? -ne 0 ]; then
-        echo "生成UUID失败"
-        return 1
-    fi
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
-    echo "uuid和短id 生成完成"
-    echo ""
-
+    # 获取用户输入
     read -p "请输入Reality端口 (default: 443): " listen_port
     listen_port=${listen_port:-443}
-    echo ""
-
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
     server_name=${server_name:-itunes.apple.com}
 }
-
+# 函数：安装VMess
 install_vmess() {
-    echo "开始配置vmess"
-    echo ""
+    echo "开始配置VMess..."
+    # 生成UUID
     vmess_uuid=$(/root/sbox/sing-box generate uuid)
     if [ $? -ne 0 ]; then
         echo "生成UUID失败"
         return 1
     fi
-
-    read -p "请输入vmess端口，默认为15555: " vmess_port
+    # 获取用户输入
+    read -p "请输入VMess端口 (default: 15555): " vmess_port
     vmess_port=${vmess_port:-15555}
-    echo ""
-
-    read -p "ws路径 (默认随机生成): " ws_path
+    read -p "WS路径 (default: 随机生成): " ws_path
     ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-
-    pid=$(pgrep -f cloudflared)
-    if [ -n "$pid" ]; then
-        kill "$pid"
-    fi
-
+    # 终止Cloudflared进程
+    pgrep -f cloudflared | xargs -r kill
+    # 启动Cloudflared隧道
     /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 &
-    sleep 2
-    clear
-    echo "等待cloudflare argo生成地址"
     sleep 5
 
-    argo=$(grep trycloudflare.com /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    argo=$(awk '/trycloudflare.com/ {print $2}' /root/sbox/argo.log | head -n 1 | awk -F// '{print $2}')
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
     rm -f /root/sbox/argo.log
 }
-
+# 函数：安装Hysteria2
 install_hysteria2() {
-    echo "开始配置hysteria2"
-    echo ""
+    echo "开始配置Hysteria2..."
+    
     hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
-    read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
+    read -p "请输入Hysteria2监听端口 (default: 8443): " hy_listen_port
     hy_listen_port=${hy_listen_port:-8443}
-    echo ""
 
     read -p "输入自签证书域名 (default: bing.com): " hy_server_name
     hy_server_name=${hy_server_name:-bing.com}
@@ -81,29 +60,25 @@ install_hysteria2() {
     mkdir -p /root/self-cert/
     openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-    echo ""
     echo "自签证书生成完成"
-    echo ""
 }
-
 # 安装基础
 install_base(){
   # 检查是否安装了jq，如果没有安装，则安装它
-  if ! command -v jq &> /dev/null; then
-      echo "jq is not installed. Installing..."
-      if [ -n "$(command -v apt)" ]; then
-          apt update > /dev/null 2>&1
-          apt install -y jq > /dev/null 2>&1
-      elif [ -n "$(command -v yum)" ]; then
-          yum install -y epel-release
-          yum install -y jq
-      elif [ -n "$(command -v dnf)" ]; then
-          dnf install -y jq
-      else
-          echo "Cannot install jq. Please install jq manually and rerun the script."
-          exit 1
-      fi
-  fi
+install_base() {
+    if ! command -v jq &> /dev/null; then
+        echo "jq未安装，正在安装..."
+        if command -v apt &> /dev/null; then
+            apt update && apt install -y jq
+        elif command -v yum &> /dev/null; then
+            yum install -y epel-release jq
+        elif command -v dnf &> /dev/null; then
+            dnf install -y jq
+        else
+            echo "无法安装jq，请手动安装并重新运行脚本。"
+            exit 1
+        fi
+    fi
 }
 # 重新生成 Cloudflared Argo 隧道
 regenarte_cloudflared_argo() {
