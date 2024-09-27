@@ -588,7 +588,7 @@ uninstall_singbox() {
     echo "DONE!"
 }
 menu() {
-# 检查必要文件是否存在
+    # 检查必要文件是否存在
     echo "sing-box-reality-hysteria2已经安装"
     echo ""
     echo "请选择选项:"
@@ -601,21 +601,20 @@ menu() {
     echo "6. 更新sing-box内核"
     echo "7. 手动重启cloudflared"
     echo ""
-    read -p "Enter your choice (1-6): " choice
+
+    read -p "Enter your choice (1-7): " choice
     case $choice in
         1)  # 安装sing-box
-        install_base
-           install_singbox
-               check_and_start_service
-            # 继续安装
+            install_base
+            install_singbox
+            check_and_start_service
             ;;
         2)  # 卸载sing-box
             uninstall_singbox
-            # 继续安装
             ;;
         3)  # 修改配置
-            show_notice "开始修改reality端口和域名"            
-           # 获取当前监听端口
+            show_notice "开始修改reality端口和域名"
+            # 获取当前监听端口
             current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
             read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
             listen_port=${listen_port:-$current_listen_port}
@@ -633,7 +632,7 @@ menu() {
                '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' \
                /root/sbox/sbconfig_server.json > /root/sb_modified.json
             mv /root/sb_modified.json /root/sbox/sbconfig_server.json
-           # 重启 sing-box 服务
+            # 重启 sing-box 服务
             systemctl restart sing-box
             show_client_configuration
             exit 0
@@ -672,4 +671,5 @@ menu() {
     esac
 }
 menu
+
 
