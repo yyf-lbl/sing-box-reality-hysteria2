@@ -173,8 +173,8 @@ show_client_configuration() {
  
 
   # sing-box 客户端配置参数
-  show_notice "sing-box客户端配置参数"
-cat << EOF
+#  show_notice "sing-box客户端配置参数"
+#cat << EOF
 {
     "dns": {
         "servers": [
