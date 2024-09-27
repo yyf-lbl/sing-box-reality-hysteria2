@@ -274,7 +274,7 @@ EOF
   echo -e "端口 80 可改为 8080 8880 2052 2082 2086 2095" 
   echo ""
   echo ""
-
+}
 # 安装sing-box
 install_singbox() {
     # 创建 sbox 目录
