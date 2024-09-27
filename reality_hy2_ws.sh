@@ -812,13 +812,13 @@ EOF
 # 检查配置并启动服务
 start_serv(){
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo "Configuration checked successfully. Starting sing-box service..."
+    echo "配置文件成功， 正在启动 sing-box 服务..."
     systemctl daemon-reload
     systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
     systemctl restart sing-box
 else
-    echo "Error in configuration. Aborting"
+    echo "配置错误，终止服务！"
 fi
 }
 menu() {
