@@ -168,17 +168,125 @@ download_cloudflared() {
   echo ""
 }
 # 显示客户端配置
-    },
-    {
-      "type": "vless",
-      "tag": "sing-box-reality",
-      "uuid": "$uuid",
-      "flow": "xtls-rprx-vision",
-      "packet_encoding": "xudp",
-      "server": "$server_ip",
-      "server_port": $current_listen_port,
-      "tls": {
-        "enabled": true,
+show_client_configuration() {
+  # Get current listen port
+  current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
+  # Get current server name
+  current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
+  # Get the UUID
+  uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbox/sbconfig_server.json)
+  # Get the public key from the file, decoding it from base64
+  public_key=$(base64 --decode /root/sbox/public.key.b64)
+  # Get the short ID
+  short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
+  # Retrieve the server IP address
+  server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+  echo ""
+  echo ""
+  show_notice "Reality 客户端通用链接" 
+  echo ""
+  echo ""
+  server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
+  echo ""
+  echo ""
+  echo "$server_link"
+  echo ""
+  echo ""
+  # Print the server details
+  show_notice "Reality 客户端通用参数" 
+  echo ""
+  echo ""
+  echo "服务器ip: $server_ip"
+  echo "监听端口: $current_listen_port"
+  echo "UUID: $uuid"
+  echo "域名SNI: $current_server_name"
+  echo "Public Key: $public_key"
+  echo "Short ID: $short_id"
+  echo ""
+  echo ""
+  # Get current listen port
+  hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+  # Get current server name
+  hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
+  # Get the password
+  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
+  # Generate the link
+  
+  hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
+
+  show_notice "Hysteria2 客户端通用链接" 
+  echo ""
+  echo "官方 hysteria2通用链接格式"
+  echo ""
+  echo "$hy2_server_link"
+  echo ""
+  echo ""   
+  # Print the server details
+  show_notice "Hysteria2 客户端通用参数" 
+  echo ""
+  echo ""  
+  echo "服务器ip: $server_ip"
+  echo "端口号: $hy_current_listen_port"
+  echo "password: $hy_password"
+  echo "域名SNI: $hy_current_server_name"
+  echo "跳过证书验证: True"
+  echo ""
+  echo ""
+  show_notice "Hysteria2 客户端yaml文件" 
+cat << EOF
+
+server: $server_ip:$hy_current_listen_port
+
+auth: $hy_password
+
+tls:
+  sni: $hy_current_server_name
+  insecure: true
+
+# 可自己修改对应带宽，不添加则默认为bbr，否则使用hy2的brutal拥塞控制
+# bandwidth:
+#   up: 100 mbps
+#   down: 100 mbps
+
+fastOpen: true
+
+socks5:
+  listen: 127.0.0.1:5080
+
+EOF
+
+  argo=$(base64 --decode /root/sbox/argo.txt.b64)
+  vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
+  ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
+  show_notice "vmess ws 通用链接参数" 
+  echo ""
+  echo ""
+  echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
+  echo ""
+  echo ""
+  echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+  echo ""
+  echo ""
+  echo -e "端口 443 可改为 2053 2083 2087 2096 8443"
+  echo ""
+  echo ""
+  echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+  echo ""
+  echo ""
+  echo -e "端口 80 可改为 8080 8880 2052 2082 2086 2095" 
+  echo ""
+  echo ""
+  show_notice "clash-meta配置参数"
+cat << EOF
+
+port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+unified-delay: true
+global-client-fingerprint: chrome
+ipv6: true
+dns:
         "server_name": "$current_server_name",
         "utls": {
           "enabled": true,
@@ -301,6 +409,7 @@ download_cloudflared() {
   }
 }
 EOF
+
 }
 # 安装sing-box
 install_singbox() {
