@@ -674,7 +674,8 @@ install_singbox() {
     esac
     # 获取本机ip地址
 server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-create_config_files
+
+create_config_files "vless" "hysteria" "vmess"
   # 调用函数时传入所有生成的配置文件
 start_serv "/root/sbox/vmess_config.json" "/root/sbox/vless_config.json" "/root/sbox/hysteria_config.json"
 }
