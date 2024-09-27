@@ -569,6 +569,16 @@ EOF
 
  # 检查配置并启动服务
 check_and_start_service() { 
+# 打印变量
+echo "UUID: $uuid"
+echo "Server Name: $server_name"
+echo "Private Key: $private_key"
+echo "Short ID: $short_id"
+echo "HY Listen Port: $hy_listen_port"
+echo "HY Password: $hy_password"
+echo "VMess Port: $vmess_port"
+echo "VMess UUID: $vmess_uuid"
+echo "WS Path: $ws_path"
  # # 使用jq创建reality.json
 jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
 --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
