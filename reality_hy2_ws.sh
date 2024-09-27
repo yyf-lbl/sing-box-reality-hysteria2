@@ -350,6 +350,7 @@ install_singbox() {
 
     echo "所有配置已完成，准备开始服务..."
     # 你可以在这里添加启动服务的命令
+    check_and_start_service
 }
  # 检查配置并启动服务
 check_and_start_service() { 
