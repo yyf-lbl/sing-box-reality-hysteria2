@@ -62,8 +62,6 @@ install_hysteria2() {
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
     echo "自签证书生成完成"
 }
-# 安装基础
-install_base(){
   # 检查是否安装了jq，如果没有安装，则安装它
 install_base() {
     if ! command -v jq &> /dev/null; then
