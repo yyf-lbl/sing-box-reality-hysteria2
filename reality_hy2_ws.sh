@@ -98,6 +98,462 @@ install_base(){
       fi
   fi
 }
+
+show_client_configuration() {
+  # Get current listen port
+  current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
+  # Get current server name
+  current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
+  # Get the UUID
+  uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbox/sbconfig_server.json)
+  # Get the public key from the file, decoding it from base64
+  public_key=$(base64 --decode /root/sbox/public.key.b64)
+  # Get the short ID
+  short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
+  # Retrieve the server IP address
+  server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+  echo ""
+  echo ""
+  show_notice "Reality 客户端通用链接" 
+  echo ""
+  echo ""
+  server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
+  echo ""
+  echo ""
+  echo "$server_link"
+  echo ""
+  echo ""
+  # Print the server details
+  show_notice "Reality 客户端通用参数" 
+  echo ""
+  echo ""
+  echo "服务器ip: $server_ip"
+  echo "监听端口: $current_listen_port"
+  echo "UUID: $uuid"
+  echo "域名SNI: $current_server_name"
+  echo "Public Key: $public_key"
+  echo "Short ID: $short_id"
+  echo ""
+  echo ""
+  # Get current listen port
+  hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+  # Get current server name
+  hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
+  # Get the password
+  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
+  # Generate the link
+  
+  hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
+
+  show_notice "Hysteria2 客户端通用链接" 
+  echo ""
+  echo "官方 hysteria2通用链接格式"
+  echo ""
+  echo "$hy2_server_link"
+  echo ""
+  echo ""   
+  # Print the server details
+  show_notice "Hysteria2 客户端通用参数" 
+  echo ""
+  echo ""  
+  echo "服务器ip: $server_ip"
+  echo "端口号: $hy_current_listen_port"
+  echo "password: $hy_password"
+  echo "域名SNI: $hy_current_server_name"
+  echo "跳过证书验证: True"
+  echo ""
+  echo ""
+  show_notice "Hysteria2 客户端yaml文件" 
+cat << EOF
+
+server: $server_ip:$hy_current_listen_port
+
+auth: $hy_password
+
+tls:
+  sni: $hy_current_server_name
+  insecure: true
+
+# 可自己修改对应带宽，不添加则默认为bbr，否则使用hy2的brutal拥塞控制
+# bandwidth:
+#   up: 100 mbps
+#   down: 100 mbps
+
+fastOpen: true
+
+socks5:
+  listen: 127.0.0.1:5080
+
+EOF
+
+  argo=$(base64 --decode /root/sbox/argo.txt.b64)
+  vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
+  ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
+  show_notice "vmess ws 通用链接参数" 
+  echo ""
+  echo ""
+  echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
+  echo ""
+  echo ""
+  echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+  echo ""
+  echo ""
+  echo -e "端口 443 可改为 2053 2083 2087 2096 8443"
+  echo ""
+  echo ""
+  echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+  echo ""
+  echo ""
+  echo -e "端口 80 可改为 8080 8880 2052 2082 2086 2095" 
+  echo ""
+  echo ""
+  show_notice "clash-meta配置参数"
+cat << EOF
+
+port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+unified-delay: true
+global-client-fingerprint: chrome
+ipv6: true
+dns:
+  enable: true
+  listen: :53
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  default-nameserver: 
+    - 223.5.5.5
+    - 8.8.8.8
+  nameserver:
+    - https://dns.alidns.com/dns-query
+    - https://doh.pub/dns-query
+  fallback:
+    - https://1.0.0.1/dns-query
+    - tls://dns.google
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+
+proxies:        
+  - name: Reality
+    type: vless
+    server: $server_ip
+    port: $current_listen_port
+    uuid: $uuid
+    network: tcp
+    udp: true
+    tls: true
+    flow: xtls-rprx-vision
+    servername: $current_server_name
+    client-fingerprint: chrome
+    reality-opts:
+      public-key: $public_key
+      short-id: $short_id
+
+  - name: Hysteria2
+    type: hysteria2
+    server: $server_ip
+    port: $hy_current_listen_port
+    #  up和down均不写或为0则使用BBR流控
+    # up: "30 Mbps" # 若不写单位，默认为 Mbps
+    # down: "200 Mbps" # 若不写单位，默认为 Mbps
+    password: $hy_password
+    sni: $hy_current_server_name
+    skip-cert-verify: true
+    alpn:
+      - h3
+  - name: Vmess
+    type: vmess
+    server: speed.cloudflare.com
+    port: 443
+    uuid: $vmess_uuid
+    alterId: 0
+    cipher: auto
+    udp: true
+    tls: true
+    client-fingerprint: chrome  
+    skip-cert-verify: true
+    servername: $argo
+    network: ws
+    ws-opts:
+      path: $ws_path
+      headers:
+        Host: $argo
+
+proxy-groups:
+  - name: 节点选择
+    type: select
+    proxies:
+      - 自动选择
+      - Reality
+      - Hysteria2
+      - Vmess
+      - DIRECT
+
+  - name: 自动选择
+    type: url-test #选出延迟最低的机场节点
+    proxies:
+      - Reality
+      - Hysteria2
+      - Vmess
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+
+
+rules:
+    - GEOIP,LAN,DIRECT
+    - GEOIP,CN,DIRECT
+    - MATCH,节点选择
+
+EOF
+
+show_notice "sing-box客户端配置参数"
+cat << EOF
+{
+    "dns": {
+        "servers": [
+            {
+                "tag": "remote",
+                "address": "https://1.1.1.1/dns-query",
+                "detour": "select"
+            },
+            {
+                "tag": "local",
+                "address": "https://223.5.5.5/dns-query",
+                "detour": "direct"
+            },
+            {
+                "address": "rcode://success",
+                "tag": "block"
+            }
+        ],
+        "rules": [
+            {
+                "outbound": [
+                    "any"
+                ],
+                "server": "local"
+            },
+            {
+                "disable_cache": true,
+                "geosite": [
+                    "category-ads-all"
+                ],
+                "server": "block"
+            },
+            {
+                "clash_mode": "global",
+                "server": "remote"
+            },
+            {
+                "clash_mode": "direct",
+                "server": "local"
+            },
+            {
+                "geosite": "cn",
+                "server": "local"
+            }
+        ],
+        "strategy": "prefer_ipv4"
+    },
+    "inbounds": [
+        {
+            "type": "tun",
+            "inet4_address": "172.19.0.1/30",
+            "inet6_address": "2001:0470:f9da:fdfa::1/64",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "stack": "mixed",
+            "strict_route": true,
+            "mtu": 9000,
+            "endpoint_independent_nat": true,
+            "auto_route": true
+        },
+        {
+            "type": "socks",
+            "tag": "socks-in",
+            "listen": "127.0.0.1",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "listen_port": 2333,
+            "users": []
+        },
+        {
+            "type": "mixed",
+            "tag": "mixed-in",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "listen": "127.0.0.1",
+            "listen_port": 2334,
+            "users": []
+        }
+    ],
+  "experimental": {
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090",
+      "secret": "",
+      "store_selected": true
+    }
+  },
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "outbounds": [
+    {
+      "tag": "select",
+      "type": "selector",
+      "default": "urltest",
+      "outbounds": [
+        "urltest",
+        "sing-box-reality",
+        "sing-box-hysteria2",
+        "sing-box-vmess"
+      ]
+    },
+    {
+      "type": "vless",
+      "tag": "sing-box-reality",
+      "uuid": "$uuid",
+      "flow": "xtls-rprx-vision",
+      "packet_encoding": "xudp",
+      "server": "$server_ip",
+      "server_port": $current_listen_port,
+      "tls": {
+        "enabled": true,
+        "server_name": "$current_server_name",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "$public_key",
+          "short_id": "$short_id"
+        }
+      }
+    },
+    {
+            "type": "hysteria2",
+            "server": "$server_ip",
+            "server_port": $hy_current_listen_port,
+            "tag": "sing-box-hysteria2",
+            
+            "up_mbps": 100,
+            "down_mbps": 100,
+            "password": "$hy_password",
+            "tls": {
+                "enabled": true,
+                "server_name": "$hy_current_server_name",
+                "insecure": true,
+                "alpn": [
+                    "h3"
+                ]
+            }
+        },
+        {
+            "server": "speed.cloudflare.com",
+            "server_port": 443,
+            "tag": "sing-box-vmess",
+            "tls": {
+                "enabled": true,
+                "server_name": "$argo",
+                "insecure": true,
+                "utls": {
+                    "enabled": true,
+                    "fingerprint": "chrome"
+                }
+            },
+            "transport": {
+                "headers": {
+                    "Host": [
+                        "$argo"
+                    ]
+                },
+                "path": "$ws_path",
+                "type": "ws"
+            },
+            "type": "vmess",
+            "security": "auto",
+            "uuid": "$vmess_uuid"
+        },
+    {
+      "tag": "direct",
+      "type": "direct"
+    },
+    {
+      "tag": "block",
+      "type": "block"
+    },
+    {
+      "tag": "dns-out",
+      "type": "dns"
+    },
+    {
+      "tag": "urltest",
+      "type": "urltest",
+      "outbounds": [
+        "sing-box-reality",
+        "sing-box-hysteria2",
+        "sing-box-vmess"
+      ]
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "rules": [
+      {
+        "geosite": "category-ads-all",
+        "outbound": "block"
+      },
+      {
+        "outbound": "dns-out",
+        "protocol": "dns"
+      },
+      {
+        "clash_mode": "direct",
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "global",
+        "outbound": "select"
+      },
+      {
+        "geoip": [
+          "cn",
+          "private"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "geosite": "geolocation-!cn",
+        "outbound": "select"
+      },
+      {
+        "geosite": "cn",
+        "outbound": "direct"
+      }
+    ],
+    "geoip": {
+            "download_detour": "select"
+        },
+    "geosite": {
+            "download_detour": "select"
+        }
+  }
+}
+EOF
+
+}
 # 生成 cloudflared argo隧道配置文件
 regenarte_cloudflared_argo(){
   pid=$(pgrep -f cloudflared)
