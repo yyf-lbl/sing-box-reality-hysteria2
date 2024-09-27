@@ -264,38 +264,132 @@ EOF
 }
 # 安装sing-box
 install_singbox() {
-    # 创建 sbox 目录
-    mkdir -p "/root/sbox/"
-    # 下载 sing-box 和 cloudflared
-    download_singbox
-    download_cloudflared
-    # 用户选择安装的协议
-    echo "请选择要安装的协议（可以多个，以空格分隔）："
-    echo "1) VLESS"
-    echo "2) VMess"
-    echo "3) Hysteria2"
-    read -p "输入选项（例如：1 2 3）: " selected_options
-    # 配置选项
-    for option in $selected_options; do
-        case $option in
-            1)
-                install_vless
-                ;;
-            2)
-                install_vmess
-                ;;
-            3)
-               install_hysteria2
-                ;;
-            *)
-                echo "无效的选项: $option"
-                ;;
-        esac
-    done
-    # 检索服务器 IP 地址
-    server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-      generate_sbconfig
-      check_and_start_service
+    echo "安装 Sing-box 和协议配置开始..."
+
+    # 安装所需协议
+    echo "选择要安装的协议:"
+    echo "1. VLESS (Reality)"
+    echo "2. VMess"
+    echo "3. Hysteria2"
+    echo "4. 全部安装"
+    read -p "输入选择的协议编号 (1, 2, 3 或 4): " protocol_choice
+
+    # 根据用户选择调用相应的安装函数
+    case $protocol_choice in
+        1)
+            install_vless
+            ;;
+        2)
+            install_vmess
+            ;;
+        3)
+            install_hysteria2
+            ;;
+        4)
+            install_vless
+            install_vmess
+            install_hysteria2
+            ;;
+        *)
+            echo "无效的选择。"
+            return 1
+            ;;
+    esac
+
+    # 调用生成配置文件的函数
+    generate_config_file
+
+    # 检查配置文件并启动服务
+    check_and_start_service
+}
+generate_config_file() {
+    echo "生成配置文件..."
+
+    jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
+    --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
+    --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" \
+    --arg hy_password "$hy_password" '{
+      "log": {
+        "disabled": false,
+        "level": "info",
+        "timestamp": true
+      },
+      "inbounds": [
+        # 如果 VLESS 安装了，生成 VLESS 配置
+        if $listen_port != null then {
+          "type": "vless",
+          "tag": "vless-in",
+          "listen": "::",
+          "listen_port": ($listen_port | tonumber),
+          "users": [
+            {
+              "uuid": $uuid,
+              "flow": "xtls-rprx-vision"
+            }
+          ],
+          "tls": {
+            "enabled": true,
+            "server_name": $server_name,
+            "reality": {
+              "enabled": true,
+              "handshake": {
+                "server": $server_name,
+                "server_port": 443
+              },
+              "private_key": $private_key,
+              "short_id": [$short_id]
+            }
+          }
+        } else empty end,
+        # 如果 VMess 安装了，生成 VMess 配置
+        if $vmess_port != null then {
+          "type": "vmess",
+          "tag": "vmess-in",
+          "listen": "::",
+          "listen_port": ($vmess_port | tonumber),
+          "users": [
+            {
+              "uuid": $vmess_uuid,
+              "alterId": 0
+            }
+          ],
+          "transport": {
+            "type": "ws",
+            "path": $ws_path
+          }
+        } else empty end,
+        # 如果 Hysteria2 安装了，生成 Hysteria2 配置
+        if $hy_listen_port != null then {
+          "type": "hysteria2",
+          "tag": "hy2-in",
+          "listen": "::",
+          "listen_port": ($hy_listen_port | tonumber),
+          "users": [
+            {
+              "password": $hy_password
+            }
+          ],
+          "tls": {
+            "enabled": true,
+            "alpn": [
+              "h3"
+            ],
+            "certificate_path": "/root/self-cert/cert.pem",
+            "key_path": "/root/self-cert/private.key"
+          }
+        } else empty end
+      ],
+      "outbounds": [
+        {
+          "type": "direct",
+          "tag": "direct"
+        },
+        {
+          "type": "block",
+          "tag": "block"
+        }
+      ]
+    }' > /root/sbox/sbconfig_server.json
 }
 # 配置文件生成
 generate_sbconfig() {
@@ -539,102 +633,20 @@ generate_sbconfig() {
 EOF
 }
 # 检查配置并启动服务
-check_and_start_service() { 
- # 使用jq创建reality.json
-jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
---arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
---arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" \
---arg hy_password "$hy_password" '{
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "inbounds": [
-    {
-      "type": "vless",
-      "tag": "vless-in",
-      "listen": "::",
-      "listen_port": ($listen_port | tonumber),
-      "users": [
-        {
-          "uuid": $uuid,
-          "flow": "xtls-rprx-vision"
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "server_name": $server_name,
-        "reality": {
-          "enabled": true,
-          "handshake": {
-            "server": $server_name,
-            "server_port": 443
-          },
-          "private_key": $private_key,
-          "short_id": [$short_id]
-        }
-      }
-    },
-    {
-      "type": "hysteria2",
-      "tag": "hy2-in",
-      "listen": "::",
-      "listen_port": ($hy_listen_port | tonumber),
-      "users": [
-        {
-          "password": $hy_password
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "alpn": [
-          "h3"
-        ],
-        "certificate_path": "/root/self-cert/cert.pem",
-        "key_path": "/root/self-cert/private.key"
-      }
-    },
-    {
-      "type": "vmess",
-      "tag": "vmess-in",
-      "listen": "::",
-      "listen_port": ($vmess_port | tonumber),
-      "users": [
-        {
-          "uuid": $vmess_uuid,
-          "alterId": 0
-        }
-      ],
-      "transport": {
-        "type": "ws",
-        "path": $ws_path
-      }
-    }
-  ],
-  "outbounds": [
-    {
-      "type": "direct",
-      "tag": "direct"
-    },
-    {
-      "type": "block",
-      "tag": "block"
-    }
-  ]
-}' > /root/sbox/sbconfig_server.json
+check_and_start_service() {
+    echo "检查配置文件并启动 sing-box 服务..."
 
-# 检查配置并启动服务
-if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo "Configuration checked successfully. Starting sing-box service..."
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
-    systemctl restart sing-box
-    show_client_configuration
-else
-    echo "Error in configuration. Aborting"
-fi
+    # 检查配置文件是否有效
+    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+        echo "配置文件有效。启动 sing-box 服务..."
+        systemctl daemon-reload
+        systemctl enable sing-box > /dev/null 2>&1
+        systemctl start sing-box
+        systemctl restart sing-box
+        show_client_configuration
+    else
+        echo "配置文件无效，终止启动。"
+    fi
 }
 # 卸载sing-box
 uninstall_singbox() {
