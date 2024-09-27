@@ -1,13 +1,13 @@
 #!/bin/bash
 #notice
-uuid=$(/root/sbox/sing-box generate uuid)
-short_id=$(/root/sbox/sing-box generate rand --hex 8)
 install_vless(){
 echo "开始配置Reality"
 echo ""
 # 生成密钥对
 echo "自动生成基本参数"
-echo ""
+uuid=$(/root/sbox/sing-box generate uuid)
+short_id=$(/root/sbox/sing-box generate rand --hex 8)
+echo "uuid生成成功"
 key_pair=$(/root/sbox/sing-box generate reality-keypair)
 echo "Key pair生成完成"
 echo ""
@@ -32,6 +32,7 @@ install_vmess(){
 echo ""
 # 生成vmess必要参数
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
+echo "uuid生成成功"
 read -p "请输入vmess端口，默认为15555: " vmess_port
 vmess_port=${vmess_port:-15555}
 echo ""
@@ -59,6 +60,8 @@ rm -rf argo.log
 install_hysteria(){
  echo "开始配置hysteria2"
 echo ""
+vmess_uuid=$(/root/sbox/sing-box generate uuid)
+echo "uuid生成成功"
 # 生成 hysteria 必要参数
 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
