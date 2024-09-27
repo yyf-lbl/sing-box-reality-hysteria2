@@ -260,7 +260,7 @@ EOF
 # 安装sing-box
 install_singbox() {
     # 创建 sbox 目录
-    mkdir -p "/root/sbox/" 
+    mkdir -p "/root/sbox/"
     # 下载 sing-box 和 cloudflared
     download_singbox
     download_cloudflared
@@ -337,7 +337,7 @@ install_singbox() {
     # 检索服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 
-    # 最后检查文件是否存在
+    # 检查配置文件和可执行文件是否存在
     if [ ! -f "/root/sbox/sbconfig_server.json" ]; then
         echo "sbconfig_server.json 文件不存在，请检查配置。"
         exit 1
@@ -347,7 +347,11 @@ install_singbox() {
         echo "sing-box 文件不存在，请检查下载是否成功。"
         exit 1
     fi
+
+    echo "所有配置已完成，准备开始服务..."
+    # 你可以在这里添加启动服务的命令
 }
+
 # 卸载sing-box
 uninstall_singbox() {
     echo "Uninstalling..."    
