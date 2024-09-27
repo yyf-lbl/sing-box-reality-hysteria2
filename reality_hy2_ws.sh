@@ -353,20 +353,115 @@ install_singbox() {
 }
  # 检查配置并启动服务
 check_and_start_service() { 
-    if [ -f /root/sbox/sbconfig_server.json ] && [ -f /root/sbox/sing-box ]; then
-        if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-            echo "Configuration checked successfully. Starting sing-box service..."
-            systemctl daemon-reload
-            systemctl enable sing-box > /dev/null 2>&1
-            systemctl start sing-box
-            systemctl restart sing-box
-            show_client_configuration
-        else
-            echo "Error in configuration. Aborting"
-        fi
-    else
-        echo "sing-box or configuration file does not exist. Please install sing-box and configure it first."
-    fi
+ # Create reality.json using jq
+jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "vless-in",
+      "listen": "::",
+      "listen_port": ($listen_port | tonumber),
+      "users": [
+        {
+          "uuid": $uuid,
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": $server_name,
+          "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": $server_name,
+            "server_port": 443
+          },
+          "private_key": $private_key,
+          "short_id": [$short_id]
+        }
+      }
+    },
+    {
+        "type": "hysteria2",
+        "tag": "hy2-in",
+        "listen": "::",
+        "listen_port": ($hy_listen_port | tonumber),
+        "users": [
+            {
+                "password": $hy_password
+            }
+        ],
+        "tls": {
+            "enabled": true,
+            "alpn": [
+                "h3"
+            ],
+            "certificate_path": "/root/self-cert/cert.pem",
+            "key_path": "/root/self-cert/private.key"
+        }
+    },
+    {
+        "type": "vmess",
+        "tag": "vmess-in",
+        "listen": "::",
+        "listen_port": ($vmess_port | tonumber),
+        "users": [
+            {
+                "uuid": $vmess_uuid,
+                "alterId": 0
+            }
+        ],
+        "transport": {
+            "type": "ws",
+            "path": $ws_path
+        }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ]
+}' > /root/sbox/sbconfig_server.json
+# Create sing-box.service
+cat > /etc/systemd/system/sing-box.service <<EOF
+[Unit]
+After=network.target nss-lookup.target
+[Service]
+User=root
+WorkingDirectory=/root
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+ExecReload=/bin/kill -HUP \$MAINPID
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=infinity
+
+[Install]
+WantedBy=multi-user.target
+EOF
+# Check configuration and start the service
+if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+    echo "Configuration checked successfully. Starting sing-box service..."
+    systemctl daemon-reload
+    systemctl enable sing-box > /dev/null 2>&1
+    systemctl start sing-box
+    systemctl restart sing-box
+    show_client_configuration
+else
+    echo "Error in configuration. Aborting"
+fi
 }
 # 卸载sing-box
 uninstall_singbox() {
@@ -473,100 +568,4 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
 fi
 
 # 使用jq创建reality.json
-jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "inbounds": [
-    {
-      "type": "vless",
-      "tag": "vless-in",
-      "listen": "::",
-      "listen_port": ($listen_port | tonumber),
-      "users": [
-        {
-          "uuid": $uuid,
-          "flow": "xtls-rprx-vision"
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "server_name": $server_name,
-          "reality": {
-          "enabled": true,
-          "handshake": {
-            "server": $server_name,
-            "server_port": 443
-          },
-          "private_key": $private_key,
-          "short_id": [$short_id]
-        }
-      }
-    },
-    {
-        "type": "hysteria2",
-        "tag": "hy2-in",
-        "listen": "::",
-        "listen_port": ($hy_listen_port | tonumber),
-        "users": [
-            {
-                "password": $hy_password
-            }
-        ],
-        "tls": {
-            "enabled": true,
-            "alpn": [
-                "h3"
-            ],
-            "certificate_path": "/root/self-cert/cert.pem",
-            "key_path": "/root/self-cert/private.key"
-        }
-    },
-    {
-        "type": "vmess",
-        "tag": "vmess-in",
-        "listen": "::",
-        "listen_port": ($vmess_port | tonumber),
-        "users": [
-            {
-                "uuid": $vmess_uuid,
-                "alterId": 0
-            }
-        ],
-        "transport": {
-            "type": "ws",
-            "path": $ws_path
-        }
-    }
-  ],
-  "outbounds": [
-    {
-      "type": "direct",
-      "tag": "direct"
-    },
-    {
-      "type": "block",
-      "tag": "block"
-    }
-  ]
-}' > /root/sbox/sbconfig_server.json
-# 创建sing-box.service
-cat > /etc/systemd/system/sing-box.service <<EOF
-[Unit]
-After=network.target nss-lookup.target
-[Service]
-User=root
-WorkingDirectory=/root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
-ExecReload=/bin/kill -HUP \$MAINPID
-Restart=on-failure
-RestartSec=10
-LimitNOFILE=infinity
-[Install]
-WantedBy=multi-user.target
-EOF
 
