@@ -99,26 +99,44 @@ regenarte_cloudflared_argo() {
   rm -rf argo.log
 }
 # 下载 Sing-Box 和 Cloudflared
-download_singbox() {
+download_singbox(){
   arch=$(uname -m)
   echo "Architecture: $arch"
+  # Map architecture names
   case ${arch} in
-      x86_64) arch="amd64";;
-      aarch64) arch="arm64";;
-      armv7l) arch="armv7";;
+      x86_64)
+          arch="amd64"
+          ;;
+      aarch64)
+          arch="arm64"
+          ;;
+      armv7l)
+          arch="armv7"
+          ;;
   esac
+  # Fetch the latest (including pre-releases) release version number from GitHub API
+  # 正式版
+  #latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
+  #beta版本
   latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
-  latest_version=${latest_version_tag#v}
+  latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
   echo "Latest version: $latest_version"
+  # Detect server architecture
+  # Prepare package names
   package_name="sing-box-${latest_version}-linux-${arch}"
+  # Prepare download URL
   url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-  mkdir -p /root/sbox
+  # Download the latest release package (.tar.gz) from GitHub
   curl -sLo "/root/${package_name}.tar.gz" "$url"
+
+  # Extract the package and move the binary to /root
   tar -xzf "/root/${package_name}.tar.gz" -C /root
-  ls /root/${package_name}  # 查看解压内容
   mv "/root/${package_name}/sing-box" /root/sbox
-  if [ -f /root/sbox/sing-box ]; then echo "File moved successfully."; fi 
+
+  # Cleanup the package
   rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
+
+  # Set the permissions
   chown root:root /root/sbox/sing-box
   chmod +x /root/sbox/sing-box
 }
