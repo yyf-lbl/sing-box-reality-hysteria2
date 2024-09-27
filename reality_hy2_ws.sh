@@ -774,6 +774,7 @@ server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
   }' > /root/sbox/sbconfig_server.json
 
   echo "配置文件生成完成: /root/sbox/sbconfig_server.json"
+  start_serv
 }
 uninstall_singbox() {
             echo "Uninstalling..."
@@ -815,19 +816,17 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 # 检查配置并启动服务
+start_serv(){
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
     systemctl daemon-reload
     systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
     systemctl restart sing-box
-
-    show_client_configuration
-
-
 else
     echo "Error in configuration. Aborting"
 fi
+}
 menu() {
     echo ""
     echo "请选择选项:"
