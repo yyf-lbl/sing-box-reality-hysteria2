@@ -780,9 +780,7 @@ User=root
 WorkingDirectory=/root
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/start_singbox.sh /root/sbox/vmess_config.json
-ExecStart=/root/sbox/start_singbox.sh /root/sbox/vless_config.json
-ExecStart=/root/sbox/start_singbox.sh /root/sbox/hysteria_config.json
+ExecStart= /root/sbox/sing-box run -c "$config_file" &
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -793,27 +791,27 @@ WantedBy=multi-user.target
 EOF
 # 检查配置并启动服务
 start_serv() {
-    # 检查是否生成了 VLESS 配置文件并启动相应的服务
-    if [[ -f /root/sbox/vless_config.json ]]; then
-        echo "启动 VLESS 服务..."
-        /root/sbox/sing-box run -c /root/sbox/vless_config.json
-    fi
-
-    # 检查是否生成了 Hysteria 配置文件并启动相应的服务
-    if [[ -f /root/sbox/hysteria_config.json ]]; then
-        echo "启动 Hysteria 服务..."
-        /root/sbox/sing-box run -c /root/sbox/hysteria_config.json
-    fi
-
-    # 检查是否生成了 VMess 配置文件并启动相应的服务
-    if [[ -f /root/sbox/vmess_config.json ]]; then
-        echo "启动 VMess 服务..."
-        /root/sbox/sing-box run -c /root/sbox/vmess_config.json
-    fi
-
-    echo "所有服务已根据安装的协议启动。"
+    local config_files=("$@")  # 接收多个配置文件作为参数
+    for config_file in "${config_files[@]}"; do
+        if /root/sbox/sing-box check -c "$config_file"; then
+            echo "$config_file 配置文件成功，正在启动 sing-box 服务..."
+            systemctl daemon-reload
+            systemctl enable sing-box > /dev/null 2>&1
+            
+            # 启动 sing-box 服务
+            /root/sbox/sing-box run -c "$config_file" &
+            
+            # 检查服务状态
+            if systemctl is-active --quiet sing-box; then
+                echo "sing-box 服务已成功启动！"
+            else
+                echo "服务启动失败，请检查日志。"
+            fi
+        else
+            echo "$config_file 配置错误，终止服务！"
+        fi
+    done
 }
-
 
 menu() {
     echo ""
