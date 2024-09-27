@@ -242,7 +242,10 @@ EOF
 }
 # 安装sing-box
 install_singbox() {
-    echo "安装 Sing-box 和协议配置开始..."
+    echo "欢迎安装 Sing-box 服务，请继续..."
+       mkdir -p "/root/sbox/"
+    # 安装sing-box
+    download_singbox
  # 安装所需协议
     echo "选择要安装的协议:"
     echo "1. VLESS (Reality)"
@@ -271,9 +274,6 @@ install_singbox() {
             return 1
             ;;
     esac
-    mkdir -p "/root/sbox/"
-    # 安装sing-box
-    download_singbox
     # 调用生成配置文件的函数
     generate_config_file
     # 检查配置文件并启动服务
