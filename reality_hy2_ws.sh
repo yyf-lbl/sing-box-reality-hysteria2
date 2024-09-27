@@ -152,7 +152,6 @@ show_client_configuration() {
   echo ""
   server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
   echo "$server_link"
-
    # Hysteria2 配置
   hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
   hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
@@ -161,7 +160,6 @@ show_client_configuration() {
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
   show_notice "Hysteria2 客户端通用链接"
   echo "$hy2_server_link"
- 
   # VMess 配置
   argo=$(base64 --decode /root/sbox/argo.txt.b64)
   vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
@@ -286,7 +284,6 @@ install_singbox() {
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
     echo "uuid和短id生成完成"
     echo ""
-
     # 配置选项
     for option in $selected_options; do
         case $option in
@@ -318,13 +315,11 @@ install_singbox() {
                 ;;
         esac
     done
-
     # 终止 cloudflared 进程
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
         kill "$pid"
     fi
-
     # 生成地址
     /root/sbox/cloudflared-linux tunnel --url http://localhost:${vmess_port:-15555} --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
     sleep 2
@@ -333,10 +328,8 @@ install_singbox() {
     argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
     rm -rf argo.log
-
     # 检索服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-
     # 检查配置文件和可执行文件是否存在
     if [ ! -f "/root/sbox/sbconfig_server.json" ]; then
         echo "sbconfig_server.json 文件不存在，请检查配置。"
@@ -347,7 +340,6 @@ install_singbox() {
         echo "sing-box 文件不存在，请检查下载是否成功。"
         exit 1
     fi
-
     echo "所有配置已完成，准备开始服务..."
     # 你可以在这里添加启动服务的命令
 }
@@ -447,7 +439,6 @@ ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
 LimitNOFILE=infinity
-
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -484,7 +475,6 @@ uninstall_singbox() {
 }
 menu() {
 # 检查必要文件是否存在
-if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/root/sbox/argo.txt.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
     echo "sing-box-reality-hysteria2已经安装"
     echo ""
     echo "请选择选项:"
@@ -566,8 +556,6 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
             exit 1
             ;;
     esac
-fi
-
 }
 menu
 
