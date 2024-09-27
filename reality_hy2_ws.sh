@@ -281,6 +281,7 @@ install_singbox() {
             return 1
             ;;
     esac
+    mkdir -p "/root/sbox/"
     # 安装sing-box
     download_singbox
     # 调用生成配置文件的函数
