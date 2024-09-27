@@ -482,6 +482,7 @@ uninstall_singbox() {
     rm -rf /root/sbox/    
     echo "DONE!"
 }
+menu() {
 # 检查必要文件是否存在
 if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/root/sbox/argo.txt.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
     echo "sing-box-reality-hysteria2已经安装"
@@ -567,5 +568,6 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     esac
 fi
 
-
+}
+menu
 
