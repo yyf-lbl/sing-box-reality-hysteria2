@@ -2,7 +2,6 @@
 #notice
 
 install_vless(){
- # reality
 echo "开始配置Reality"
 echo ""
 # 生成密钥对
@@ -11,14 +10,11 @@ echo ""
 key_pair=$(/root/sbox/sing-box generate reality-keypair)
 echo "Key pair生成完成"
 echo ""
-
 # 提取私钥和公钥
 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
-
 # 使用base64编码将公钥保存在文件中
 echo "$public_key" | base64 > /root/sbox/public.key.b64
-
 # 生成必要的值
 uuid=$(/root/sbox/sing-box generate uuid)
 short_id=$(/root/sbox/sing-box generate rand --hex 8)
@@ -645,8 +641,6 @@ download_cloudflared(){
     
 install_singbox() {
     echo "欢迎安装 Sing-box 服务，请继续..."
-    download_singbox
-    download_cloudflared
  # 安装所需协议
     echo "选择要安装的协议:"
     echo "1. VLESS (Reality)"
