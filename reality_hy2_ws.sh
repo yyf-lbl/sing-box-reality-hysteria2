@@ -453,10 +453,7 @@ clear
             install_singbox
             check_and_start_service
             ;;
-        2)  # 卸载sing-box
-            uninstall_singbox
-            ;;
-        3)  # 修改配置
+        2)  # 修改配置
             show_notice "开始修改reality端口和域名"
             # 获取当前监听端口
             current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
@@ -481,15 +478,15 @@ clear
             show_client_configuration
             exit 0
             ;;
-        4)  # 显示客户端配置
+        3)  # 显示客户端配置
             show_client_configuration
             exit 0
             ;;
-        5)  # 卸载
+        4)  # 卸载
             uninstall_singbox
             exit 0
             ;;
-        6)  # 更新 sing-box 内核
+        5)  # 更新 sing-box 内核
             show_notice "Update Sing-box..."
             download_singbox
             if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
@@ -502,7 +499,7 @@ clear
             echo ""
             exit 1
             ;;
-        7)  # 手动重启 cloudflared
+        6)  # 手动重启 cloudflared
             regenarte_cloudflared_argo
             echo "重新启动完成，查看新的 vmess 客户端信息"
             show_client_configuration
