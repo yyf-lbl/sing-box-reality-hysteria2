@@ -683,6 +683,9 @@ start_serv "/root/sbox/vmess_config.json" "/root/sbox/vless_config.json" "/root/
 create_config_files() {
     local protocols=("$@")  # 接收多个协议参数
 
+    # 清空之前的配置文件
+    rm -f /root/sbox/vless_config.json /root/sbox/hysteria_config.json /root/sbox/vmess_config.json
+
     # 遍历每个协议
     for protocol in "${protocols[@]}"; do
         case $protocol in
@@ -792,18 +795,21 @@ EOF
 # 检查配置并启动服务
 start_serv() {
     local config_files=("$@")  # 接收多个配置文件作为参数
+    local service_started=false
+
     for config_file in "${config_files[@]}"; do
-        if /root/sbox/sing-box check -c "$config_file"; then
+        if [[ -f "$config_file" ]] && /root/sbox/sing-box check -c "$config_file"; then
             echo "$config_file 配置文件成功，正在启动 sing-box 服务..."
             systemctl daemon-reload
             systemctl enable sing-box > /dev/null 2>&1
             
-            # 启动 sing-box 服务
-            /root/sbox/sing-box run -c "$config_file" &
+            # 启动服务
+            systemctl start sing-box
             
             # 检查服务状态
             if systemctl is-active --quiet sing-box; then
                 echo "sing-box 服务已成功启动！"
+                service_started=true
             else
                 echo "服务启动失败，请检查日志。"
             fi
@@ -811,8 +817,11 @@ start_serv() {
             echo "$config_file 配置错误，终止服务！"
         fi
     done
-}
 
+    if ! $service_started; then
+        echo "没有服务启动。请检查配置文件。"
+    fi
+}
 menu() {
     echo ""
     echo "请选择选项:"
