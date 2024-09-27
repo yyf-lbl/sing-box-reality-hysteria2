@@ -305,6 +305,26 @@ install_singbox() {
 generate_config_file() {
     echo "生成配置文件..."
 
+    # 输出调试信息，检查变量是否有值
+    echo "调试信息："
+    echo "VLESS 监听端口: $listen_port"
+    echo "VMess 监听端口: $vmess_port"
+    echo "VMess UUID: $vmess_uuid"
+    echo "WebSocket 路径: $ws_path"
+    echo "服务器名称: $server_name"
+    echo "Reality 私钥: $private_key"
+    echo "短 ID: $short_id"
+    echo "VLESS UUID: $uuid"
+    echo "Hysteria2 监听端口: $hy_listen_port"
+    echo "Hysteria2 密码: $hy_password"
+
+    # 检查关键变量是否为空
+    if [ -z "$listen_port" ] || [ -z "$vmess_port" ] || [ -z "$uuid" ]; then
+        echo "错误: 必要的变量为空。请检查配置。"
+        return 1
+    fi
+
+    # 使用 jq 生成 JSON 配置文件
     jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
     --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
     --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" \
@@ -316,7 +336,7 @@ generate_config_file() {
       },
       "inbounds": [
         # 如果 VLESS 安装了，生成 VLESS 配置
-        if $listen_port != null then {
+        if $listen_port != null and $listen_port != "" then {
           "type": "vless",
           "tag": "vless-in",
           "listen": "::",
@@ -342,7 +362,7 @@ generate_config_file() {
           }
         } else empty end,
         # 如果 VMess 安装了，生成 VMess 配置
-        if $vmess_port != null then {
+        if $vmess_port != null and $vmess_port != "" then {
           "type": "vmess",
           "tag": "vmess-in",
           "listen": "::",
@@ -359,7 +379,7 @@ generate_config_file() {
           }
         } else empty end,
         # 如果 Hysteria2 安装了，生成 Hysteria2 配置
-        if $hy_listen_port != null then {
+        if $hy_listen_port != null and $hy_listen_port != "" then {
           "type": "hysteria2",
           "tag": "hy2-in",
           "listen": "::",
@@ -390,6 +410,9 @@ generate_config_file() {
         }
       ]
     }' > /root/sbox/sbconfig_server.json
+
+    # 输出生成的 JSON 文件内容，供调试用
+    cat /root/sbox/sbconfig_server.json
 }
 # 配置文件生成
 generate_sbconfig() {
