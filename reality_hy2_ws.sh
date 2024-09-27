@@ -371,8 +371,6 @@ else
     echo "Error in configuration. Aborting"
 fi
 menu() {
-    # 检查必要文件是否存在
-clear
     echo ""
     echo "请选择选项:"
     echo ""
