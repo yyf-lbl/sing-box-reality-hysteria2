@@ -152,14 +152,7 @@ show_client_configuration() {
   echo ""
   server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
   echo "$server_link"
-   # 打印服务器详细信息
-  show_notice "Reality 客户端通用参数"
-  echo "服务器ip: $server_ip"
-  echo "监听端口: $current_listen_port"
-  echo "UUID: $uuid"
-  echo "域名SNI: $current_server_name"
-  echo "Public Key: $public_key"
-  echo "Short ID: $short_id"
+
    # Hysteria2 配置
   hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
   hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
@@ -168,25 +161,7 @@ show_client_configuration() {
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
   show_notice "Hysteria2 客户端通用链接"
   echo "$hy2_server_link"
-   # 打印 Hysteria2 详细信息
-  show_notice "Hysteria2 客户端通用参数"
-  echo "服务器ip: $server_ip"
-  echo "端口号: $hy_current_listen_port"
-  echo "password: $hy_password"
-  echo "域名SNI: $hy_current_server_name"
-  echo "跳过证书验证: True"
-    # 显示 Hysteria2 YAML 文件
-  show_notice "Hysteria2 客户端yaml文件"
-cat << EOF
-server: $server_ip:$hy_current_listen_port
-auth: $hy_password
-tls:
-  sni: $hy_current_server_name
-  insecure: true
-fastOpen: true
-socks5:
-  listen: 127.0.0.1:5080
-EOF
+ 
   # VMess 配置
   argo=$(base64 --decode /root/sbox/argo.txt.b64)
   vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
@@ -195,105 +170,7 @@ EOF
   echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
   echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
   echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
-  # Clash-meta 配置参数
-  show_notice "clash-meta配置参数"
-cat << EOF
-port: 7890
-allow-lan: true
-mode: rule
-log-level: info
-unified-delay: true
-global-client-fingerprint: chrome
-ipv6: true
-dns:
-  enable: true
-  listen: :53
-  ipv6: true
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/16
-  default-nameserver: 
-    - 223.5.5.5
-    - 8.8.8.8
-  nameserver:
-    - https://dns.alidns.com/dns-query
-    - https://doh.pub/dns-query
-  fallback:
-    - https://1.0.0.1/dns-query
-    - tls://dns.google
-  fallback-filter:
-    geoip: true
-    geoip-code: CN
-    ipcidr:
-      - 240.0.0.0/4
-
-proxies:        
-  - name: Reality
-    type: vless
-    server: $server_ip
-    port: $current_listen_port
-    uuid: $uuid
-    network: tcp
-    udp: true
-    tls: true
-    flow: xtls-rprx-vision
-    servername: $current_server_name
-    client-fingerprint: chrome
-    reality-opts:
-      public-key: $public_key
-      short-id: $short_id
-
-  - name: Hysteria2
-    type: hysteria2
-    server: $server_ip
-    port: $hy_current_listen_port
-    password: $hy_password
-    sni: $hy_current_server_name
-    skip-cert-verify: true
-    alpn:
-      - h3
-  - name: Vmess
-    type: vmess
-    server: speed.cloudflare.com
-    port: 443
-    uuid: $vmess_uuid
-    alterId: 0
-    cipher: auto
-    udp: true
-    tls: true
-    client-fingerprint: chrome  
-    skip-cert-verify: true
-    servername: $argo
-    network: ws
-    ws-opts:
-      path: $ws_path
-      headers:
-        Host: $argo
-
-proxy-groups:
-  - name: 节点选择
-    type: select
-    proxies:
-      - 自动选择
-      - Reality
-      - Hysteria2
-      - Vmess
-      - DIRECT
-
-  - name: 自动选择
-    type: url-test
-    proxies:
-      - Reality
-      - Hysteria2
-      - Vmess
-    url: "http://www.gstatic.com/generate_204"
-    interval: 300
-    tolerance: 50
-
-rules:
-    - GEOIP,LAN,DIRECT
-    - GEOIP,CN,DIRECT
-    - MATCH,节点选择
-EOF
+ 
 
   # sing-box 客户端配置参数
   show_notice "sing-box客户端配置参数"
