@@ -170,7 +170,93 @@ show_client_configuration() {
   echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
   echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
   echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
- 
+  # sing-box 客户端配置参数
+  show_notice "sing-box客户端配置参数"
+cat << EOF
+{
+    "dns": {
+        "servers": [
+            {
+                "tag": "remote",
+                "address": "https://1.1.1.1/dns-query",
+                "detour": "select"
+            },
+            {
+                "tag": "local",
+                "address": "https://223.5.5.5/dns-query",
+                "detour": "direct"
+            },
+            {
+                "address": "rcode://success",
+                "tag": "block"
+            }
+        ],
+        "rules": [
+            {
+                "outbound": [
+                    "any"
+                ],
+                "server": "local"
+            },
+            {
+                "disable_cache": true,
+                "geosite": [
+                    "category-ads-all"
+                ],
+                "server": "block"
+            },
+            {
+                "clash_mode": "global",
+                "server": "remote"
+            },
+            {
+                "clash_mode": "direct",
+                "server": "local"
+            },
+            {
+                "geosite": "cn",
+                "server": "local"
+            }
+        ],
+        "strategy": "prefer_ipv4"
+    },
+    "inbounds": [
+        {
+            "type": "tun",
+            "inet4_address": "172.19.0.1/30",
+            "inet6_address": "2001:0470:f9da:fdfa::1/64",
+            "sniff": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4",
+            "stack": "netstack",
+            "outbound": "global"
+        }
+    ],
+    "outbounds": [
+        {
+            "name": "remote",
+            "type": "outbound"
+        },
+        {
+            "name": "local",
+            "type": "outbound"
+        },
+        {
+            "name": "block",
+            "type": "outbound"
+        }
+    ],
+    "outbound": {
+        "send": {
+            "type": "outbound"
+        }
+    },
+    "logging": {
+        "level": "info"
+    }
+}
+EOF
+}
 # 安装sing-box
 install_singbox() {
     # 创建 sbox 目录
