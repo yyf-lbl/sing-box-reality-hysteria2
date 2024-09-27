@@ -540,7 +540,7 @@ EOF
 }
 # 检查配置并启动服务
 check_and_start_service() { 
- # # 使用jq创建reality.json
+ # 使用jq创建reality.json
 jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
 --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
 --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" \
@@ -624,24 +624,7 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
   ]
 }' > /root/sbox/sbconfig_server.json
 
-# 创建sing-box.service
-cat > /etc/systemd/system/sing-box.service <<EOF
-[Unit]
-After=network.target nss-lookup.target
-[Service]
-User=root
-WorkingDirectory=/root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
-ExecReload=/bin/kill -HUP \$MAINPID
-Restart=on-failure
-RestartSec=10
-LimitNOFILE=infinity
-[Install]
-WantedBy=multi-user.target
-EOF
-# Check configuration and start the service
+# 检查配置并启动服务
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
     systemctl daemon-reload
