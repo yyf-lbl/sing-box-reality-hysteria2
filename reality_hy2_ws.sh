@@ -295,10 +295,10 @@ install_singbox() {
             return 1
             ;;
     esac
-
+    # 安装sing-box
+    download_singbox
     # 调用生成配置文件的函数
     generate_config_file
-
     # 检查配置文件并启动服务
     check_and_start_service
 }
