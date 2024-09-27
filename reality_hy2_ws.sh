@@ -1,14 +1,6 @@
 #!/bin/bash
 #notice
-show_notice() {
-    local message="$1"
 
-    echo "#######################################################################################################################"
-    echo "                                                                                                                       "
-    echo "                                ${message}                                                                             "
-    echo "                                                                                                                       "
-    echo "#######################################################################################################################"
-}
 install_vless(){
  # reality
 echo "开始配置Reality"
@@ -654,6 +646,9 @@ download_cloudflared(){
     download_cloudflared
 install_singbox() {
     echo "欢迎安装 Sing-box 服务，请继续..."
+     mkdir -p "/root/sbox/"
+    download_singbox
+    download_cloudflared
  # 安装所需协议
     echo "选择要安装的协议:"
     echo "1. VLESS (Reality)"
