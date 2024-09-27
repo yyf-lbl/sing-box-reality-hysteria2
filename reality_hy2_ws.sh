@@ -382,6 +382,96 @@ cat << EOF
 }
 EOF
 }
+# 安装sing-box
+install_singbox() {
+    # 创建 sbox 目录
+    mkdir -p "/root/sbox/"
+    
+    # 下载 sing-box 和 cloudflared
+    download_singbox
+    download_cloudflared
+
+    # Reality 配置
+    echo "开始配置 Reality"
+    echo ""
+    key_pair=$(/root/sbox/sing-box generate reality-keypair)
+    echo "Key pair生成完成"
+    echo ""
+
+    # 提取私钥和公钥
+    private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
+    public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+    echo "$public_key" | base64 > /root/sbox/public.key.b64
+
+    # 生成必要的值
+    uuid=$(/root/sbox/sing-box generate uuid)
+    short_id=$(/root/sbox/sing-box generate rand --hex 8)
+    echo "uuid和短id生成完成"
+    echo ""
+
+    # 获取监听端口
+    read -p "请输入Reality端口 (default: 443): " listen_port
+    listen_port=${listen_port:-443}
+    echo ""
+
+    # 获取服务器名称
+    read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
+    server_name=${server_name:-itunes.apple.com}
+    echo ""
+
+    # hysteria2 配置
+    echo "开始配置 hysteria2"
+    echo ""
+    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
+
+    # 获取监听端口
+    read -p "请输入 hysteria2 监听端口 (default: 8443): " hy_listen_port
+    hy_listen_port=${hy_listen_port:-8443}
+    echo ""
+
+    # 获取自签证书域名
+    read -p "输入自签证书域名 (default: bing.com): " hy_server_name
+    hy_server_name=${hy_server_name:-bing.com}
+
+    # 生成自签证书
+    mkdir -p /root/self-cert/ 
+    openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+    echo "自签证书生成完成"
+    echo ""
+
+    # vmess ws 配置
+    echo "开始配置 vmess"
+    echo ""
+    vmess_uuid=$(/root/sbox/sing-box generate uuid)
+    read -p "请输入 vmess 端口，默认为 15555: " vmess_port
+    vmess_port=${vmess_port:-15555}
+    echo ""
+    read -p "ws 路径 (默认随机生成): " ws_path
+    ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+
+    # 终止 cloudflared 进程
+    pid=$(pgrep -f cloudflared)
+    if [ -n "$pid" ]; then
+        kill "$pid"
+    fi
+
+    # 生成地址
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux >argo.log 2>&1 &
+    sleep 2
+    clear
+    echo "等待cloudflare argo生成地址"
+    sleep 5
+
+    # 连接到域名
+    argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+    rm -rf argo.log
+
+    # 检索服务器IP地址
+    server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+}
+
 # 卸载sing-box
 uninstall_singbox() {
     echo "Uninstalling..."    
@@ -401,28 +491,32 @@ uninstall_singbox() {
     rm -rf /root/sbox/    
     echo "DONE!"
 }
-install_base
 # 检查必要文件是否存在
 if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/root/sbox/argo.txt.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
     echo "sing-box-reality-hysteria2已经安装"
     echo ""
     echo "请选择选项:"
     echo ""
-    echo "1. 重新安装"
-    echo "2. 修改配置"
-    echo "3. 显示客户端配置"
-    echo "4. 卸载"
-    echo "5. 更新sing-box内核"
-    echo "6. 手动重启cloudflared"
+    echo "1. 安装sing-box"
+    echo "2. 卸载sing-box"
+    echo "3. 修改配置"
+    echo "4. 显示客户端配置"
+    echo "5. 卸载"
+    echo "6. 更新sing-box内核"
+    echo "7. 手动重启cloudflared"
     echo ""
     read -p "Enter your choice (1-6): " choice
     case $choice in
-        1)  # 重新安装
-            show_notice "Reinstalling..."
+        1)  # 安装sing-box
+        install_base
+           install_singbox
+            # 继续安装
+            ;;
+        2)  # 卸载sing-box
             uninstall_singbox
             # 继续安装
             ;;
-        2)  # 修改配置
+        3)  # 修改配置
             show_notice "开始修改reality端口和域名"            
            # 获取当前监听端口
             current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
@@ -447,15 +541,15 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
             show_client_configuration
             exit 0
             ;;
-        3)  # 显示客户端配置
+        4)  # 显示客户端配置
             show_client_configuration
             exit 0
             ;;
-        4)  # 卸载
+        5)  # 卸载
             uninstall_singbox
             exit 0
             ;;
-        5)  # 更新 sing-box 内核
+        6)  # 更新 sing-box 内核
             show_notice "Update Sing-box..."
             download_singbox
             if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
@@ -468,7 +562,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
             echo ""
             exit 1
             ;;
-        6)  # 手动重启 cloudflared
+        7)  # 手动重启 cloudflared
             regenarte_cloudflared_argo
             echo "重新启动完成，查看新的 vmess 客户端信息"
             show_client_configuration
@@ -480,80 +574,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
             ;;
     esac
 fi
-# 创建 sbox 目录
-mkdir -p "/root/sbox/"
-# 下载 sing-box 和 cloudflared
-download_singbox
-download_cloudflared
-# Reality 配置
-echo "开始配置 Reality"
-echo ""
-# 生成密钥对
-echo "自动生成基本参数"
-echo ""
-key_pair=$(/root/sbox/sing-box generate reality-keypair)
-echo "Key pair生成完成"
-echo ""
-# 提取私钥和公钥
-private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
-public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
-echo "$public_key" | base64 > /root/sbox/public.key.b64
-# 生成必要的值
-uuid=$(/root/sbox/sing-box generate uuid)
-short_id=$(/root/sbox/sing-box generate rand --hex 8)
-echo "uuid和短id生成完成"
-echo ""
-# 获取监听端口
-read -p "请输入Reality端口 (default: 443): " listen_port
-listen_port=${listen_port:-443}
-echo ""
-# 获取服务器名称
-read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
-server_name=${server_name:-itunes.apple.com}
-echo ""
-# hysteria2 配置
-echo "开始配置 hysteria2"
-echo ""
-hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-# 获取监听端口
-read -p "请输入 hysteria2 监听端口 (default: 8443): " hy_listen_port
-hy_listen_port=${hy_listen_port:-8443}
-echo ""
-# 获取自签证书域名
-read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-hy_server_name=${hy_server_name:-bing.com}
-# 生成自签证书
-mkdir -p /root/self-cert/ 
-openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-echo "自签证书生成完成"
-echo ""
-# vmess ws 配置
-echo "开始配置 vmess"
-echo ""
-vmess_uuid=$(/root/sbox/sing-box generate uuid)
-read -p "请输入 vmess 端口，默认为 15555: " vmess_port
-vmess_port=${vmess_port:-15555}
-echo ""
-read -p "ws 路径 (默认随机生成): " ws_path
-ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-# 终止 cloudflared 进程
-pid=$(pgrep -f cloudflared)
-if [ -n "$pid" ]; then
-    kill "$pid"
-fi
-#生成地址
-/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
-sleep 2
-clear
-echo 等待cloudflare argo生成地址
-sleep 5
-#连接到域名
-argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-echo "$argo" | base64 > /root/sbox/argo.txt.b64
-rm -rf argo.log
-# 检索服务器IP地址
-server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+
 # 使用jq创建reality.json
 jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
   "log": {
