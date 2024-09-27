@@ -308,6 +308,7 @@ install_singbox() {
     done
     # 检索服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+      generate_sbconfig
       check_and_start_service
     # 检查配置文件和可执行文件是否存在
     if [ ! -f "/root/sbox/sbconfig_server.json" ]; then
