@@ -377,14 +377,13 @@ clear
     echo "请选择选项:"
     echo ""
     echo "1. 安装sing-box"
-    echo "2. 卸载sing-box"
-    echo "3. 修改配置"
-    echo "4. 显示客户端配置"
-    echo "5. 卸载"
-    echo "6. 更新sing-box内核"
-    echo "7. 手动重启cloudflared"
+    echo "2. 修改配置"
+    echo "3. 显示客户端配置"
+    echo "4. 卸载"
+    echo "5. 更新sing-box内核"
+    echo "6. 手动重启cloudflared"
     echo ""
-    read -p "Enter your choice (1-7): " choice
+    read -p "Enter your choice (1-6): " choice
     case $choice in
         1)  # 安装sing-box
             install_base
