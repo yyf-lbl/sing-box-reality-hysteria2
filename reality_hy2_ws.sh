@@ -1,6 +1,7 @@
 #!/bin/bash
 #notice
-
+uuid=$(/root/sbox/sing-box generate uuid)
+short_id=$(/root/sbox/sing-box generate rand --hex 8)
 install_vless(){
 echo "开始配置Reality"
 echo ""
@@ -16,9 +17,6 @@ public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
 # 使用base64编码将公钥保存在文件中
 echo "$public_key" | base64 > /root/sbox/public.key.b64
 # 生成必要的值
-uuid=$(/root/sbox/sing-box generate uuid)
-short_id=$(/root/sbox/sing-box generate rand --hex 8)
-echo "uuid和短id 生成完成"
 echo ""
 # 请求监听端口
 read -p "请输入Reality端口 (default: 443): " listen_port
