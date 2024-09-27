@@ -444,7 +444,7 @@ uninstall_singbox() {
 }
 menu() {
     # 检查必要文件是否存在
-    echo "sing-box-reality-hysteria2已经安装"
+clear
     echo ""
     echo "请选择选项:"
     echo ""
