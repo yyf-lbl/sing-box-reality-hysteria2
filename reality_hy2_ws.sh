@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Function to print characters with delay
+# 延迟打印字符的功能
 print_with_delay() {
     text="$1"
     delay="$2"
@@ -10,7 +10,7 @@ print_with_delay() {
     done
     echo
 }
-#notice
+# 简明提示
 show_notice() {
     local message="$1"
 
@@ -20,11 +20,11 @@ show_notice() {
     echo "                                                                                                                       "
     echo "#######################################################################################################################"
 }
-# Introduction animation
+# 动画过渡时间
 print_with_delay "sing-reality-hy2-box" 0.05
 echo ""
 echo ""
-# install base
+# 基础安装依赖
 install_base(){
   # Check if jq is installed, and install it if not
   if ! command -v jq &> /dev/null; then
@@ -43,7 +43,7 @@ install_base(){
       fi
   fi
 }
-# regenrate cloudflared argo
+# 生成 cloudflared argo隧道配置文件
 regenarte_cloudflared_argo(){
   pid=$(pgrep -f cloudflared)
   if [ -n "$pid" ]; then
@@ -99,18 +99,18 @@ download_singbox(){
   tar -xzf "/root/${package_name}.tar.gz" -C /root
   mv "/root/${package_name}/sing-box" /root/sbox
 
-  # Cleanup the package
+  # 清理解压文件
   rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
 
-  # Set the permissions
+  # 设置权限
   chown root:root /root/sbox/sing-box
   chmod +x /root/sbox/sing-box
 }
 
-# download singbox and cloudflared
+# 下载 singbox and cloudflared
 download_cloudflared(){
   arch=$(uname -m)
-  # Map architecture names
+  # 选择架构名称
   case ${arch} in
       x86_64)
           cf_arch="amd64"
@@ -123,7 +123,7 @@ download_cloudflared(){
           ;;
   esac
 
-  # install cloudflared linux
+  # 安装cloudflared linux
   cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
   curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
   chmod +x /root/sbox/cloudflared-linux
@@ -131,19 +131,19 @@ download_cloudflared(){
 }
 
 
-# client configuration
+# 客户端配置
 show_client_configuration() {
-  # Get current listen port
+  # 获取当前侦听端口
   current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
-  # Get current server name
+  # 获取当前服务器名称
   current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
-  # Get the UUID
+  # 获取UUUID
   uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbox/sbconfig_server.json)
-  # Get the public key from the file, decoding it from base64
+  # 从文件中获取公钥，用base64解码
   public_key=$(base64 --decode /root/sbox/public.key.b64)
-  # Get the short ID
+  # 获取短ID
   short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
-  # Retrieve the server IP address
+  # 检索服务器IP地址
   server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
   echo ""
   echo ""
@@ -156,7 +156,7 @@ show_client_configuration() {
   echo "$server_link"
   echo ""
   echo ""
-  # Print the server details
+  # 打印服务器详细信息
   show_notice "Reality 客户端通用参数" 
   echo ""
   echo ""
@@ -168,13 +168,13 @@ show_client_configuration() {
   echo "Short ID: $short_id"
   echo ""
   echo ""
-  # Get current listen port
+  # 获取当前侦听端口
   hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
-  # Get current server name
+  # 获取当前服务器名称
   hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
-  # Get the password
+  # 获取密码
   hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
-  # Generate the link
+  # 生成链接
   
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
 
@@ -185,7 +185,7 @@ show_client_configuration() {
   echo "$hy2_server_link"
   echo ""
   echo ""   
-  # Print the server details
+  # 打印服务器详细信息
   show_notice "Hysteria2 客户端通用参数" 
   echo ""
   echo ""  
@@ -589,11 +589,11 @@ EOF
 }
 uninstall_singbox() {
             echo "Uninstalling..."
-          # Stop and disable sing-box service
+          # 停止并禁用sing-box服务
           systemctl stop sing-box
           systemctl disable sing-box > /dev/null 2>&1
-
-          # Remove files
+	  
+          # 删除文件    
           rm /etc/systemd/system/sing-box.service
           rm /root/sbox/sbconfig_server.json
           rm /root/sbox/sing-box
@@ -608,7 +608,7 @@ uninstall_singbox() {
 }
 install_base
 
-# Check if reality.json, sing-box, and sing-box.service already exist
+# 检查reality.json、sing-box和sing-box.service是否已存在
 if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/root/sbox/argo.txt.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
 
     echo "sing-box-reality-hysteria2已经安装"
@@ -627,7 +627,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     case $choice in
         1)
           show_notice "Reinstalling..."
-          # Uninstall previous installation
+          # 卸载以前的安装
           systemctl stop sing-box
           systemctl disable sing-box > /dev/null 2>&1
           rm /etc/systemd/system/sing-box.service
@@ -641,47 +641,47 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           rm -rf /root/self-cert/
           rm -rf /root/sbox/
           
-          # Proceed with installation
+          # 继续安装
         ;;
         2)
-          #Reality modify
+          # 实时修改
           show_notice "开始修改reality端口和域名"
-          # Get current listen port
+          # 获取当前侦听端口
           current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
 
-          # Ask for listen port
+          # 修改监听端口
           read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
           listen_port=${listen_port:-$current_listen_port}
 
-          # Get current server name
+          # 获取当前服务器名称
           current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
 
-          # Ask for server name (sni)
+          # 询问服务器名称（sni）
           read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
           server_name=${server_name:-$current_server_name}
           echo ""
-          # modifying hysteria2 configuration
+          # 修改 hysteria2 配置
           show_notice "开始修改hysteria2端口"
           echo ""
-          # Get current listen port
+          # 获取端口
           hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
           
-          # Ask for listen port
+          # 修改端口
           read -p "请属于想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
           hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
 
-          # Modify reality.json with new settings
+          # 使用新设置修改reality.json
           jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/sbox/sbconfig_server.json > /root/sb_modified.json
           mv /root/sb_modified.json /root/sbox/sbconfig_server.json
 
-          # Restart sing-box service
+          # 重新启动 sing-box 服务
           systemctl restart sing-box
-          # show client configuration
+          # 显示客户端配置
           show_client_configuration
           exit 0
         ;;
       3)  
-          # show client configuration
+          # 显示客户端配置
           show_client_configuration
           exit 0
       ;;	
@@ -692,7 +692,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
       5)
           show_notice "Update Sing-box..."
           download_singbox
-          # Check configuration and start the service
+          # 检查配置并启动服务
           if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
               echo "Configuration checked successfully. Starting sing-box service..."
               systemctl daemon-reload
@@ -725,45 +725,45 @@ download_cloudflared
 # reality
 echo "开始配置Reality"
 echo ""
-# Generate key pair
+# 生成密钥对
 echo "自动生成基本参数"
 echo ""
 key_pair=$(/root/sbox/sing-box generate reality-keypair)
 echo "Key pair生成完成"
 echo ""
 
-# Extract private key and public key
+# 提取私钥和公钥
 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
 
-# Save the public key in a file using base64 encoding
+# 使用base64编码将公钥保存在文件中
 echo "$public_key" | base64 > /root/sbox/public.key.b64
 
-# Generate necessary values
+# 生成必要的值
 uuid=$(/root/sbox/sing-box generate uuid)
 short_id=$(/root/sbox/sing-box generate rand --hex 8)
 echo "uuid和短id 生成完成"
 echo ""
-# Ask for listen port
+# 请求监听端口
 read -p "请输入Reality端口 (default: 443): " listen_port
 listen_port=${listen_port:-443}
 echo ""
-# Ask for server name (sni)
+# 询问服务器名称（sni）
 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
 server_name=${server_name:-itunes.apple.com}
 echo ""
 # hysteria2
 echo "开始配置hysteria2"
 echo ""
-# Generate hysteria necessary values
+# 生成 hysteria 必要参数
 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
-# Ask for listen port
+# 请求监听端口
 read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
 hy_listen_port=${hy_listen_port:-8443}
 echo ""
 
-# Ask for self-signed certificate domain
+# 请求自签名证书域
 read -p "输入自签证书域名 (default: bing.com): " hy_server_name
 hy_server_name=${hy_server_name:-bing.com}
 mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key && openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
@@ -773,7 +773,7 @@ echo ""
 # vmess ws
 echo "开始配置vmess"
 echo ""
-# Generate hysteria necessary values
+# 生成vmess必要参数
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
 read -p "请输入vmess端口，默认为15555: " vmess_port
 vmess_port=${vmess_port:-15555}
@@ -799,10 +799,10 @@ echo "$argo" | base64 > /root/sbox/argo.txt.b64
 rm -rf argo.log
 
 
-# Retrieve the server IP address
+# 获取本机ip地址
 server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 
-# Create reality.json using jq
+# 使用jq创建reality.json文件
 jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
   "log": {
     "disabled": false,
@@ -885,7 +885,7 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
 
 
 
-# Create sing-box.service
+# 创建sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
 After=network.target nss-lookup.target
@@ -906,7 +906,7 @@ WantedBy=multi-user.target
 EOF
 
 
-# Check configuration and start the service
+# 检查配置并启动服务
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
     systemctl daemon-reload
