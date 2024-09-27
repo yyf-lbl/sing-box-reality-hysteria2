@@ -1,8 +1,4 @@
 #!/bin/bash
-
-    mkdir -p "/root/sbox/"
-    download_singbox
-    download_cloudflared
 #notice
 show_notice() {
     local message="$1"
@@ -653,6 +649,9 @@ download_cloudflared(){
   chmod +x /root/sbox/cloudflared-linux
   echo ""
 }
+  mkdir -p "/root/sbox/"
+    download_singbox
+    download_cloudflared
 install_singbox() {
     echo "欢迎安装 Sing-box 服务，请继续..."
  # 安装所需协议
