@@ -318,13 +318,13 @@ generate_config_file() {
     echo "Hysteria2 监听端口: $hy_listen_port"
     echo "Hysteria2 密码: $hy_password"
 
-    # 检查关键变量是否为空
-    if [ -z "$listen_port" ] || [ -z "$vmess_port" ] || [ -z "$uuid" ]; then
+    # 检查必要的变量是否为空
+    if [ -z "$listen_port" ] || [ -z "$uuid" ]; then
         echo "错误: 必要的变量为空。请检查配置。"
         return 1
     fi
 
-    # 使用 jq 生成 JSON 配置文件
+    # 使用 jq 生成 JSON 配置文件，动态判断每个协议是否启用
     jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
     --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
     --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" \
@@ -336,7 +336,7 @@ generate_config_file() {
       },
       "inbounds": [
         # 如果 VLESS 安装了，生成 VLESS 配置
-        if $listen_port != null and $listen_port != "" then {
+        if $listen_port != null and $listen_port != "" and $uuid != null and $uuid != "" then {
           "type": "vless",
           "tag": "vless-in",
           "listen": "::",
@@ -362,7 +362,7 @@ generate_config_file() {
           }
         } else empty end,
         # 如果 VMess 安装了，生成 VMess 配置
-        if $vmess_port != null and $vmess_port != "" then {
+        if $vmess_port != null and $vmess_port != "" and $vmess_uuid != null and $vmess_uuid != "" then {
           "type": "vmess",
           "tag": "vmess-in",
           "listen": "::",
@@ -379,7 +379,7 @@ generate_config_file() {
           }
         } else empty end,
         # 如果 Hysteria2 安装了，生成 Hysteria2 配置
-        if $hy_listen_port != null and $hy_listen_port != "" then {
+        if $hy_listen_port != null and $hy_listen_port != "" and $hy_password != null and $hy_password != "" then {
           "type": "hysteria2",
           "tag": "hy2-in",
           "listen": "::",
