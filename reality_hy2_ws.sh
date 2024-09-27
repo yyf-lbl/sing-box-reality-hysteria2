@@ -47,16 +47,12 @@ install_vmess() {
 }
 # 函数：安装Hysteria2
 install_hysteria2() {
-    echo "开始配置Hysteria2..."
-    
+    echo "开始配置Hysteria2..." 
     hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-
     read -p "请输入Hysteria2监听端口 (default: 8443): " hy_listen_port
     hy_listen_port=${hy_listen_port:-8443}
-
     read -p "输入自签证书域名 (default: bing.com): " hy_server_name
     hy_server_name=${hy_server_name:-bing.com}
-
     mkdir -p /root/self-cert/
     openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
@@ -81,8 +77,7 @@ install_base() {
 # 重新生成 Cloudflared Argo 隧道
 regenarte_cloudflared_argo() {
   # 获取 cloudflared 进程的 PID
-  pid=$(pgrep -f cloudflared)
-  
+  pid=$(pgrep -f cloudflared) 
   if [ -n "$pid" ]; then
     # 如果进程存在，则终止它
     kill "$pid"
@@ -112,26 +107,21 @@ download_singbox() {
       aarch64) arch="arm64";;
       armv7l) arch="armv7";;
   esac
-
   latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
   latest_version=${latest_version_tag#v}
   echo "Latest version: $latest_version"
-
   package_name="sing-box-${latest_version}-linux-${arch}"
   url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-  
   mkdir -p /root/sbox
   curl -sLo "/root/${package_name}.tar.gz" "$url"
   tar -xzf "/root/${package_name}.tar.gz" -C /root
   ls /root/${package_name}  # 查看解压内容
   mv "/root/${package_name}/sing-box" /root/sbox
-  if [ -f /root/sbox/sing-box ]; then echo "File moved successfully."; fi
-  
+  if [ -f /root/sbox/sing-box ]; then echo "File moved successfully."; fi 
   rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
   chown root:root /root/sbox/sing-box
   chmod +x /root/sbox/sing-box
 }
-
 # 下载 Cloudflared
 download_cloudflared() {
   # 获取系统架构
@@ -170,7 +160,6 @@ show_client_configuration() {
     short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
     # Retrieve the server IP address
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-
     echo ""
     echo ""
     show_notice "Reality 客户端通用链接"
@@ -178,7 +167,6 @@ show_client_configuration() {
     server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
     echo "$server_link"
     echo ""
-
     # Print the server details
     show_notice "Reality 客户端通用参数"
     echo ""
@@ -190,7 +178,6 @@ show_client_configuration() {
     echo "Short ID: $short_id"
     echo ""
   fi
-
   # 检查是否安装了 Hysteria2
   if jq -e '.inbounds[1].protocol == "hysteria"' /root/sbox/sbconfig_server.json > /dev/null; then
     # Get current listen port
@@ -204,7 +191,6 @@ show_client_configuration() {
     hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
     show_notice "Hysteria2 客户端通用链接"
     echo "$hy2_server_link"
-
     # Print the server details
     show_notice "Hysteria2 客户端通用参数"
     echo "服务器ip: $server_ip"
@@ -213,7 +199,6 @@ show_client_configuration() {
     echo "域名SNI: $hy_current_server_name"
     echo "跳过证书验证: True"
     echo ""
-
     # Print YAML configuration
     show_notice "Hysteria2 客户端yaml文件"
     cat << EOF
@@ -227,31 +212,26 @@ socks5:
   listen: 127.0.0.1:5080
 EOF
   fi
-
   # 检查是否安装了 VMess
   if jq -e '.inbounds[2].protocol == "vmess"' /root/sbox/sbconfig_server.json > /dev/null; then
     argo=$(base64 --decode /root/sbox/argo.txt.b64)
     vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
     ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
-
     show_notice "vmess ws 通用链接参数"
     echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
     echo 'vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
   fi
 }
-
 # 安装sing-box
 install_singbox() {
     echo "安装 Sing-box 和协议配置开始..."
-
-    # 安装所需协议
+ # 安装所需协议
     echo "选择要安装的协议:"
     echo "1. VLESS (Reality)"
     echo "2. VMess"
     echo "3. Hysteria2"
     echo "4. 全部安装"
     read -p "输入选择的协议编号 (1, 2, 3 或 4): " protocol_choice
-
     # 根据用户选择调用相应的安装函数
     case $protocol_choice in
         1)
@@ -284,7 +264,6 @@ install_singbox() {
 # 配置文件生成
 generate_config_file() {
     echo "生成配置文件..."
-
     # 输出调试信息，检查变量是否有值
     echo "调试信息："
     echo "VLESS 监听端口: $listen_port"
@@ -297,16 +276,13 @@ generate_config_file() {
     echo "VLESS UUID: $uuid"
     echo "Hysteria2 监听端口: $hy_listen_port"
     echo "Hysteria2 密码: $hy_password"
-
     # 检查必要的变量是否为空
     if [ -z "$listen_port" ] || [ -z "$uuid" ]; then
         echo "错误: 必要的变量为空。请检查配置。"
         return 1
     fi
-
     # 初始化inbounds为空数组
     inbound_config="[]"
-
     # 如果 VLESS 安装了，生成 VLESS 配置
     if [ -n "$listen_port" ] && [ -n "$uuid" ]; then
         vless_config=$(jq -n --arg listen_port "$listen_port" --arg uuid "$uuid" \
@@ -338,7 +314,6 @@ generate_config_file() {
         }')
         inbound_config=$(echo $inbound_config | jq --argjson vless "$vless_config" '. += [$vless]')
     fi
-
     # 如果 VMess 安装了，生成 VMess 配置
     if [ -n "$vmess_port" ] && [ -n "$vmess_uuid" ]; then
         vmess_config=$(jq -n --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '{
@@ -359,7 +334,6 @@ generate_config_file() {
         }')
         inbound_config=$(echo $inbound_config | jq --argjson vmess "$vmess_config" '. += [$vmess]')
     fi
-
     # 如果 Hysteria2 安装了，生成 Hysteria2 配置
     if [ -n "$hy_listen_port" ] && [ -n "$hy_password" ]; then
         hysteria_config=$(jq -n --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '{
@@ -383,7 +357,6 @@ generate_config_file() {
         }')
         inbound_config=$(echo $inbound_config | jq --argjson hysteria "$hysteria_config" '. += [$hysteria]')
     fi
-
     # 最终生成完整的配置文件
     jq -n --argjson inbounds "$inbound_config" '{
       "log": {
@@ -403,7 +376,6 @@ generate_config_file() {
         }
       ]
     }' > /root/sbox/sbconfig_server.json
-
     # 输出生成的 JSON 文件内容，供调试用
     cat /root/sbox/sbconfig_server.json
 }
@@ -456,7 +428,6 @@ clear
     echo "6. 更新sing-box内核"
     echo "7. 手动重启cloudflared"
     echo ""
-
     read -p "Enter your choice (1-7): " choice
     case $choice in
         1)  # 安装sing-box
