@@ -9,23 +9,18 @@ install_vless() {
         return 1
     fi
     echo "密钥对生成完成"
-
     private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
     public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
     echo "$public_key" | base64 > /root/sbox/public.key.b64
-
     # 生成UUID和短ID
     uuid=$(/root/sbox/sing-box generate uuid)
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
-
     # 获取用户输入
     read -p "请输入Reality端口 (default: 443): " listen_port
-    listen_port=${listen_port:-443}
-    
+    listen_port=${listen_port:-443} 
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
     server_name=${server_name:-itunes.apple.com}
 }
-
 # 函数：安装VMess
 install_vmess() {
     echo "开始配置VMess..."
@@ -136,11 +131,9 @@ download_singbox() {
   url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
   # 从 GitHub 下载最新发布的包 (.tar.gz)
   curl -sLo "/root/${package_name}.tar.gz" "$url"
-
   # 解压缩包并将二进制文件移动到 /root
   tar -xzf "/root/${package_name}.tar.gz" -C /root
   mv "/root/${package_name}/sing-box" /root/sbox
-
   # 清理下载的包
   rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
   # 设置权限
@@ -151,7 +144,6 @@ download_singbox() {
 download_cloudflared() {
   # 获取系统架构
   arch=$(uname -m)
-
   # 根据系统架构映射名称
   case ${arch} in
       x86_64)
@@ -214,9 +206,7 @@ show_client_configuration() {
   # Get the password
   hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
   # Generate the link
-  
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
-
   show_notice "Hysteria2 客户端通用链接" 
   echo ""
   echo "官方 hysteria2通用链接格式"
@@ -237,27 +227,19 @@ show_client_configuration() {
   echo ""
   show_notice "Hysteria2 客户端yaml文件" 
 cat << EOF
-
 server: $server_ip:$hy_current_listen_port
-
 auth: $hy_password
-
 tls:
   sni: $hy_current_server_name
   insecure: true
-
 # 可自己修改对应带宽，不添加则默认为bbr，否则使用hy2的brutal拥塞控制
 # bandwidth:
 #   up: 100 mbps
 #   down: 100 mbps
-
 fastOpen: true
-
 socks5:
   listen: 127.0.0.1:5080
-
 EOF
-
   argo=$(base64 --decode /root/sbox/argo.txt.b64)
   vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
   ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
@@ -287,7 +269,6 @@ install_singbox() {
     # 下载 sing-box 和 cloudflared
     download_singbox
     download_cloudflared
-
     # 用户选择安装的协议
     echo "请选择要安装的协议（可以多个，以空格分隔）："
     echo "1) VLESS"
@@ -315,24 +296,9 @@ install_singbox() {
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
       generate_sbconfig
       check_and_start_service
-    # 检查配置文件和可执行文件是否存在
-    if [ ! -f "/root/sbox/sbconfig_server.json" ]; then
-        echo "sbconfig_server.json 文件不存在，请检查配置。"
-        exit 1
-    fi
-
-    if [ ! -f "/root/sbox/sing-box" ]; then
-        echo "sing-box 文件不存在，请检查下载是否成功。"
-        exit 1
-    fi
-    echo "所有配置已完成，准备开始服务..."
-    # 你可以在这里添加启动服务的命令
 }
 # 配置文件生成
 generate_sbconfig() {
-    # 确保在调用此函数之前已设置所需的变量
-    # 例如: $uuid, $server_ip, $current_listen_port, $current_server_name, $public_key, $short_id, $hy_current_listen_port, $hy_password, $ws_path, $vmess_uuid, $argo
-
     cat << EOF > /root/sbox/sbconfig_server.json
 {
     "dns": {
@@ -572,19 +538,8 @@ generate_sbconfig() {
 }
 EOF
 }
-
- # 检查配置并启动服务
+# 检查配置并启动服务
 check_and_start_service() { 
-# 打印变量
-echo "UUID: $uuid"
-echo "Server Name: $server_name"
-echo "Private Key: $private_key"
-echo "Short ID: $short_id"
-echo "HY Listen Port: $hy_listen_port"
-echo "HY Password: $hy_password"
-echo "VMess Port: $vmess_port"
-echo "VMess UUID: $vmess_uuid"
-echo "WS Path: $ws_path"
  # # 使用jq创建reality.json
 jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
 --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
@@ -698,7 +653,6 @@ else
     echo "Error in configuration. Aborting"
 fi
 }
-
 # 卸载sing-box
 uninstall_singbox() {
     echo "Uninstalling..."    
