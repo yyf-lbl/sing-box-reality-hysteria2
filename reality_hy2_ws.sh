@@ -1,7 +1,7 @@
 #!/bin/bash
 # 函数：安装VLESS
 install_vless() {
-    echo "开始配置Reality..." 
+    echo "开始配置Reality..."
     # 自动生成密钥对
     key_pair=$(/root/sbox/sing-box generate reality-keypair)
     if [ $? -ne 0 ]; then
@@ -9,18 +9,111 @@ install_vless() {
         return 1
     fi
     echo "密钥对生成完成"
+
     private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
     public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
     echo "$public_key" | base64 > /root/sbox/public.key.b64
+
     # 生成UUID和短ID
     uuid=$(/root/sbox/sing-box generate uuid)
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
+
     # 获取用户输入
     read -p "请输入Reality端口 (default: 443): " listen_port
     listen_port=${listen_port:-443}
+    
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
     server_name=${server_name:-itunes.apple.com}
+
+    # 获取Hysteria和VMess的配置
+    read -p "请输入HY Listen Port: " hy_listen_port
+    read -p "请输入HY Password: " hy_password
+    read -p "请输入VMess Port: " vmess_port
+    read -p "请输入VMess UUID: " vmess_uuid
+    read -p "请输入WS Path: " ws_path
+
+    # 生成配置文件
+    cat <<EOF > /root/sbox/sbconfig_server.json
+{
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "vless-in",
+      "listen": "::",
+      "listen_port": $listen_port,
+      "users": [
+        {
+          "uuid": "$uuid",
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "$server_name",
+        "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": "$server_name",
+            "server_port": 443
+          },
+          "private_key": "$private_key",
+          "short_id": ["$short_id"]
+        }
+      }
+    },
+    {
+      "type": "hysteria2",
+      "tag": "hy2-in",
+      "listen": "::",
+      "listen_port": $hy_listen_port,
+      "users": [
+        {
+          "password": "$hy_password"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "alpn": [
+          "h3"
+        ],
+        "certificate_path": "/root/self-cert/cert.pem",
+        "key_path": "/root/self-cert/private.key"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "vmess-in",
+      "listen": "::",
+      "listen_port": $vmess_port,
+      "users": [
+        {
+          "uuid": "$vmess_uuid",
+          "alterId": 0
+        }
+      ],
+      "transport": {
+        "type": "ws",
+        "path": "$ws_path"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ]
 }
+EOF
+
+    # 继续检查和启动服务
+    check_and_start_service
+}
+
 # 函数：安装VMess
 install_vmess() {
     echo "开始配置VMess..."
