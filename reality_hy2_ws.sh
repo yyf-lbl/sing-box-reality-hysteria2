@@ -351,7 +351,23 @@ install_singbox() {
     echo "所有配置已完成，准备开始服务..."
     # 你可以在这里添加启动服务的命令
 }
-
+ # 检查配置并启动服务
+check_and_start_service() { 
+    if [ -f /root/sbox/sbconfig_server.json ] && [ -f /root/sbox/sing-box ]; then
+        if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+            echo "Configuration checked successfully. Starting sing-box service..."
+            systemctl daemon-reload
+            systemctl enable sing-box > /dev/null 2>&1
+            systemctl start sing-box
+            systemctl restart sing-box
+            show_client_configuration
+        else
+            echo "Error in configuration. Aborting"
+        fi
+    else
+        echo "sing-box or configuration file does not exist. Please install sing-box and configure it first."
+    fi
+}
 # 卸载sing-box
 uninstall_singbox() {
     echo "Uninstalling..."    
@@ -552,14 +568,4 @@ LimitNOFILE=infinity
 [Install]
 WantedBy=multi-user.target
 EOF
-# 检查配置并启动服务
-if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo "Configuration checked successfully. Starting sing-box service..."
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
-    systemctl restart sing-box
-    show_client_configuration
-else
-    echo "Error in configuration. Aborting"
-fi
+
