@@ -302,6 +302,7 @@ install_singbox() {
     # 检查配置文件并启动服务
     check_and_start_service
 }
+# 配置文件生成
 generate_config_file() {
     echo "生成配置文件..."
 
@@ -324,81 +325,94 @@ generate_config_file() {
         return 1
     fi
 
-    # 使用 jq 生成 JSON 配置文件，动态判断每个协议是否启用
-    jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
-    --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
-    --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" \
-    --arg hy_password "$hy_password" '{
+    # 初始化inbounds为空数组
+    inbound_config="[]"
+
+    # 如果 VLESS 安装了，生成 VLESS 配置
+    if [ -n "$listen_port" ] && [ -n "$uuid" ]; then
+        vless_config=$(jq -n --arg listen_port "$listen_port" --arg uuid "$uuid" \
+            --arg server_name "$server_name" --arg private_key "$private_key" \
+            --arg short_id "$short_id" '{
+            "type": "vless",
+            "tag": "vless-in",
+            "listen": "::",
+            "listen_port": ($listen_port | tonumber),
+            "users": [
+                {
+                    "uuid": $uuid,
+                    "flow": "xtls-rprx-vision"
+                }
+            ],
+            "tls": {
+                "enabled": true,
+                "server_name": $server_name,
+                "reality": {
+                    "enabled": true,
+                    "handshake": {
+                        "server": $server_name,
+                        "server_port": 443
+                    },
+                    "private_key": $private_key,
+                    "short_id": [$short_id]
+                }
+            }
+        }')
+        inbound_config=$(echo $inbound_config | jq --argjson vless "$vless_config" '. += [$vless]')
+    fi
+
+    # 如果 VMess 安装了，生成 VMess 配置
+    if [ -n "$vmess_port" ] && [ -n "$vmess_uuid" ]; then
+        vmess_config=$(jq -n --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '{
+            "type": "vmess",
+            "tag": "vmess-in",
+            "listen": "::",
+            "listen_port": ($vmess_port | tonumber),
+            "users": [
+                {
+                    "uuid": $vmess_uuid,
+                    "alterId": 0
+                }
+            ],
+            "transport": {
+                "type": "ws",
+                "path": $ws_path
+            }
+        }')
+        inbound_config=$(echo $inbound_config | jq --argjson vmess "$vmess_config" '. += [$vmess]')
+    fi
+
+    # 如果 Hysteria2 安装了，生成 Hysteria2 配置
+    if [ -n "$hy_listen_port" ] && [ -n "$hy_password" ]; then
+        hysteria_config=$(jq -n --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '{
+            "type": "hysteria2",
+            "tag": "hy2-in",
+            "listen": "::",
+            "listen_port": ($hy_listen_port | tonumber),
+            "users": [
+                {
+                    "password": $hy_password
+                }
+            ],
+            "tls": {
+                "enabled": true,
+                "alpn": [
+                    "h3"
+                ],
+                "certificate_path": "/root/self-cert/cert.pem",
+                "key_path": "/root/self-cert/private.key"
+            }
+        }')
+        inbound_config=$(echo $inbound_config | jq --argjson hysteria "$hysteria_config" '. += [$hysteria]')
+    fi
+
+    # 最终生成完整的配置文件
+    jq -n --argjson inbounds "$inbound_config" '{
       "log": {
         "disabled": false,
         "level": "info",
         "timestamp": true
       },
-      "inbounds": [
-        # 如果 VLESS 安装了，生成 VLESS 配置
-        if $listen_port != null and $listen_port != "" and $uuid != null and $uuid != "" then {
-          "type": "vless",
-          "tag": "vless-in",
-          "listen": "::",
-          "listen_port": ($listen_port | tonumber),
-          "users": [
-            {
-              "uuid": $uuid,
-              "flow": "xtls-rprx-vision"
-            }
-          ],
-          "tls": {
-            "enabled": true,
-            "server_name": $server_name,
-            "reality": {
-              "enabled": true,
-              "handshake": {
-                "server": $server_name,
-                "server_port": 443
-              },
-              "private_key": $private_key,
-              "short_id": [$short_id]
-            }
-          }
-        } else empty end,
-        # 如果 VMess 安装了，生成 VMess 配置
-        if $vmess_port != null and $vmess_port != "" and $vmess_uuid != null and $vmess_uuid != "" then {
-          "type": "vmess",
-          "tag": "vmess-in",
-          "listen": "::",
-          "listen_port": ($vmess_port | tonumber),
-          "users": [
-            {
-              "uuid": $vmess_uuid,
-              "alterId": 0
-            }
-          ],
-          "transport": {
-            "type": "ws",
-            "path": $ws_path
-          }
-        } else empty end,
-        # 如果 Hysteria2 安装了，生成 Hysteria2 配置
-        if $hy_listen_port != null and $hy_listen_port != "" and $hy_password != null and $hy_password != "" then {
-          "type": "hysteria2",
-          "tag": "hy2-in",
-          "listen": "::",
-          "listen_port": ($hy_listen_port | tonumber),
-          "users": [
-            {
-              "password": $hy_password
-            }
-          ],
-          "tls": {
-            "enabled": true,
-            "alpn": [
-              "h3"
-            ],
-            "certificate_path": "/root/self-cert/cert.pem",
-            "key_path": "/root/self-cert/private.key"
-          }
-        } else empty end
-      ],
+      "inbounds": $inbounds,
       "outbounds": [
         {
           "type": "direct",
@@ -414,6 +428,7 @@ generate_config_file() {
     # 输出生成的 JSON 文件内容，供调试用
     cat /root/sbox/sbconfig_server.json
 }
+
 # 配置文件生成
 generate_sbconfig() {
     cat << EOF > /root/sbox/sbconfig_server.json
