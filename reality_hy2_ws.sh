@@ -570,7 +570,10 @@ EOF
  # 检查配置并启动服务
 check_and_start_service() { 
  # # 使用jq创建reality.json
-jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
+jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" \
+--arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" \
+--arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" \
+--arg hy_password "$hy_password" '{
   "log": {
     "disabled": false,
     "level": "info",
@@ -591,7 +594,7 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
       "tls": {
         "enabled": true,
         "server_name": $server_name,
-          "reality": {
+        "reality": {
           "enabled": true,
           "handshake": {
             "server": $server_name,
@@ -603,39 +606,39 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
       }
     },
     {
-        "type": "hysteria2",
-        "tag": "hy2-in",
-        "listen": "::",
-        "listen_port": ($hy_listen_port | tonumber),
-        "users": [
-            {
-                "password": $hy_password
-            }
-        ],
-        "tls": {
-            "enabled": true,
-            "alpn": [
-                "h3"
-            ],
-            "certificate_path": "/root/self-cert/cert.pem",
-            "key_path": "/root/self-cert/private.key"
+      "type": "hysteria2",
+      "tag": "hy2-in",
+      "listen": "::",
+      "listen_port": ($hy_listen_port | tonumber),
+      "users": [
+        {
+          "password": $hy_password
         }
+      ],
+      "tls": {
+        "enabled": true,
+        "alpn": [
+          "h3"
+        ],
+        "certificate_path": "/root/self-cert/cert.pem",
+        "key_path": "/root/self-cert/private.key"
+      }
     },
     {
-        "type": "vmess",
-        "tag": "vmess-in",
-        "listen": "::",
-        "listen_port": ($vmess_port | tonumber),
-        "users": [
-            {
-                "uuid": $vmess_uuid,
-                "alterId": 0
-            }
-        ],
-        "transport": {
-            "type": "ws",
-            "path": $ws_path
+      "type": "vmess",
+      "tag": "vmess-in",
+      "listen": "::",
+      "listen_port": ($vmess_port | tonumber),
+      "users": [
+        {
+          "uuid": $vmess_uuid,
+          "alterId": 0
         }
+      ],
+      "transport": {
+        "type": "ws",
+        "path": $ws_path
+      }
     }
   ],
   "outbounds": [
@@ -649,7 +652,8 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
     }
   ]
 }' > /root/sbox/sbconfig_server.json
-# Create sing-box.service
+
+# 创建sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
 After=network.target nss-lookup.target
