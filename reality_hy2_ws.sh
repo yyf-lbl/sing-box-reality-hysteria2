@@ -3,36 +3,40 @@
 install_vless(){
 echo "开始配置Reality"
 echo ""
-# 生成密钥对
+# Generate key pair
 echo "自动生成基本参数"
-uuid=$(/root/sbox/sing-box generate uuid)
-short_id=$(/root/sbox/sing-box generate rand --hex 8)
-echo "uuid生成成功"
+echo ""
 key_pair=$(/root/sbox/sing-box generate reality-keypair)
 echo "Key pair生成完成"
 echo ""
-# 提取私钥和公钥
+
+# Extract private key and public key
 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
-# 使用base64编码将公钥保存在文件中
+
+# Save the public key in a file using base64 encoding
 echo "$public_key" | base64 > /root/sbox/public.key.b64
-# 生成必要的值
+
+# Generate necessary values
+uuid=$(/root/sbox/sing-box generate uuid)
+short_id=$(/root/sbox/sing-box generate rand --hex 8)
+echo "uuid和短id 生成完成"
 echo ""
-# 请求监听端口
+# Ask for listen port
 read -p "请输入Reality端口 (default: 443): " listen_port
 listen_port=${listen_port:-443}
 echo ""
-# 询问服务器名称（sni）
+# Ask for server name (sni)
 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
 server_name=${server_name:-itunes.apple.com}
 echo ""
 }
+
 install_vmess(){
-  echo "开始配置vmess"
+echo "开始配置vmess"
 echo ""
-# 生成vmess必要参数
+# Generate hysteria necessary values
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
-echo "uuid生成成功"
 read -p "请输入vmess端口，默认为15555: " vmess_port
 vmess_port=${vmess_port:-15555}
 echo ""
@@ -55,22 +59,20 @@ sleep 5
 argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 rm -rf argo.log
-
 }
+
 install_hysteria(){
- echo "开始配置hysteria2"
+echo "开始配置hysteria2"
 echo ""
-vmess_uuid=$(/root/sbox/sing-box generate uuid)
-echo "uuid生成成功"
-# 生成 hysteria 必要参数
+# Generate hysteria necessary values
 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
-# 请求监听端口
+# Ask for listen port
 read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
 hy_listen_port=${hy_listen_port:-8443}
 echo ""
 
-# 请求自签名证书域
+# Ask for self-signed certificate domain
 read -p "输入自签证书域名 (default: bing.com): " hy_server_name
 hy_server_name=${hy_server_name:-bing.com}
 mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key && openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
@@ -672,105 +674,79 @@ install_singbox() {
     esac
     # 获取本机ip地址
 server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-
-    # 根据用户选择动态生成对应协议的配置文件
-  config_inbounds=()
-
-  if [[ "$protocol_choice" == "1" || "$protocol_choice" == "4" ]]; then
-    vless_config=$(jq -n --arg listen_port "$listen_port" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" '{
-      "type": "vless",
-      "tag": "vless-in",
-      "listen": "::",
-      "listen_port": ($listen_port | tonumber),
-      "users": [
-        {
-          "uuid": $uuid,
-          "flow": "xtls-rprx-vision"
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "server_name": $server_name,
-        "reality": {
-          "enabled": true,
-          "handshake": {
-            "server": $server_name,
-            "server_port": 443
-          },
-          "private_key": $private_key,
-          "short_id": [$short_id]
-        }
-      }
-    }')
-    config_inbounds+=("$vless_config")
-  fi
-
-  if [[ "$protocol_choice" == "2" || "$protocol_choice" == "4" ]]; then
-    vmess_config=$(jq -n --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '{
-      "type": "vmess",
-      "tag": "vmess-in",
-      "listen": "::",
-      "listen_port": ($vmess_port | tonumber),
-      "users": [
-        {
-          "uuid": $vmess_uuid,
-          "alterId": 0
-        }
-      ],
-      "transport": {
-        "type": "ws",
-        "path": $ws_path
-      }
-    }')
-    config_inbounds+=("$vmess_config")
-  fi
-
-  if [[ "$protocol_choice" == "3" || "$protocol_choice" == "4" ]]; then
-    hysteria_config=$(jq -n --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
-      "type": "hysteria2",
-      "tag": "hy2-in",
-      "listen": "::",
-      "listen_port": ($hy_listen_port | tonumber),
-      "users": [
-        {
-          "password": $hy_password
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "alpn": [
-          "h3"
-        ],
-        "certificate_path": "/root/self-cert/cert.pem",
-        "key_path": "/root/self-cert/private.key"
-      }
-    }')
-    config_inbounds+=("$hysteria_config")
-  fi
-
-  # 将所有生成的配置合并到一个配置文件中
-  jq -n --argjson inbounds "$(printf '%s\n' "${config_inbounds[@]}" | jq -s '.')" '{
-    "log": {
-      "disabled": false,
-      "level": "info",
-      "timestamp": true
-    },
-    "inbounds": $inbounds,
-    "outbounds": [
-      {
-        "type": "direct",
-        "tag": "direct"
-      },
-      {
-        "type": "block",
-        "tag": "block"
-      }
-    ]
-  }' > /root/sbox/sbconfig_server.json
-
-  echo "配置文件生成完成: /root/sbox/sbconfig_server.json"
-  start_serv
+create_config_files
+  # 调用函数时传入所有生成的配置文件
+start_serv "/root/sbox/vmess_config.json" "/root/sbox/vless_config.json" "/root/sbox/hysteria_config.json"
 }
+# 创建配置文件的函数
+create_config_files() {
+    local protocols=("$@")  # 接收多个协议参数
+
+    # 遍历每个协议
+    for protocol in "${protocols[@]}"; do
+        case $protocol in
+            "vless")
+                echo "生成 VLESS 配置文件..."
+                jq -n --arg listen_port "$listen_port" \
+                       --arg uuid "$uuid" \
+                       --arg server_name "$server_name" \
+                       --arg private_key "$private_key" \
+                       --arg short_id "$short_id" '{
+                  "inbounds": [
+                      {
+                          "type": "vless",
+                          "listen_port": ($listen_port | tonumber),
+                          "users": [{ "uuid": $uuid }],
+                          "tls": {
+                              "enabled": true,
+                              "server_name": $server_name,
+                              "reality": {
+                                  "enabled": true,
+                                  "private_key": $private_key,
+                                  "short_id": [$short_id]
+                              }
+                          }
+                      }
+                  ]
+              }' > /root/sbox/vless_config.json
+                ;;
+            "hysteria")
+                echo "生成 Hysteria 配置文件..."
+                jq -n --arg hy_listen_port "$hy_listen_port" \
+                       --arg hy_password "$hy_password" '{
+                  "inbounds": [
+                      {
+                          "type": "hysteria2",
+                          "listen_port": ($hy_listen_port | tonumber),
+                          "users": [{ "password": $hy_password }]
+                      }
+                  ]
+              }' > /root/sbox/hysteria_config.json
+                ;;
+            "vmess")
+                echo "生成 VMess 配置文件..."
+                jq -n --arg vmess_port "$vmess_port" \
+                       --arg vmess_uuid "$vmess_uuid" \
+                       --arg ws_path "$ws_path" '{
+                  "inbounds": [
+                      {
+                          "type": "vmess",
+                          "listen_port": ($vmess_port | tonumber),
+                          "users": [{ "uuid": $vmess_uuid }],
+                          "transport": { "type": "ws", "path": $ws_path }
+                      }
+                  ]
+              }' > /root/sbox/vmess_config.json
+                ;;
+            *)
+                echo "未知协议: $protocol"
+                ;;
+        esac
+    done
+
+    echo "所有配置文件已生成。"
+}
+
 uninstall_singbox() {
             echo "Uninstalling..."
           # 停止并禁用sing-box服务
@@ -779,7 +755,9 @@ uninstall_singbox() {
 	  
           # 删除文件    
           rm /etc/systemd/system/sing-box.service
-          rm /root/sbox/sbconfig_server.json
+          rm /root/sbox/vless_config.json
+	  rm /root/sbox/vmess_config.json
+          rm /root/sbox/hysteria_config.json
           rm /root/sbox/sing-box
           rm /root/sbox/cloudflared-linux
           rm /root/sbox/argo.txt.b64
@@ -801,7 +779,9 @@ User=root
 WorkingDirectory=/root
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+ExecStart=/root/sbox/start_singbox.sh /root/sbox/vmess_config.json
+ExecStart=/root/sbox/start_singbox.sh /root/sbox/vless_config.json
+ExecStart=/root/sbox/start_singbox.sh /root/sbox/hysteria_config.json
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -811,17 +791,29 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 # 检查配置并启动服务
-start_serv(){
-if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo "配置文件成功， 正在启动 sing-box 服务..."
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
-    systemctl restart sing-box
-else
-    echo "配置错误，终止服务！"
-fi
+start_serv() {
+    local config_files=("$@")  # 接收多个配置文件作为参数
+    for config_file in "${config_files[@]}"; do
+        if /root/sbox/sing-box check -c "$config_file"; then
+            echo "$config_file 配置文件成功，正在启动 sing-box 服务..."
+            systemctl daemon-reload
+            systemctl enable sing-box > /dev/null 2>&1
+            
+            # 启动服务
+            systemctl start sing-box
+            
+            # 检查服务状态
+            if systemctl is-active --quiet sing-box; then
+                echo "sing-box 服务已成功启动！"
+            else
+                echo "服务启动失败，请检查日志。"
+            fi
+        else
+            echo "$config_file 配置错误，终止服务！"
+        fi
+    done
 }
+
 menu() {
     echo ""
     echo "请选择选项:"
