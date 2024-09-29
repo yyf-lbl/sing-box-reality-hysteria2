@@ -353,28 +353,16 @@ configure_vmess() {
 #配置文件生成
 generate_config() {
     jq -n \
-      --arg listen_port "${listen_ports}" \
-      --arg vmess_port "${vmess_ports}" \
-      --arg uuid "${uuids}" \
-      --arg ws_path "${ws_paths}" \
-      --arg server_name "${server_names}" \
+      --arg listen_port "$listen_ports" \
+      --arg vmess_port "$vmess_ports" \
+      --arg uuid "$uuids" \
+      --arg ws_path "$ws_paths" \
+      --arg server_name "$server_names" \
       --arg private_key "$private_key" \
-      --arg short_id "${short_ids}" \
-      --arg hy_listen_port "${hy_listen_ports}" \
-      --arg hy_password "${hy_passwords}" \
+      --arg short_id "$short_ids" \
+      --arg hy_listen_port "$hy_listen_ports" \
+      --arg hy_password "$hy_passwords" \
       --arg server_ip "$server_ip" \
-    '{
-        "listen_ports": [$listen_port],
-        "vmess_ports": $vmess_port,
-        "vmess_uuids": $uuid,
-        "ws_paths": $ws_path,
-        "server_names": $server_name,
-        "private_key": $private_key,
-        "short_ids": $short_id,
-        "hy_listen_ports": $hy_listen_port,
-        "hy_passwords": $hy_password,
-        "server_ip": $server_ip
-    }' \
     '{
       "log": {
         "disabled": false,
