@@ -349,6 +349,10 @@ configure_vmess() {
 }
 #配置文件生成
 generate_config() {
+   # 打印变量以检查值
+    echo "监听端口: ${listen_ports[@]}"
+    echo "UUID: ${uuids[@]}"
+    echo "域名SNI: ${server_names[@]}"
     jq -n \
       --argjson listen_ports "$(printf '%s\n' "${listen_ports[@]}" | jq -R . | jq -s .)" \
       --argjson vmess_ports "$(printf '%s\n' "${vmess_ports[@]}" | jq -R . | jq -s .)" \
