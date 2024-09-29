@@ -506,6 +506,7 @@ echo "ws路径: ${ws_paths[*]}"
         systemctl enable sing-box
         systemctl start sing-box
         echo "服务已启动" 
+        show_client_configuration
             ;;
         2)
             show_notice "Reinstalling..."
