@@ -117,11 +117,11 @@ download_cloudflared(){
   echo ""
 }
 show_client_configuration() {
-   current_listen_port=${listen_ports[0]}
-  current_server_name=${server_names[0]}
-  uuid=${uuids[0]}
+   current_listen_port=${listen_ports[@]}
+  current_server_name=${server_names[@]}
+  uuid=${uuids[@]}
   public_key=$(base64 --decode /root/sbox/public.key.b64)
-  short_id=${short_ids[0]}
+  short_id=${short_ids[@]}
   server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
   echo ""
   echo ""
@@ -142,9 +142,9 @@ show_client_configuration() {
   echo "Public Key: $public_key"
   echo "Short ID: $short_id"
   echo ""
-  hy_current_listen_port=${listen_ports[1]}
-  hy_current_server_name=${server_names[1]}
-  hy_password=${hy_passwords[0]}
+  hy_current_listen_port=${listen_ports[@]}
+  hy_current_server_name=${server_names[@]}
+  hy_password=${hy_passwords[@]}
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
   show_notice "Hysteria2 客户端通用链接" 
   echo ""
@@ -176,8 +176,8 @@ socks5:
   listen: 127.0.0.1:5080
 EOF
   argo=$(base64 --decode /root/sbox/argo.txt.b64)
-  vmess_uuid=${uuids[1]}
-  ws_path=${ws_paths[0]}
+  vmess_uuid=${vmess_uuids[@]}
+  ws_path=${ws_paths[@]}
   show_notice "vmess ws 通用链接参数" 
   echo ""
   echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
