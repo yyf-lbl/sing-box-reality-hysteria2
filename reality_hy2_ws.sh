@@ -714,10 +714,8 @@ configure_vmess() {
     echo "生成的Cloudflare地址已保存。"
     rm -rf argo.log
 }
-
 generate_config() {
     local protocols=("$@")
-    # 初始化 JSON 对象
     local json='{
         "log": {
             "disabled": false,
@@ -737,11 +735,11 @@ generate_config() {
         ]
     }'
 
-    # 根据选择的协议添加相应的 inbound 配置
-   for i in "${!listen_ports[@]}"; do
+    for i in "${!listen_ports[@]}"; do
+        protocol=${protocols[$i]}
         case $protocol in
             "vless")
-                json=$(echo "$json" | jq --arg listen_port "${listen_ports[0]}" --arg uuid "${uuids[0]}" --arg server_name "${server_names[0]}" --arg private_key "$private_key" --arg short_id "$short_id" --arg server_ip "$server_ip" '
+                json=$(echo "$json" | jq --arg listen_port "${listen_ports[$i]}" --arg uuid "${uuids[$i]}" --arg server_name "${server_names[$i]}" --arg private_key "$private_key" --arg short_id "$short_id" '
                     .inbounds += [{
                         "type": "vless",
                         "tag": "vless-in",
@@ -767,7 +765,7 @@ generate_config() {
                     }]')
                 ;;
             "hysteria2")
-                json=$(echo "$json" | jq --arg hy_listen_port "${hy_listen_ports[0]}" --arg hy_password "${hy_passwords[0]}" '
+                json=$(echo "$json" | jq --arg hy_listen_port "${hy_listen_ports[$i]}" --arg hy_password "${hy_passwords[$i]}" '
                     .inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
@@ -785,7 +783,7 @@ generate_config() {
                     }]')
                 ;;
             "vmess")
-                json=$(echo "$json" | jq --arg vmess_port "${vmess_ports[0]}" --arg vmess_uuid "${uuids[1]}" --arg ws_path "${ws_paths[0]}" '
+                json=$(echo "$json" | jq --arg vmess_port "${vmess_ports[$i]}" --arg vmess_uuid "${uuids[$i]}" --arg ws_path "${ws_paths[$i]}" '
                     .inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
@@ -807,9 +805,9 @@ generate_config() {
         esac
     done
 
-    # 将生成的 JSON 写入文件
     echo "$json" | jq . > /root/sbox/sbconfig_server.json
 }
+
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
