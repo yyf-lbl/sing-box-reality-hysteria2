@@ -655,10 +655,10 @@ configure_reality() {
     echo "选择的域名: $server_name"
     echo ""
     # 保存参数到数组
-    listen_port+=("$listen_port")
-    uuid+=("$uuid")
-    short_id+=("$short_id")
-    server_name+=("$server_name")
+    listen_ports+=("$listen_port")
+    uuids+=("$uuid")
+    short_ids+=("$short_id")
+    server_names+=("$server_name")
 }
 configure_hysteria2() {
     echo "开始配置hysteria2"
@@ -697,9 +697,9 @@ configure_hysteria2() {
     echo "自签证书生成完成"
     echo ""
     # 保存参数到数组
-     listen_port+=("$hy_listen_port")
-    uuid+=("$hy_password")  # 假设这里使用密码作为唯一标识
-    server_name+=("$hy_server_name")
+     listen_ports+=("$hy_listen_port")
+    uuids+=("$hy_password")  # 假设这里使用密码作为唯一标识
+    server_names+=("$hy_server_name")
 }
 configure_vmess() {
     echo "开始配置vmess"
@@ -720,9 +720,9 @@ configure_vmess() {
         return 1
     fi
     # 保存参数到数组
-    vmess_port+=("$vmess_port")
-    uuid+=("$vmess_uuid")
-    ws_path+=("$ws_path")
+    vmess_ports+=("$vmess_port")
+    uuids+=("$vmess_uuid")
+    ws_paths+=("$ws_path")
     # Terminate cloudflared process if running
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
@@ -887,9 +887,9 @@ menu() {
                         ;;
                 esac
             done
-            echo "监听端口: $listen_ports"
-echo "UUID: $uuids"
-echo "域名SNI: $server_names"
+            echo "监听端口: ${!listen_ports[@]}"
+echo "UUID: ${!uuids[@]}"
+echo "域名SNI: ${!server_names[@]}"
             # 生成配置文件
         server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
         generate_config 
