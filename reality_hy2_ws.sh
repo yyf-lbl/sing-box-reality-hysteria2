@@ -302,8 +302,9 @@ configure_hysteria2() {
     echo "自签证书生成完成"
     echo ""
      listen_ports+=("$hy_listen_port")
-    uuids+=("$hy_password")  # 假设这里使用密码作为唯一标识
+    uuids+=("$hy_uuid")  # 假设这里使用密码作为唯一标识
     server_names+=("$hy_server_name")
+    hy_passwords+=("$hy_password")
 }
 configure_vmess() {
     echo "开始配置vmess"
