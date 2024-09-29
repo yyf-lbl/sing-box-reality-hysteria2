@@ -890,7 +890,7 @@ menu() {
             done
             # 生成配置文件
         server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-        generate_config 
+        generate_config "${protocols[@]}"
 
         # 启动服务
         systemctl daemon-reload
