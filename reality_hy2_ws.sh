@@ -1,6 +1,6 @@
 #!/bin/bash
 # 全局数组 
-declare -a vless_uuids
+declare -a uuids
 declare -a listen_ports
 declare -a vmess_uuids
 declare -a short_ids
