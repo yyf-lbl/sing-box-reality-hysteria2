@@ -467,9 +467,16 @@ menu() {
             done
              server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 # Debugging output before generating config
-echo "监听端口: $listen_port"
-echo "UUIDs: $uuid"
-echo "短ID: $short_id"
+echo "服务器IP: $server_ip"
+echo "Reality端口: $listen_port"
+echo "UUID: $uuid"
+echo "域名SNI: $server_name"
+echo "Public Key: $private_key"
+echo "Short ID: $short_id"
+if [[ -z "$uuid" || -z "$listen_port" || -z "$server_name" || -z "$public_key" || -z "$short_id" ]]; then
+    echo "请确保所有配置变量都有值。"
+    exit 1
+fi
 
         generate_config 
         systemctl daemon-reload
