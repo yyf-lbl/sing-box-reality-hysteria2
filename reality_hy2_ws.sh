@@ -349,100 +349,86 @@ configure_vmess() {
 }
 #配置文件生成
 generate_config() {
-    local protocols=("$@")
-    local json='{
-        "log": {
-            "disabled": false,
-            "level": "info",
-            "timestamp": true
-        },
-        "inbounds": [],
-        "outbounds": [
+   jq -n --arg listen_port "$listen_ports" --arg vmess_port "$vmess_ports" --arg vmess_uuid "$vmess_uuids"  --arg ws_path "$ws_paths" --arg server_name "$server_names" --arg private_key "$private_key" --arg short_id "$short_ids" --arg uuid "$uuids" --arg hy_listen_port "$hy_listen_ports" --arg hy_password "$hy_passwords" --arg server_ip "$server_ip" '{
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "vless-in",
+      "listen": "::",
+      "listen_port": ($listen_ports | tonumber),
+      "users": [
+        {
+          "uuid": $uuids,
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": $server_names,
+          "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": $server_names,
+            "server_port": 443
+          },
+          "private_key": $private_key,
+          "short_id": [$short_ids]
+        }
+      }
+    },
+    {
+        "type": "hysteria2",
+        "tag": "hy2-in",
+        "listen": "::",
+        "listen_port": ($hy_listen_ports | tonumber),
+        "users": [
             {
-                "type": "direct",
-                "tag": "direct"
-            },
-            {
-                "type": "block",
-                "tag": "block"
+                "password": $hy_passwords
             }
-        ]
-    }'
+        ],
+        "tls": {
+            "enabled": true,
+            "alpn": [
+                "h3"
+            ],
+            "certificate_path": "/root/self-cert/cert.pem",
+            "key_path": "/root/self-cert/private.key"
+        }
+    },
+    {
+        "type": "vmess",
+        "tag": "vmess-in",
+        "listen": "::",
+        "listen_port": ($vmess_ports | tonumber),
+        "users": [
+            {
+                "uuid": $vmess_uuids,
+                "alterId": 0
+            }
+        ],
+        "transport": {
+            "type": "ws",
+            "path": $ws_paths
+        }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ]
+}' > /root/sbox/sbconfig_server.json
 
-    for i in "${!listen_ports[@]}"; do
-        protocol=${protocols[$i]}
-        case $protocol in
-            "vless")
-                json=$(echo "$json" | jq --arg listen_port "${listen_ports[$i]}" --arg uuid "${uuids[$i]}" --arg server_name "${server_names[$i]}" --arg private_key "$private_key" --arg short_id "${short_ids[$i]}" '
-                    .inbounds += [{
-                        "type": "vless",
-                        "tag": "vless-in",
-                        "listen": "::",
-                        "listen_port": ($listen_port | tonumber),
-                        "users": [{
-                            "uuid": $uuid,
-                            "flow": "xtls-rprx-vision"
-                        }],
-                        "tls": {
-                            "enabled": true,
-                            "server_name": $server_name,
-                            "reality": {
-                                "enabled": true,
-                                "handshake": {
-                                    "server": $server_name,
-                                    "server_port": 443
-                                },
-                                "private_key": $private_key,
-                                "short_id": [$short_id]
-                            }
-                        }
-                    }]')
-                ;;
-            "hysteria2")
-                json=$(echo "$json" | jq --arg hy_listen_port "${hy_listen_ports[$i]}" --arg hy_password "${hy_passwords[$i]}" '
-                    .inbounds += [{
-                        "type": "hysteria2",
-                        "tag": "hy2-in",
-                        "listen": "::",
-                        "listen_port": ($hy_listen_port | tonumber),
-                        "users": [{
-                            "password": $hy_password
-                        }],
-                        "tls": {
-                            "enabled": true,
-                            "alpn": ["h3"],
-                            "certificate_path": "/root/self-cert/cert.pem",
-                            "key_path": "/root/self-cert/private.key"
-                        }
-                    }]')
-                ;;
-            "vmess")
-                json=$(echo "$json" | jq --arg vmess_port "${vmess_ports[$i]}" --arg vmess_uuid "${uuids[$i]}" --arg ws_path "${ws_paths[$i]}" '
-                    .inbounds += [{
-                        "type": "vmess",
-                        "tag": "vmess-in",
-                        "listen": "::",
-                        "listen_port": ($vmess_port | tonumber),
-                        "users": [{
-                            "uuid": $vmess_uuid,
-                            "alterId": 0
-                        }],
-                        "transport": {
-                            "type": "ws",
-                            "path": $ws_path
-                        }
-                    }]')
-                ;;
-            *)
-                echo "无效的协议选择"
-                ;;
-        esac
-    done
-
-    echo "$json" | jq . > /root/sbox/sbconfig_server.json
-    if [[ $? -ne 0 ]]; then
-    echo "写入配置文件失败"
-fi
 }
 
 # 显示界面
