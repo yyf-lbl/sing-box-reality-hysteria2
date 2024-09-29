@@ -608,14 +608,14 @@ else
 fi
 }
 # 全局数组 
-declare -a listen_port
-declare -a uuid
-declare -a short_id
-declare -a server_name
-declare -a hy_listen_port
-declare -a hy_password
-declare -a vmess_port
-declare -a ws_path
+declare -a listen_ports
+declare -a uuids
+declare -a short_ids
+declare -a server_names
+declare -a hy_listen_ports
+declare -a hy_passwords
+declare -a vmess_ports
+declare -a ws_paths
 
 configure_reality() {
     echo "开始配置Reality"
@@ -636,8 +636,8 @@ configure_reality() {
     # Save the public key in a file using base64 encoding
     echo "$public_key" | base64 > /root/sbox/public.key.b64
     # Generate necessary values
-    uuid_value=$(/root/sbox/sing-box generate uuid)
-    short_id_value=$(/root/sbox/sing-box generate rand --hex 8) 
+    uuid=$(/root/sbox/sing-box generate uuid)
+    short_id=$(/root/sbox/sing-box generate rand --hex 8) 
     if [[ $? -ne 0 ]]; then
         echo "生成 UUID 和短ID 失败。"
         return 1
@@ -645,42 +645,41 @@ configure_reality() {
     echo "uuid和短id 生成完成"
     echo ""
     # Ask for listen port
-    read -p "请输入Reality端口 (default: 443): " listen_port_value
-    listen_port_value=${listen_port_value:-443}
-    echo "选择的Reality端口: $listen_port_value"
+    read -p "请输入Reality端口 (default: 443): " listen_port
+    listen_port=${listen_port:-443}
+    echo "选择的Reality端口: $listen_port"
     echo ""
     # Ask for server name (sni)
-    read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name_value
-    server_name_value=${server_name_value:-itunes.apple.com}
-    echo "选择的域名: $server_name_value"
+    read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
+    server_name=${server_name:-itunes.apple.com}
+    echo "选择的域名: $server_name"
     echo ""
     # 保存参数到数组
-    listen_port+=("$listen_port_value")
-    uuid+=("$uuid_value")
-    short_id+=("$short_id_value")
-    server_name+=("$server_name_value")
+    listen_port+=("$listen_port")
+    uuid+=("$uuid")
+    short_id+=("$short_id")
+    server_name+=("$server_name")
 }
-
 configure_hysteria2() {
     echo "开始配置hysteria2"
     echo ""
     # Generate hysteria necessary values
-    hy_password_value=$(/root/sbox/sing-box generate rand --hex 8)
+    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
     if [[ $? -ne 0 ]]; then
         echo "生成随机密码失败。"
         return 1
     fi
     # Ask for listen port
-    read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port_value
-    hy_listen_port_value=${hy_listen_port_value:-8443}
-    echo "选择的监听端口: $hy_listen_port_value"
+    read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
+    hy_listen_port=${hy_listen_port:-8443}
+    echo "选择的监听端口: $hy_listen_port"
     echo ""
 
     # Ask for self-signed certificate domain
-    read -p "输入自签证书域名 (default: bing.com): " hy_server_name_value
-    hy_server_name_value=${hy_server_name_value:-bing.com}
-    echo "选择的自签证书域名: $hy_server_name_value"
+    read -p "输入自签证书域名 (default: bing.com): " hy_server_name
+    hy_server_name=${hy_server_name:-bing.com}
+    echo "选择的自签证书域名: $hy_server_name"
     echo ""
     # Generate self-signed certificate
     mkdir -p /root/self-cert/
@@ -689,7 +688,7 @@ configure_hysteria2() {
         echo "生成私钥失败。"
         return 1
     fi
-    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name_value}"
+    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
     if [[ $? -ne 0 ]]; then
         echo "生成自签证书失败。"
         return 1
@@ -698,33 +697,32 @@ configure_hysteria2() {
     echo "自签证书生成完成"
     echo ""
     # 保存参数到数组
-    hy_listen_port+=("$hy_listen_port_value")
-    hy_password+=("$hy_password_value")  # 假设这里使用密码作为唯一标识
-    server_name+=("$hy_server_name_value")
+     listen_port+=("$hy_listen_port")
+    uuid+=("$hy_password")  # 假设这里使用密码作为唯一标识
+    server_name+=("$hy_server_name")
 }
-
 configure_vmess() {
     echo "开始配置vmess"
     echo ""   
-    # Generate vmess necessary values
-    vmess_uuid_value=$(/root/sbox/sing-box generate uuid)
+  # Generate vmess necessary values
+    vmess_uuid=$(/root/sbox/sing-box generate uuid)
     if [[ $? -ne 0 ]]; then
         echo "生成UUID失败。"
         return 1
     fi
-    read -p "请输入vmess端口，默认为15555: " vmess_port_value
-    vmess_port_value=${vmess_port_value:-15555}
+    read -p "请输入vmess端口，默认为15555: " vmess_port
+    vmess_port=${vmess_port:-15555}
     echo ""
-    read -p "ws路径 (默认随机生成): " ws_path_value
-    ws_path_value=${ws_path_value:-$(/root/sbox/sing-box generate rand --hex 6)}
+    read -p "ws路径 (默认随机生成): " ws_path
+    ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
     if [[ $? -ne 0 ]]; then
         echo "生成随机路径失败。"
         return 1
     fi
     # 保存参数到数组
-    vmess_port+=("$vmess_port_value")
-    uuid+=("$vmess_uuid_value")
-    ws_path+=("$ws_path_value")
+    vmess_port+=("$vmess_port")
+    uuid+=("$vmess_uuid")
+    ws_path+=("$ws_path")
     # Terminate cloudflared process if running
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
@@ -732,7 +730,7 @@ configure_vmess() {
         echo "已终止正在运行的cloudflared进程: $pid"
     fi
     # Generate address
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port_value --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
     sleep 2
     clear
     echo "等待cloudflare argo生成地址..."
@@ -748,9 +746,8 @@ configure_vmess() {
     echo "生成的Cloudflare地址已保存。"
     rm -rf argo.log
 }
-
 generate_config() {
-   local protocol=("$@")
+    local protocols=("$@")
     local json='{
         "log": {
             "disabled": false,
@@ -770,44 +767,44 @@ generate_config() {
         ]
     }'
 
-    for i in "${!listen_port[@]}"; do
-        protocol_name=${protocol[$i]}
-        case $protocol_name in
+    for i in "${!listen_ports[@]}"; do
+        protocol=${protocols[$i]}
+        case $protocols in
             "vless")
-                json=$(echo "$json" | jq --arg listen_port "${listen_port[$i]}" --arg uuid "${uuid[$i]}" --arg server_name "${server_name[$i]}" --arg private_key "$private_key" --arg short_id "${short_id[$i]}" '
+                json=$(echo "$json" | jq --arg listen_port "${listen_ports[$i]}" --arg uuid "${uuids[$i]}" --arg server_name "${server_names[$i]}" --arg private_key "$private_key" --arg short_id "$short_ids" '
                     .inbounds += [{
                         "type": "vless",
                         "tag": "vless-in",
                         "listen": "::",
-                        "listen_port": ($listen_port | tonumber),
+                        "listen_port": ($listen_ports | tonumber),
                         "users": [{
                             "uuid": $uuid,
                             "flow": "xtls-rprx-vision"
                         }],
                         "tls": {
                             "enabled": true,
-                            "server_name": $server_name,
+                            "server_name": $server_names,
                             "reality": {
                                 "enabled": true,
                                 "handshake": {
-                                    "server": $server_name,
+                                    "server": $server_names,
                                     "server_port": 443
                                 },
                                 "private_key": $private_key,
-                                "short_id": [$short_id]
+                                "short_id": [$short_ids]
                             }
                         }
                     }]')
                 ;;
             "hysteria2")
-                json=$(echo "$json" | jq --arg hy_listen_port "${hy_listen_port[$i]}" --arg hy_password "${hy_password[$i]}" '
+                json=$(echo "$json" | jq --arg hy_listen_port "${hy_listen_ports[$i]}" --arg hy_password "${hy_passwords[$i]}" '
                     .inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
                         "listen": "::",
-                        "listen_port": ($hy_listen_port | tonumber),
+                        "listen_port": ($hy_listen_ports | tonumber),
                         "users": [{
-                            "password": $hy_password
+                            "password": $hy_passwords
                         }],
                         "tls": {
                             "enabled": true,
@@ -818,19 +815,19 @@ generate_config() {
                     }]')
                 ;;
             "vmess")
-                json=$(echo "$json" | jq --arg vmess_port "${vmess_port[$i]}" --arg vmess_uuid "${uuid[$i]}" --arg ws_path "${ws_path[$i]}" '
+                json=$(echo "$json" | jq --arg vmess_port "${vmess_ports[$i]}" --arg vmess_uuid "${uuids[$i]}" --arg ws_path "${ws_paths[$i]}" '
                     .inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
                         "listen": "::",
-                        "listen_port": ($vmess_port | tonumber),
+                        "listen_port": ($vmess_ports | tonumber),
                         "users": [{
-                            "uuid": $vmess_uuid,
+                            "uuid": $vmess_uuids,
                             "alterId": 0
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path
+                            "path": $ws_paths
                         }
                     }]')
                 ;;
@@ -839,6 +836,7 @@ generate_config() {
                 ;;
         esac
     done
+
     echo "$json" | jq . > /root/sbox/sbconfig_server.json
 }
 # 显示界面
@@ -870,8 +868,8 @@ menu() {
             echo "3. Hysteria2"
             read -p "Enter your choices (e.g., 1 2 3): " protocols
 
-            for protocol in $protocol; do
-                case $protocol in
+            for protocol in $protocols; do
+                case $protocols in
                     1)
                         echo "正在安装 VLESS..."
                         configure_reality
@@ -885,16 +883,16 @@ menu() {
                         configure_hysteria2
                         ;;
                     *)
-                        echo "无效的协议选择: $protocol"
+                        echo "无效的协议选择: $protocols"
                         ;;
                 esac
             done
-            echo "监听端口: ${listen_port[@]}"
-echo "UUID: ${uuid[@]}"
-echo "域名SNI: ${server_name[@]}"
+            echo "监听端口: ${listen_ports[@]}"
+echo "UUID: ${uuids[@]}"
+echo "域名SNI: ${server_names[@]}"
             # 生成配置文件
         server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-        generate_config "${protocol[@]}"
+        generate_config "${protocols[@]}"
 
         # 启动服务
         systemctl daemon-reload
