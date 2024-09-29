@@ -300,54 +300,38 @@ configure_vmess() {
 
 # 配置文件生成
 generate_config() {
-    # 输出所有相关变量以进行调试
-    echo "正在生成配置文件..."
-    echo "listen_port: $listen_port"
-    echo "vmess_port: $vmess_port"
-    echo "vmess_uuid: $vmess_uuid"
-    echo "ws_path: $ws_path"
-    echo "server_name: $server_name"
-    echo "private_key: $private_key"
-    echo "short_id: $short_id"
-    echo "uuid: $uuid"
-    echo "hy_listen_port: $hy_listen_port"
-    echo "hy_password: $hy_password"
-    echo "server_ip: $server_ip"
-
-    # 确保没有变量为空
-    if [[ -z "$listen_port" || -z "$vmess_port" || -z "$vmess_uuid" || -z "$ws_path" || -z "$server_name" || -z "$private_key" || -z "$short_id" || -z "$uuid" || -z "$hy_listen_port" || -z "$hy_password" || -z "$server_ip" ]]; then
-        echo "错误：某些必需变量未设置。"
-        return 1
-    fi
-
-    config_json=$(jq -n --arg listen_port "$listen_port" \
-                         --arg vmess_port "$vmess_port" \
-                         --arg vmess_uuid "$vmess_uuid" \
-                         --arg ws_path "$ws_path" \
-                         --arg server_name "$server_name" \
-                         --arg private_key "$private_key" \
-                         --arg short_id "$short_id" \
-                         --arg uuid "$uuid" \
-                         --arg hy_listen_port "$hy_listen_port" \
-                         --arg hy_password "$hy_password" \
-                         --arg server_ip "$server_ip" '{
+    # 初始化jq的输入
+    json_input='{
         "log": {
             "disabled": false,
             "level": "info",
             "timestamp": true
         },
-        "inbounds": [
+        "inbounds": [],
+        "outbounds": [
             {
+                "type": "direct",
+                "tag": "direct"
+            },
+            {
+                "type": "block",
+                "tag": "block"
+            }
+        ]
+    }'
+
+    # 添加VLESS配置
+    if [[ -n "$listen_port" && -n "$uuid" && -n "$server_name" && -n "$private_key" && -n "$short_id" ]]; then
+        json_input=$(echo "$json_input" | jq --arg listen_port "$listen_port" --arg uuid "$uuid" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" '
+            .inbounds += [{
                 "type": "vless",
                 "tag": "vless-in",
                 "listen": "::",
                 "listen_port": ($listen_port | tonumber),
-                "users": [
-                    {
-                        "uuid": $uuid,
-                        "flow": "xtls-rprx-vision"
-                    }
-                ],
+                "users": [{
+                    "uuid": $uuid,
+                    "flow": "xtls-rprx-vision"
+                }],
                 "tls": {
                     "enabled": true,
                     "server_name": $server_name,
@@ -361,59 +345,53 @@ generate_config() {
                         "short_id": [$short_id]
                     }
                 }
-            },
-            {
-                "type": "hysteria2",
-                "tag": "hy2-in",
-                "listen": "::",
-                "listen_port": ($hy_listen_port | tonumber),
-                "users": [
-                    {
-                        "password": $hy_password
-                    }
-                ],
-                "tls": {
-                    "enabled": true,
-                    "alpn": [
-                        "h3"
-                    ],
-                    "certificate_path": "/root/self-cert/cert.pem",
-                    "key_path": "/root/self-cert/private.key"
-                }
-            },
-            {
+            }]'
+        )
+    fi
+
+    # 添加VMess配置
+    if [[ -n "$vmess_port" && -n "$vmess_uuid" && -n "$ws_path" ]]; then
+        json_input=$(echo "$json_input" | jq --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '
+            .inbounds += [{
                 "type": "vmess",
                 "tag": "vmess-in",
                 "listen": "::",
                 "listen_port": ($vmess_port | tonumber),
-                "users": [
-                    {
-                        "uuid": $vmess_uuid,
-                        "alterId": 0
-                    }
-                ],
+                "users": [{
+                    "uuid": $vmess_uuid,
+                    "alterId": 0
+                }],
                 "transport": {
                     "type": "ws",
                     "path": $ws_path
                 }
-            }
-        ],
-        "outbounds": [
-            {
-                "type": "direct",
-                "tag": "direct"
-            },
-            {
-                "type": "block",
-                "tag": "block"
-            }
-        ]
-    }')
+            }]'
+        )
+    fi
 
-    # 打印 JSON 内容以进行调试
-    echo "$config_json"
+    # 添加Hysteria2配置
+    if [[ -n "$hy_listen_port" && -n "$hy_password" ]]; then
+        json_input=$(echo "$json_input" | jq --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '
+            .inbounds += [{
+                "type": "hysteria2",
+                "tag": "hy2-in",
+                "listen": "::",
+                "listen_port": ($hy_listen_port | tonumber),
+                "users": [{
+                    "password": $hy_password
+                }],
+                "tls": {
+                    "enabled": true,
+                    "alpn": ["h3"],
+                    "certificate_path": "/root/self-cert/cert.pem",
+                    "key_path": "/root/self-cert/private.key"
+                }
+            }]'
+        )
+    fi
 
-    echo "$config_json" > /root/sbox/sbconfig_server.json  # 输出到文件
+    # 写入配置文件
+    echo "$json_input" > /root/sbox/sbconfig_server.json
 }
 
 
