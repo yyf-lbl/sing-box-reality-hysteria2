@@ -357,94 +357,66 @@ generate_config() {
     echo "UUID: ${uuids[@]}"
     echo "域名SNI: ${server_names[@]}"
     jq -n \
-      --argjson listen_ports "$(printf '%s\n' "${listen_ports[@]}" | jq -R . | jq -s .)" \
-      --argjson vmess_ports "$(printf '%s\n' "${vmess_ports[@]}" | jq -R . | jq -s .)" \
-      --argjson vmess_uuids "$(printf '%s\n' "${uuids[@]}" | jq -R . | jq -s .)" \
-      --argjson ws_paths "$(printf '%s\n' "${ws_paths[@]}" | jq -R . | jq -s .)" \
-      --argjson server_names "$(printf '%s\n' "${server_names[@]}" | jq -R . | jq -s .)" \
-      --arg private_key "$private_key" \
-      --argjson short_ids "$(printf '%s\n' "${short_ids[@]}" | jq -R . | jq -s .)" \
-      --argjson hy_listen_ports "$(printf '%s\n' "${hy_listen_ports[@]}" | jq -R . | jq -s .)" \
-      --argjson hy_passwords "$(printf '%s\n' "${hy_passwords[@]}" | jq -R . | jq -s .)" \
+        jq -n \
+      --arg listen_port "${listen_ports}" \        # 直接传递单个值
+      --arg vmess_port "${vmess_ports}" \          # 直接传递单个值
+      --arg uuid "${uuids}" \                       # 直接传递单个值
+      --arg ws_path "${ws_paths}" \                 # 直接传递单个值
+      --arg server_name "${server_names}" \         # 直接传递单个值
+      --arg private_key "$private_key" \            # 直接传递单个值
+      --arg short_id "${short_ids}" \               # 直接传递单个值
+      --arg hy_listen_port "${hy_listen_ports}" \   # 直接传递单个值
+      --arg hy_password "${hy_passwords}" \         # 直接传递单个值
       --arg server_ip "$server_ip" \
       '{
-        "log": {
-          "disabled": false,
-          "level": "info",
-          "timestamp": true
-        },
-        "inbounds": [
-          {
-            "type": "vless",
-            "tag": "vless-in",
-            "listen": "::",
-            "listen_port": $listen_ports[0],
-            "users": [
-              {
-                "uuid": $vmess_uuids[0],
-                "flow": "xtls-rprx-vision"
-              }
-            ],
-            "tls": {
-              "enabled": true,
-              "server_name": $server_names[0],
+        "listen_ports": [$listen_port],  # 如果你需要将单个值放在数组中
+        "vmess_ports": $vmess_port,
+        "vmess_uuids": $uuid,
+        "ws_paths": $ws_path,
+        "server_names": $server_name,
+        "private_key": $private_key,
+        "short_ids": $short_id,
+        "hy_listen_ports": $hy_listen_port,
+        "hy_passwords": $hy_password,
+        "server_ip": $server_ip
+    }' \
+    '{
+      "log": {
+        "disabled": false,
+        "level": "info",
+        "timestamp": true
+      },
+      "inbounds": [
+        {
+          "type": "vless",
+          "tag": "vless-in",
+          "listen": "::",
+          "listen_port": $listen_port,  # 直接使用单个值
+          "users": [
+            {
+              "uuid": $uuid,
+              "flow": "xtls-rprx-vision"
+            }
+          ],
+          "tls": {
+            "enabled": true,
+            "server_name": $server_name,
               "reality": {
-                "enabled": true,
-                "handshake": {
-                  "server": $server_names[0],
-                  "server_port": 443
-                },
-                "private_key": $private_key,
-                "short_id": [$short_ids[0]]
-              }
-            }
-          },
-          {
-            "type": "hysteria2",
-            "tag": "hy2-in",
-            "listen": "::",
-            "listen_port": $hy_listen_ports[0],
-            "users": [
-              {
-                "password": $hy_passwords[0]
-              }
-            ],
-            "tls": {
               "enabled": true,
-              "alpn": ["h3"],
-              "certificate_path": "/root/self-cert/cert.pem",
-              "key_path": "/root/self-cert/private.key"
-            }
-          },
-          {
-            "type": "vmess",
-            "tag": "vmess-in",
-            "listen": "::",
-            "listen_port": $vmess_ports[0],
-            "users": [
-              {
-                "uuid": $vmess_uuids[0],
-                "alterId": 0
-              }
-            ],
-            "transport": {
-              "type": "ws",
-              "path": $ws_paths[0]
+              "handshake": {
+                "server": $server_name,
+                "server_port": 443
+              },
+              "private_key": $private_key,
+              "short_id": [$short_id]  # 如果需要单个值，可以放在数组中
             }
           }
-        ],
-        "outbounds": [
-          {
-            "type": "direct",
-            "tag": "direct"
-          },
-          {
-            "type": "block",
-            "tag": "block"
-          }
-        ]
-      }' > /root/sbox/sbconfig_server.json
+        },
+        ...
+      ]
+    }' > /root/sbox/sbconfig_server.json
 }
+
 # 显示界面
 menu() {
     mkdir -p "/root/sbox/"
