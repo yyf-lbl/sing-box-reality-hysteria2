@@ -360,7 +360,7 @@ generate_config() {
       "type": "vless",
       "tag": "vless-in",
       "listen": "::",
-      "listen_port": ($listen_ports | tonumber),
+      "listen_port": $listen_ports,
       "users": [
         {
           "uuid": $uuids,
@@ -385,7 +385,7 @@ generate_config() {
         "type": "hysteria2",
         "tag": "hy2-in",
         "listen": "::",
-        "listen_port": ($hy_listen_ports | tonumber),
+        "listen_port": $hy_listen_ports,
         "users": [
             {
                 "password": $hy_passwords
@@ -404,7 +404,7 @@ generate_config() {
         "type": "vmess",
         "tag": "vmess-in",
         "listen": "::",
-        "listen_port": ($vmess_ports | tonumber),
+        "listen_port": $vmess_ports,
         "users": [
             {
                 "uuid": $vmess_uuids,
