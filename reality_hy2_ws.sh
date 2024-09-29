@@ -367,6 +367,7 @@ generate_config() {
       --arg listen_port "$listen_port" \
       --arg vmess_port "$vmess_port" \
       --arg uuid "$uuid" \
+       --arg vmess_uuid "$vmess_uuid" \
       --arg ws_path "$ws_path" \
       --arg server_name "$server_name" \
       --arg private_key "$private_key" \
