@@ -205,6 +205,9 @@ uninstall_singbox() {
           rm /root/self-cert/cert.pem
           rm -rf /root/self-cert/
           rm -rf /root/sbox/
+          if [ -f /root/sbox/argo.txt.b64 ]; then
+  rm /root/sbox/argo.txt.b64
+fi
           echo "DONE!"
 }
 install_base
