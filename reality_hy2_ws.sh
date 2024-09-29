@@ -1,7 +1,9 @@
 #!/bin/bash
 # 全局数组 
+declare -a vless_uuids
 declare -a listen_ports
-declare -a uuids
+declare -a vmess_uuids
+declare -a hy_uuids
 declare -a short_ids
 declare -a server_names
 declare -a hy_listen_ports
@@ -58,7 +60,7 @@ regenarte_cloudflared_argo(){
     # 终止进程
     kill "$pid"
   fi
-  vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+  vmess_port=$vmess_ports
   #生成地址
   /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
   sleep 2
@@ -302,7 +304,7 @@ configure_hysteria2() {
     echo "自签证书生成完成"
     echo ""
      listen_ports+=("$hy_listen_port")
-    uuids+=("$hy_uuid")  # 假设这里使用密码作为唯一标识
+    hy_uuids+=("$hy_uuid")  # 假设这里使用密码作为唯一标识
     server_names+=("$hy_server_name")
     hy_passwords+=("$hy_password")
 }
@@ -324,7 +326,7 @@ configure_vmess() {
         return 1
     fi
     vmess_ports+=("$vmess_port")
-    uuids+=("$vmess_uuid")
+    vmess_uuids+=("$vmess_uuid")
     ws_paths+=("$ws_path")
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
