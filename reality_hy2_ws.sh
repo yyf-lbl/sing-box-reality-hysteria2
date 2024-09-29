@@ -3,7 +3,6 @@
 declare -a vless_uuids
 declare -a listen_ports
 declare -a vmess_uuids
-declare -a hy_uuids
 declare -a short_ids
 declare -a server_names
 declare -a hy_listen_ports
@@ -497,7 +496,7 @@ menu() {
              server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 # Debugging output before generating config
 echo "监听端口: ${listen_ports[*]}"
-echo "UUIDs: $hy_uuids"
+echo "UUIDs: ${uuids[*]}"
 echo "短ID: ${short_ids[*]}"
 echo "服务器名称: ${server_names[*]}"
 echo "hysteria2 端口: $hy_listen_ports"
