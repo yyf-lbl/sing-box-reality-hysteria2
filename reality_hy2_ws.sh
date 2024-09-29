@@ -352,16 +352,25 @@ configure_vmess() {
 }
 #配置文件生成
 generate_config() {
+    local listen_port="${listen_ports[0]}"  # 使用 listen_ports 数组的第一个值
+    local uuid="${uuids[0]}"                  # 使用 uuids 数组的第一个值
+    local server_name="${server_names[0]}"    # 使用 server_names 数组的第一个值
+    local short_id="${short_ids[0]}" # 使用 short_ids 数组的第一个值
+    local hy_listen_port="${hy_listen_ports[0]}"
+    local hy_password="${hy_passwords[0]}"
+    local vmess_port="${vmess_ports[0]}"
+    local ws_path="${ws_paths[0]}"
+ 
    jq -n \
-      --argjson listen_ports "$(printf '%s\n' "${listen_ports[@]}" | jq -R . | jq -s .)" \
-      --argjson vmess_ports "$(printf '%s\n' "${vmess_ports[@]}" | jq -R . | jq -s .)" \
-      --arg uuid "$uuids" \
-      --arg ws_path "$ws_paths" \
-      --arg server_name "$server_names" \
+      --argjson listen_ports "$listen_port
+      --argjson vmess_ports "$vmess_port
+      --arg uuid "$uuid" \
+      --arg ws_path "$ws_path" \
+      --arg server_name "$server_name" \
       --arg private_key "$private_key" \
-      --arg short_id "$short_ids" \
-      --argjson hy_listen_ports "$(printf '%s\n' "${hy_listen_ports[@]}" | jq -R . | jq -s .)" \
-      --arg hy_password "$hy_passwords" \
+      --arg short_id "$short_id" \
+      --argjson hy_listen_ports "$hy_listen_port \
+      --arg hy_password "$hy_password" \
       --arg server_ip "$server_ip" \
     '{
       "log": {
