@@ -887,9 +887,11 @@ menu() {
                         ;;
                 esac
             done
-            echo "监听端口: ${!listen_ports[@]}"
-echo "UUID: ${!uuids[@]}"
-echo "域名SNI: ${!server_names[@]}"
+       echo "Listen Ports: ${listen_ports[@]}"
+echo "UUIDs: ${uuids[@]}"
+echo "Short_ids: ${short_ids[@]}"
+echo "Server Names: ${server_names[@]}"
+
             # 生成配置文件
         server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
         generate_config 
