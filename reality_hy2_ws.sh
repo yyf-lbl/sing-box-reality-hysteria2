@@ -750,20 +750,19 @@ LimitNOFILE=infinity
 [Install]
 WantedBy=multi-user.target
 EOF
-# Check configuration and start the service
+# 检测配置并启动服务
+start_singbox(){
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
     systemctl daemon-reload
     systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
     systemctl restart sing-box
-
     show_client_configuration
-
-
 else
     echo "Error in configuration. Aborting"
 fi
+}
 menu(){
   mkdir -p "/root/sbox/"
   download_singbox
@@ -778,6 +777,7 @@ menu(){
     echo "5. 卸载"
     echo "6. 更新sing-box内核"
     echo "7. 手动重启cloudflared"
+    echo "8. 手动重启sing-box"
     echo "0. 退出脚本"
     echo ""
     read -p "Enter your choice (0-7): " choice
@@ -879,6 +879,10 @@ menu(){
             show_client_configuration
             exit 1
             ;;
+         8)
+           start_singbox
+            exit 0
+            ;;   
         0)
             echo "退出脚本"
             exit 0
