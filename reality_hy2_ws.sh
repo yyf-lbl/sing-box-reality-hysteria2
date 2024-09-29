@@ -652,87 +652,102 @@ configure_vmess() {
     rm -rf argo.log
 }
 generate_config() {
-  local protocols=("$@")
-jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "inbounds": [
-    {
-      "type": "vless",
-      "tag": "vless-in",
-      "listen": "::",
-      "listen_port": ($listen_port | tonumber),
-      "users": [
-        {
-          "uuid": $uuid,
-          "flow": "xtls-rprx-vision"
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "server_name": $server_name,
-          "reality": {
-          "enabled": true,
-          "handshake": {
-            "server": $server_name,
-            "server_port": 443
-          },
-          "private_key": $private_key,
-          "short_id": [$short_id]
-        }
-      }
-    },
-    {
-        "type": "hysteria2",
-        "tag": "hy2-in",
-        "listen": "::",
-        "listen_port": ($hy_listen_port | tonumber),
-        "users": [
+    local protocols=("$@")
+    
+    # 初始化 JSON 对象
+    local json='{
+        "log": {
+            "disabled": false,
+            "level": "info",
+            "timestamp": true
+        },
+        "inbounds": [],
+        "outbounds": [
             {
-                "password": $hy_password
-            }
-        ],
-        "tls": {
-            "enabled": true,
-            "alpn": [
-                "h3"
-            ],
-            "certificate_path": "/root/self-cert/cert.pem",
-            "key_path": "/root/self-cert/private.key"
-        }
-    },
-    {
-        "type": "vmess",
-        "tag": "vmess-in",
-        "listen": "::",
-        "listen_port": ($vmess_port | tonumber),
-        "users": [
+                "type": "direct",
+                "tag": "direct"
+            },
             {
-                "uuid": $vmess_uuid,
-                "alterId": 0
+                "type": "block",
+                "tag": "block"
             }
-        ],
-        "transport": {
-            "type": "ws",
-            "path": $ws_path
-        }
-    }
-  ],
-  "outbounds": [
-    {
-      "type": "direct",
-      "tag": "direct"
-    },
-    {
-      "type": "block",
-      "tag": "block"
-    }
-  ]
-}' > /root/sbox/sbconfig_server.json
+        ]
+    }'
+
+    # 根据选择的协议添加相应的 inbound 配置
+    for protocol in "${protocols[@]}"; do
+        case $protocol in
+            "vless")
+                json=$(echo "$json" | jq --arg listen_port "$listen_port" --arg uuid "$uuid" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg server_ip "$server_ip" '
+                    .inbounds += [{
+                        "type": "vless",
+                        "tag": "vless-in",
+                        "listen": "::",
+                        "listen_port": ($listen_port | tonumber),
+                        "users": [{
+                            "uuid": $uuid,
+                            "flow": "xtls-rprx-vision"
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "server_name": $server_name,
+                            "reality": {
+                                "enabled": true,
+                                "handshake": {
+                                    "server": $server_name,
+                                    "server_port": 443
+                                },
+                                "private_key": $private_key,
+                                "short_id": [$short_id]
+                            }
+                        }
+                    }]')
+                ;;
+            "hysteria2")
+                json=$(echo "$json" | jq --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '
+                    .inbounds += [{
+                        "type": "hysteria2",
+                        "tag": "hy2-in",
+                        "listen": "::",
+                        "listen_port": ($hy_listen_port | tonumber),
+                        "users": [{
+                            "password": $hy_password
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "alpn": ["h3"],
+                            "certificate_path": "/root/self-cert/cert.pem",
+                            "key_path": "/root/self-cert/private.key"
+                        }
+                    }]')
+                ;;
+            "vmess")
+                json=$(echo "$json" | jq --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '
+                    .inbounds += [{
+                        "type": "vmess",
+                        "tag": "vmess-in",
+                        "listen": "::",
+                        "listen_port": ($vmess_port | tonumber),
+                        "users": [{
+                            "uuid": $vmess_uuid,
+                            "alterId": 0
+                        }],
+                        "transport": {
+                            "type": "ws",
+                            "path": $ws_path
+                        }
+                    }]')
+                ;;
+            *)
+                echo "无效的协议选择: $protocol"
+                ;;
+        esac
+    done
+
+    # 将生成的 JSON 写入文件
+    echo "$json" | jq . > /root/sbox/sbconfig_server.json
 }
+
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
@@ -812,7 +827,7 @@ menu(){
             done
              # 生成配置文件
              server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-             generate_config "${selected_protocols[@]}"
+             generate_config 
             ;;   
         2)
             show_notice "Reinstalling..."
