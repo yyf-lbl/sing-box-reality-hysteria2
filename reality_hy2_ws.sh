@@ -364,14 +364,14 @@ generate_config() {
     local server_ip="107.175.124.56"           # 假设这是你的服务器 IP
 
     jq -n \
-      --argjson listen_port "$listen_port" \
-      --argjson vmess_port "$vmess_port" \
+      --arg listen_port "$listen_port" \
+      --arg vmess_port "$vmess_port" \
       --arg uuid "$uuid" \
       --arg ws_path "$ws_path" \
       --arg server_name "$server_name" \
       --arg private_key "$private_key" \
       --arg short_id "$short_id" \
-      --argjson hy_listen_port "$hy_listen_port" \
+      --arg hy_listen_port "$hy_listen_port" \
       --arg hy_password "$hy_password" \
       --arg server_ip "$server_ip" \
     '{
