@@ -21,7 +21,7 @@ show_notice() {
     echo "#######################################################################################################################"
 }
 # Introduction animation
-print_with_delay "sing-reality-hy2-box" 0.05
+print_with_delay "欢迎使用三协议一键脚本" 0.05
 echo ""
 echo ""
 # install base
