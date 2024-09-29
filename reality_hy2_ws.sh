@@ -839,6 +839,9 @@ generate_config() {
     done
 
     echo "$json" | jq . > /root/sbox/sbconfig_server.json
+    if [[ $? -ne 0 ]]; then
+    echo "写入配置文件失败"
+fi
 }
 
 # 显示界面
