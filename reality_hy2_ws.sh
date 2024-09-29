@@ -1,14 +1,5 @@
 #!/bin/bash
-# 全局数组 
-declare -a uuids
-declare -a listen_ports
-declare -a vmess_uuids
-declare -a short_ids
-declare -a server_names
-declare -a hy_listen_ports
-declare -a hy_passwords
-declare -a vmess_ports
-declare -a ws_paths
+
 # Function to print characters with delay
 print_with_delay() {
     text="$1"
@@ -59,7 +50,8 @@ regenarte_cloudflared_argo(){
     # 终止进程
     kill "$pid"
   fi
-  vmess_port=$vmess_ports
+
+  vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
   #生成地址
   /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
   sleep 2
@@ -70,6 +62,7 @@ regenarte_cloudflared_argo(){
   argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
   echo "$argo" | base64 > /root/sbox/argo.txt.b64
   rm -rf argo.log
+
   }
 download_singbox(){
   arch=$(uname -m)
@@ -117,19 +110,16 @@ download_cloudflared(){
   echo ""
 }
 show_client_configuration() {
-   current_listen_port=${listen_ports[@]}
-  current_server_name=${server_names[@]}
-  uuid=${uuids[@]}
+  current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
+  current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
+  uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbox/sbconfig_server.json)
   public_key=$(base64 --decode /root/sbox/public.key.b64)
-  short_id=${short_ids[@]}
+  short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
   server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-  echo ""
   echo ""
   show_notice "Reality 客户端通用链接" 
   echo ""
-  echo ""
   server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
-  echo ""
   echo ""
   echo "$server_link"
   echo ""
@@ -142,9 +132,9 @@ show_client_configuration() {
   echo "Public Key: $public_key"
   echo "Short ID: $short_id"
   echo ""
-  hy_current_listen_port=${listen_ports[@]}
-  hy_current_server_name=${server_names[@]}
-  hy_password=${hy_passwords[@]}
+  hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+  hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
+  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json) 
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
   show_notice "Hysteria2 客户端通用链接" 
   echo ""
@@ -176,8 +166,8 @@ socks5:
   listen: 127.0.0.1:5080
 EOF
   argo=$(base64 --decode /root/sbox/argo.txt.b64)
-  vmess_uuid=${vmess_uuids[@]}
-  ws_path=${ws_paths[@]}
+  vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
+  ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
   show_notice "vmess ws 通用链接参数" 
   echo ""
   echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
@@ -242,218 +232,146 @@ else
 fi
 }
 configure_reality() {
-    echo "开始配置Reality"
-    echo ""
-    echo "自动生成基本参数..."
-    key_pair=$(/root/sbox/sing-box generate reality-keypair)    
-    if [[ $? -ne 0 ]]; then
-        echo "生成 key pair 失败，请检查 sing-box 是否正确安装。"
-        return 1
-    fi
-    echo "Key pair生成完成"
-    echo ""
-    private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
-    public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
-    echo "$public_key" | base64 > /root/sbox/public.key.b64
-    uuid=$(/root/sbox/sing-box generate uuid)
-    short_id=$(/root/sbox/sing-box generate rand --hex 8) 
-    if [[ $? -ne 0 ]]; then
-        echo "生成 UUID 和短ID 失败。"
-        return 1
-    fi
-    echo "uuid和短id 生成完成"
-    echo ""
-    read -p "请输入Reality端口 (default: 443): " listen_port
-    listen_port=${listen_port:-443}
-    echo "选择的Reality端口: $listen_port"
-    echo ""
-    read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
-    server_name=${server_name:-itunes.apple.com}
-    echo "选择的域名: $server_name"
-    echo ""
-    listen_ports+=("$listen_port")
-    uuids+=("$uuid")
-    short_ids+=("$short_id")
-    server_names+=("$server_name")
+   echo "开始配置Reality"
+echo ""
+echo "自动生成基本参数"
+echo ""
+key_pair=$(/root/sbox/sing-box generate reality-keypair)
+echo "Key pair生成完成"
+echo ""
+private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
+public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+echo "$public_key" | base64 > /root/sbox/public.key.b64
+uuid=$(/root/sbox/sing-box generate uuid)
+short_id=$(/root/sbox/sing-box generate rand --hex 8)
+echo "uuid和短id 生成完成"
+echo ""
+read -p "请输入Reality端口 (default: 443): " listen_port
+listen_port=${listen_port:-443}
+echo ""
+read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
+server_name=${server_name:-itunes.apple.com}
+echo ""
 }
 configure_hysteria2() {
-    echo "开始配置hysteria2"
-    echo ""
-    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-    if [[ $? -ne 0 ]]; then
-        echo "生成随机密码失败。"
-        return 1
-    fi
-    read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
-    hy_listen_port=${hy_listen_port:-8443}
-    echo "选择的监听端口: $hy_listen_port"
-    echo ""
-    read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-    hy_server_name=${hy_server_name:-bing.com}
-    echo "选择的自签证书域名: $hy_server_name"
-    mkdir -p /root/self-cert/
-    openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-    if [[ $? -ne 0 ]]; then
-        echo "生成私钥失败。"
-        return 1
-    fi
-    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-    if [[ $? -ne 0 ]]; then
-        echo "生成自签证书失败。"
-        return 1
-    fi
+   echo "开始配置hysteria2"
+echo ""
+hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
-    echo "自签证书生成完成"
-    echo ""
-     listen_ports+=("$hy_listen_port")
-    hy_uuids+=("$hy_uuid")  # 假设这里使用密码作为唯一标识
-    server_names+=("$hy_server_name")
-    hy_passwords+=("$hy_password")
+# Ask for listen port
+read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
+hy_listen_port=${hy_listen_port:-8443}
+echo ""
+read -p "输入自签证书域名 (default: bing.com): " hy_server_name
+hy_server_name=${hy_server_name:-bing.com}
+mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key && openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+echo ""
+echo "自签证书生成完成"
+echo ""
 }
 configure_vmess() {
     echo "开始配置vmess"
-    echo ""   
-    vmess_uuid=$(/root/sbox/sing-box generate uuid)
-    if [[ $? -ne 0 ]]; then
-        echo "生成UUID失败。"
-        return 1
-    fi
-    read -p "请输入vmess端口，默认为15555: " vmess_port
-    vmess_port=${vmess_port:-15555}
-    echo ""
-    read -p "ws路径 (默认随机生成): " ws_path
-    ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-    if [[ $? -ne 0 ]]; then
-        echo "生成随机路径失败。"
-        return 1
-    fi
-    vmess_ports+=("$vmess_port")
-    vmess_uuids+=("$vmess_uuid")
-    ws_paths+=("$ws_path")
-    pid=$(pgrep -f cloudflared)
-    if [ -n "$pid" ]; then
-        kill "$pid"
-        echo "已终止正在运行的cloudflared进程: $pid"
-    fi
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-    sleep 2
-    clear
-    echo "等待cloudflare argo生成地址..."
-    sleep 5
-    argo=$(grep trycloudflare.com argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-    
-    if [[ -z "$argo" ]]; then
-        echo "未能获取Cloudflare地址，请检查日志。"
-        return 1
-    fi
-    echo "$argo" | base64 > /root/sbox/argo.txt.b64
-    echo "生成的Cloudflare地址已保存。"
-    rm -rf argo.log
+echo ""
+vmess_uuid=$(/root/sbox/sing-box generate uuid)
+read -p "请输入vmess端口，默认为15555: " vmess_port
+vmess_port=${vmess_port:-15555}
+echo ""
+read -p "ws路径 (默认随机生成): " ws_path
+ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+pid=$(pgrep -f cloudflared)
+if [ -n "$pid" ]; then
+  kill "$pid"
+fi
+/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
+sleep 2
+clear
+echo 等待cloudflare argo生成地址
+sleep 5
+argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
+rm -rf argo.log
 }
 #配置文件生成
 generate_config() {
-    local listen_port="${listen_ports[0]}"  # 使用 listen_ports 数组的第一个值
-    local uuid="${uuids[0]}"                  # 使用 uuids 数组的第一个值
-    local vmess_uuid="${vmess_uuids[0]}"  
-    local server_name="${server_names[0]}"    # 使用 server_names 数组的第一个值
-    local short_id="${short_ids[0]}"          # 使用 short_ids 数组的第一个值
-    local hy_listen_port="${hy_listen_ports[0]}"  # 使用 hy_listen_ports 数组的第一个值
-    local hy_password="${hy_passwords[0]}"    # 使用 hy_passwords 数组的第一个值
-    local vmess_port="${vmess_ports[0]}"      # 使用 vmess_ports 数组的第一个值
-    local ws_path="${ws_paths[0]}"            # 使用 ws_paths 数组的第一个值
-    local server_ip="107.175.124.56"           # 假设这是你的服务器 IP
-
-    jq -n \
-      --arg listen_port "$listen_port" \
-      --arg vmess_port "$vmess_port" \
-      --arg uuid "$uuid" \
-       --arg vmess_uuid "$vmess_uuid" \
-      --arg ws_path "$ws_path" \
-      --arg server_name "$server_name" \
-      --arg private_key "$private_key" \
-      --arg short_id "$short_id" \
-      --arg hy_listen_port "$hy_listen_port" \
-      --arg hy_password "$hy_password" \
-      --arg server_ip "$server_ip" \
-    '{
-      "log": {
-        "disabled": false,
-        "level": "info",
-        "timestamp": true
-      },
-      "inbounds": [
+  jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "vless-in",
+      "listen": "::",
+      "listen_port": ($listen_port | tonumber),
+      "users": [
         {
-          "type": "vless",
-          "tag": "vless-in",
-          "listen": "::",
-          "listen_port": ($listen_port | tonumber),
-          "users": [
+          "uuid": $uuid,
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": $server_name,
+          "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": $server_name,
+            "server_port": 443
+          },
+          "private_key": $private_key,
+          "short_id": [$short_id]
+        }
+      }
+    },
+    {
+        "type": "hysteria2",
+        "tag": "hy2-in",
+        "listen": "::",
+        "listen_port": ($hy_listen_port | tonumber),
+        "users": [
             {
-              "uuid": $uuid,
-              "flow": "xtls-rprx-vision"
+                "password": $hy_password
             }
-          ],
-          "tls": {
-            "enabled": true,
-            "server_name": $server_name,
-            "reality": {
-              "enabled": true,
-              "handshake": {
-                "server": $server_name,
-                "server_port": 443
-              },
-              "private_key": $private_key,
-              "short_id": [$short_id]
-            }
-          }
-        },
-        {
-          "type": "hysteria2",
-          "tag": "hy2-in",
-          "listen": "::",
-          "listen_port": ($hy_listen_port | tonumber),
-          "users": [
-            {
-              "password": $hy_password
-            }
-          ],
-          "tls": {
+        ],
+        "tls": {
             "enabled": true,
             "alpn": [
-              "h3"
+                "h3"
             ],
             "certificate_path": "/root/self-cert/cert.pem",
             "key_path": "/root/self-cert/private.key"
-          }
-        },
-        {
-          "type": "vmess",
-          "tag": "vmess-in",
-          "listen": "::",
-          "listen_port": ($vmess_port | tonumber),
-          "users": [
+        }
+    },
+    {
+        "type": "vmess",
+        "tag": "vmess-in",
+        "listen": "::",
+        "listen_port": ($vmess_port | tonumber),
+        "users": [
             {
-              "uuid": $vmess_uuid,  # 这里需要使用对应的 UUID
-              "alterId": 0
+                "uuid": $vmess_uuid,
+                "alterId": 0
             }
-          ],
-          "transport": {
+        ],
+        "transport": {
             "type": "ws",
             "path": $ws_path
-          }
         }
-      ],
-      "outbounds": [
-        {
-          "type": "direct",
-          "tag": "direct"
-        },
-        {
-          "type": "block",
-          "tag": "block"
-        }
-      ]
-    }' > /root/sbox/sbconfig_server.json
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ]
+}' > /root/sbox/sbconfig_server.json
 }
 
 # 显示界面
