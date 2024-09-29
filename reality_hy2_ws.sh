@@ -889,10 +889,15 @@ menu() {
                         ;;
                 esac
             done
-       echo "Listen Ports: ${listen_ports[@]}"
-echo "UUIDs: ${uuids[@]}"
-echo "Short_ids: ${short_ids[@]}"
-echo "Server Names: ${server_names[@]}"
+# Debugging output before generating config
+echo "监听端口: ${listen_ports[*]}"
+echo "UUIDs: ${uuids[*]}"
+echo "短ID: ${short_ids[*]}"
+echo "服务器名称: ${server_names[*]}"
+echo "hysteria2 端口: ${hy_listen_ports[*]}"
+echo "hysteria2 密码: ${hy_passwords[*]}"
+echo "vmess 端口: ${vmess_ports[*]}"
+echo "ws路径: ${ws_paths[*]}"
 
             # 生成配置文件
         server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
