@@ -352,24 +352,19 @@ configure_vmess() {
 }
 #配置文件生成
 generate_config() {
-   # 打印变量以检查值
-    echo "监听端口: ${listen_ports[@]}"
-    echo "UUID: ${uuids[@]}"
-    echo "域名SNI: ${server_names[@]}"
     jq -n \
-        jq -n \
-      --arg listen_port "${listen_ports}" \        # 直接传递单个值
-      --arg vmess_port "${vmess_ports}" \          # 直接传递单个值
-      --arg uuid "${uuids}" \                       # 直接传递单个值
-      --arg ws_path "${ws_paths}" \                 # 直接传递单个值
-      --arg server_name "${server_names}" \         # 直接传递单个值
-      --arg private_key "$private_key" \            # 直接传递单个值
-      --arg short_id "${short_ids}" \               # 直接传递单个值
-      --arg hy_listen_port "${hy_listen_ports}" \   # 直接传递单个值
-      --arg hy_password "${hy_passwords}" \         # 直接传递单个值
+      --arg listen_port "${listen_ports}" \
+      --arg vmess_port "${vmess_ports}" \
+      --arg uuid "${uuids}" \
+      --arg ws_path "${ws_paths}" \
+      --arg server_name "${server_names}" \
+      --arg private_key "$private_key" \
+      --arg short_id "${short_ids}" \
+      --arg hy_listen_port "${hy_listen_ports}" \
+      --arg hy_password "${hy_passwords}" \
       --arg server_ip "$server_ip" \
-      '{
-        "listen_ports": [$listen_port],  # 如果你需要将单个值放在数组中
+    '{
+        "listen_ports": [$listen_port],
         "vmess_ports": $vmess_port,
         "vmess_uuids": $uuid,
         "ws_paths": $ws_path,
@@ -391,7 +386,7 @@ generate_config() {
           "type": "vless",
           "tag": "vless-in",
           "listen": "::",
-          "listen_port": $listen_port,  # 直接使用单个值
+          "listen_port": $listen_port,
           "users": [
             {
               "uuid": $uuid,
@@ -408,7 +403,7 @@ generate_config() {
                 "server_port": 443
               },
               "private_key": $private_key,
-              "short_id": [$short_id]  # 如果需要单个值，可以放在数组中
+              "short_id": [$short_id]
             }
           }
         },
