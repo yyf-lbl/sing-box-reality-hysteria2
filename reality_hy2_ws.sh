@@ -892,9 +892,15 @@ menu() {
                         ;;
                 esac
             done
-            
-            server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-            generate_config 
+            # 生成配置文件
+        server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+        generate_config 
+
+        # 启动服务
+        systemctl daemon-reload
+        systemctl enable sing-box
+        systemctl start sing-box
+        echo "服务已启动" 
             ;;
         2)
             show_notice "Reinstalling..."
