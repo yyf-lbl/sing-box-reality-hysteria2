@@ -391,7 +391,7 @@ generate_config() {
     fi
 
     # 写入配置文件
-    echo "$json_input" > /root/sbox/sbconfig_server.json
+    jq -n --argjson config "$json_input" '$config' > /root/sbox/sbconfig_server.json
 }
 
 
