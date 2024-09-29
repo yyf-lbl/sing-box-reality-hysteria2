@@ -352,52 +352,96 @@ configure_vmess() {
 }
 #配置文件生成
 generate_config() {
-    jq -n \
-      --arg listen_port "$listen_ports" \
-      --arg vmess_port "$vmess_ports" \
+   jq -n \
+      --argjson listen_ports "$(printf '%s\n' "${listen_ports[@]}" | jq -R . | jq -s .)" \
+      --argjson vmess_ports "$(printf '%s\n' "${vmess_ports[@]}" | jq -R . | jq -s .)" \
       --arg uuid "$uuids" \
       --arg ws_path "$ws_paths" \
       --arg server_name "$server_names" \
       --arg private_key "$private_key" \
       --arg short_id "$short_ids" \
-      --arg hy_listen_port "$hy_listen_ports" \
+      --argjson hy_listen_ports "$(printf '%s\n' "${hy_listen_ports[@]}" | jq -R . | jq -s .)" \
       --arg hy_password "$hy_passwords" \
       --arg server_ip "$server_ip" \
     '{
       "log": {
-        "disabled": false,
-        "level": "info",
-        "timestamp": true
-      },
-      "inbounds": [
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "vless",
+      "tag": "vless-in",
+      "listen": "::",
+      "listen_port": ($listen_port | tonumber),
+      "users": [
         {
-          "type": "vless",
-          "tag": "vless-in",
-          "listen": "::",
-          "listen_port": $listen_port,
-          "users": [
+          "uuid": $uuid,
+          "flow": "xtls-rprx-vision"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": $server_name,
+          "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": $server_name,
+            "server_port": 443
+          },
+          "private_key": $private_key,
+          "short_id": [$short_id]
+        }
+      }
+    },
+    {
+        "type": "hysteria2",
+        "tag": "hy2-in",
+        "listen": "::",
+        "listen_port": ($hy_listen_port | tonumber),
+        "users": [
             {
-              "uuid": $uuid,
-              "flow": "xtls-rprx-vision"
+                "password": $hy_password
             }
-          ],
-          "tls": {
+        ],
+        "tls": {
             "enabled": true,
-            "server_name": $server_name,
-              "reality": {
-              "enabled": true,
-              "handshake": {
-                "server": $server_name,
-                "server_port": 443
-              },
-              "private_key": $private_key,
-              "short_id": [$short_id]
+            "alpn": [
+                "h3"
+            ],
+            "certificate_path": "/root/self-cert/cert.pem",
+            "key_path": "/root/self-cert/private.key"
+        }
+    },
+    {
+        "type": "vmess",
+        "tag": "vmess-in",
+        "listen": "::",
+        "listen_port": ($vmess_port | tonumber),
+        "users": [
+            {
+                "uuid": $vmess_uuid,
+                "alterId": 0
             }
-          }
-        },
-        ...
-      ]
-    }' > /root/sbox/sbconfig_server.json
+        ],
+        "transport": {
+            "type": "ws",
+            "path": $ws_path
+        }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ]
+}' > /root/sbox/sbconfig_server.json
 }
 
 # 显示界面
