@@ -578,13 +578,14 @@ uninstall_singbox() {
 }
 install_base
 # 全局数组 
-declare -a listen_ports
-declare -a uuids
-declare -a server_names
-declare -a hy_listen_ports
-declare -a hy_passwords
-declare -a vmess_ports
-declare -a ws_paths
+declare -a listen_port
+declare -a uuid
+declare -a short_id
+declare -a server_name
+declare -a hy_listen_port
+declare -a hy_password
+declare -a vmess_port
+declare -a ws_path
 
 configure_reality() {
     echo "开始配置Reality"
@@ -624,9 +625,10 @@ configure_reality() {
     echo "选择的域名: $server_name"
     echo ""
     # 保存参数到数组
-    listen_ports+=("$listen_port")
-    uuids+=("$uuid")
-    server_names+=("$server_name")
+    listen_port+=("$listen_port")
+    uuid+=("$uuid")
+    short_id+=("$short_id")
+    server_name+=("$server_name")
 }
 configure_hysteria2() {
     echo "开始配置hysteria2"
@@ -665,9 +667,9 @@ configure_hysteria2() {
     echo "自签证书生成完成"
     echo ""
     # 保存参数到数组
-     listen_ports+=("$hy_listen_port")
-    uuids+=("$hy_password")  # 假设这里使用密码作为唯一标识
-    server_names+=("$hy_server_name")
+     listen_port+=("$hy_listen_port")
+    uuid+=("$hy_password")  # 假设这里使用密码作为唯一标识
+    server_name+=("$hy_server_name")
 }
 configure_vmess() {
     echo "开始配置vmess"
@@ -688,9 +690,9 @@ configure_vmess() {
         return 1
     fi
     # 保存参数到数组
-    vmess_ports+=("$vmess_port")
-    uuids+=("$vmess_uuid")
-    ws_paths+=("$ws_path")
+    vmess_port+=("$vmess_port")
+    uuid+=("$vmess_uuid")
+    ws_path+=("$ws_path")
     # Terminate cloudflared process if running
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
@@ -715,7 +717,7 @@ configure_vmess() {
     rm -rf argo.log
 }
 generate_config() {
-    local protocols=("$@")
+    local protocol=("$@")
     local json='{
         "log": {
             "disabled": false,
@@ -735,11 +737,11 @@ generate_config() {
         ]
     }'
 
-    for i in "${!listen_ports[@]}"; do
-        protocol=${protocols[$i]}
+    for i in "${!listen_port[@]}"; do
+        protocol=${protocol[$i]}
         case $protocol in
             "vless")
-                json=$(echo "$json" | jq --arg listen_port "${listen_ports[$i]}" --arg uuid "${uuids[$i]}" --arg server_name "${server_names[$i]}" --arg private_key "$private_key" --arg short_id "$short_id" '
+                json=$(echo "$json" | jq --arg listen_port "${listen_port[$i]}" --arg uuid "${uuid[$i]}" --arg server_name "${server_name[$i]}" --arg private_key "$private_key" --arg short_id "$short_id" '
                     .inbounds += [{
                         "type": "vless",
                         "tag": "vless-in",
@@ -765,7 +767,7 @@ generate_config() {
                     }]')
                 ;;
             "hysteria2")
-                json=$(echo "$json" | jq --arg hy_listen_port "${hy_listen_ports[$i]}" --arg hy_password "${hy_passwords[$i]}" '
+                json=$(echo "$json" | jq --arg hy_listen_port "${hy_listen_port[$i]}" --arg hy_password "${hy_password[$i]}" '
                     .inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
@@ -783,7 +785,7 @@ generate_config() {
                     }]')
                 ;;
             "vmess")
-                json=$(echo "$json" | jq --arg vmess_port "${vmess_ports[$i]}" --arg vmess_uuid "${uuids[$i]}" --arg ws_path "${ws_paths[$i]}" '
+                json=$(echo "$json" | jq --arg vmess_port "${vmess_port[$i]}" --arg vmess_uuid "${uuid[$i]}" --arg ws_path "${ws_path[$i]}" '
                     .inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
@@ -800,7 +802,7 @@ generate_config() {
                     }]')
                 ;;
             *)
-                echo "无效的协议选择: $protocol"
+                echo "无效的协议选择"
                 ;;
         esac
     done
@@ -867,7 +869,7 @@ menu() {
             echo "3. Hysteria2"
             read -p "Enter your choices (e.g., 1 2 3): " protocols
 
-            for protocol in $protocols; do
+            for protocol in $protocol; do
                 case $protocol in
                     1)
                         echo "正在安装 VLESS..."
@@ -886,12 +888,12 @@ menu() {
                         ;;
                 esac
             done
-            echo "监听端口: ${listen_ports[@]}"
-echo "UUID: ${uuids[@]}"
-echo "域名SNI: ${server_names[@]}"
+            echo "监听端口: ${listen_port[@]}"
+echo "UUID: ${uuid[@]}"
+echo "域名SNI: ${server_name[@]}"
             # 生成配置文件
         server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-        generate_config "${protocols[@]}"
+        generate_config "${protocol[@]}"
 
         # 启动服务
         systemctl daemon-reload
