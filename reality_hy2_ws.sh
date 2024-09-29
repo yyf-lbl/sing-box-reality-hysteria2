@@ -242,28 +242,28 @@ echo ""
 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
 echo "$public_key" | base64 > /root/sbox/public.key.b64
-uuid=$(/root/sbox/sing-box generate uuid)
-short_id=$(/root/sbox/sing-box generate rand --hex 8)
+declare -g uuid=$(/root/sbox/sing-box generate uuid)
+declare -g short_id=$(/root/sbox/sing-box generate rand --hex 8)
 echo "uuid和短id 生成完成"
 echo ""
 read -p "请输入Reality端口 (default: 443): " listen_port
-listen_port=${listen_port:-443}
+declare -g listen_port=${listen_port:-443}
 echo ""
 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
-server_name=${server_name:-itunes.apple.com}
+declare -g server_name=${server_name:-itunes.apple.com}
 echo ""
 }
 configure_hysteria2() {
    echo "开始配置hysteria2"
 echo ""
-hy_password=$(/root/sbox/sing-box generate rand --hex 8)
+declare -g hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
 # Ask for listen port
 read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
-hy_listen_port=${hy_listen_port:-8443}
+declare -g hy_listen_port=${hy_listen_port:-8443}
 echo ""
 read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-hy_server_name=${hy_server_name:-bing.com}
+declare -g hy_server_name=${hy_server_name:-bing.com}
 mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key && openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
 echo ""
 echo "自签证书生成完成"
@@ -272,12 +272,12 @@ echo ""
 configure_vmess() {
     echo "开始配置vmess"
 echo ""
-vmess_uuid=$(/root/sbox/sing-box generate uuid)
+declare -g vmess_uuid=$(/root/sbox/sing-box generate uuid)
 read -p "请输入vmess端口，默认为15555: " vmess_port
-vmess_port=${vmess_port:-15555}
+declare -g vmess_port=${vmess_port:-15555}
 echo ""
 read -p "ws路径 (默认随机生成): " ws_path
-ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+declare -g ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
 pid=$(pgrep -f cloudflared)
 if [ -n "$pid" ]; then
   kill "$pid"
