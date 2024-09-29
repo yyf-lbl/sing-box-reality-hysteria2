@@ -300,6 +300,26 @@ configure_vmess() {
 
 # 配置文件生成
 generate_config() {
+    # 输出所有相关变量以进行调试
+    echo "正在生成配置文件..."
+    echo "listen_port: $listen_port"
+    echo "vmess_port: $vmess_port"
+    echo "vmess_uuid: $vmess_uuid"
+    echo "ws_path: $ws_path"
+    echo "server_name: $server_name"
+    echo "private_key: $private_key"
+    echo "short_id: $short_id"
+    echo "uuid: $uuid"
+    echo "hy_listen_port: $hy_listen_port"
+    echo "hy_password: $hy_password"
+    echo "server_ip: $server_ip"
+
+    # 确保没有变量为空
+    if [[ -z "$listen_port" || -z "$vmess_port" || -z "$vmess_uuid" || -z "$ws_path" || -z "$server_name" || -z "$private_key" || -z "$short_id" || -z "$uuid" || -z "$hy_listen_port" || -z "$hy_password" || -z "$server_ip" ]]; then
+        echo "错误：某些必需变量未设置。"
+        return 1
+    fi
+
     config_json=$(jq -n --arg listen_port "$listen_port" \
                          --arg vmess_port "$vmess_port" \
                          --arg vmess_uuid "$vmess_uuid" \
@@ -390,9 +410,12 @@ generate_config() {
         ]
     }')
 
-    echo "$config_json"  # 打印 JSON 内容
+    # 打印 JSON 内容以进行调试
+    echo "$config_json"
+
     echo "$config_json" > /root/sbox/sbconfig_server.json  # 输出到文件
 }
+
 
 # 显示界面
 menu() {
