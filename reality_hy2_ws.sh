@@ -887,12 +887,12 @@ menu() {
                         ;;
                 esac
             done
-            echo "监听端口: ${listen_ports[@]}"
-echo "UUID: ${uuids[@]}"
-echo "域名SNI: ${server_names[@]}"
+            echo "监听端口: $listen_ports"
+echo "UUID: $uuids"
+echo "域名SNI: $server_names"
             # 生成配置文件
         server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-        generate_config "${protocols[@]}"
+        generate_config 
 
         # 启动服务
         systemctl daemon-reload
