@@ -492,6 +492,7 @@ menu() {
                         ;;
                 esac
             done
+             server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 # Debugging output before generating config
 echo "监听端口: ${listen_ports[*]}"
 echo "UUIDs: ${uuids[*]}"
@@ -501,7 +502,7 @@ echo "hysteria2 端口: ${hy_listen_ports[*]}"
 echo "hysteria2 密码: ${hy_passwords[*]}"
 echo "vmess 端口: ${vmess_ports[*]}"
 echo "ws路径: ${ws_paths[*]}"
-        server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+       
         generate_config 
         systemctl daemon-reload
         systemctl enable sing-box
