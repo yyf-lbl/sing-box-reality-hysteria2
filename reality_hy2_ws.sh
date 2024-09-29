@@ -354,103 +354,105 @@ configure_vmess() {
 generate_config() {
     local listen_port="${listen_ports[0]}"  # 使用 listen_ports 数组的第一个值
     local uuid="${uuids[0]}"                  # 使用 uuids 数组的第一个值
+    local vmess_uuid="${vmess_uuids[0]}"  
     local server_name="${server_names[0]}"    # 使用 server_names 数组的第一个值
-    local short_id="${short_ids[0]}" # 使用 short_ids 数组的第一个值
-    local hy_listen_port="${hy_listen_ports[0]}"
-    local hy_password="${hy_passwords[0]}"
-    local vmess_port="${vmess_ports[0]}"
-    local ws_path="${ws_paths[0]}"
- 
-   jq -n \
-      --argjson listen_ports "$listen_port
-      --argjson vmess_ports "$vmess_port
+    local short_id="${short_ids[0]}"          # 使用 short_ids 数组的第一个值
+    local hy_listen_port="${hy_listen_ports[0]}"  # 使用 hy_listen_ports 数组的第一个值
+    local hy_password="${hy_passwords[0]}"    # 使用 hy_passwords 数组的第一个值
+    local vmess_port="${vmess_ports[0]}"      # 使用 vmess_ports 数组的第一个值
+    local ws_path="${ws_paths[0]}"            # 使用 ws_paths 数组的第一个值
+    local server_ip="107.175.124.56"           # 假设这是你的服务器 IP
+
+    jq -n \
+      --argjson listen_port "$listen_port" \
+      --argjson vmess_port "$vmess_port" \
       --arg uuid "$uuid" \
       --arg ws_path "$ws_path" \
       --arg server_name "$server_name" \
       --arg private_key "$private_key" \
       --arg short_id "$short_id" \
-      --argjson hy_listen_ports "$hy_listen_port \
+      --argjson hy_listen_port "$hy_listen_port" \
       --arg hy_password "$hy_password" \
       --arg server_ip "$server_ip" \
     '{
       "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "inbounds": [
-    {
-      "type": "vless",
-      "tag": "vless-in",
-      "listen": "::",
-      "listen_port": ($listen_port | tonumber),
-      "users": [
+        "disabled": false,
+        "level": "info",
+        "timestamp": true
+      },
+      "inbounds": [
         {
-          "uuid": $uuid,
-          "flow": "xtls-rprx-vision"
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "server_name": $server_name,
-          "reality": {
-          "enabled": true,
-          "handshake": {
-            "server": $server_name,
-            "server_port": 443
-          },
-          "private_key": $private_key,
-          "short_id": [$short_id]
-        }
-      }
-    },
-    {
-        "type": "hysteria2",
-        "tag": "hy2-in",
-        "listen": "::",
-        "listen_port": ($hy_listen_port | tonumber),
-        "users": [
+          "type": "vless",
+          "tag": "vless-in",
+          "listen": "::",
+          "listen_port": ($listen_port | tonumber),
+          "users": [
             {
-                "password": $hy_password
+              "uuid": $uuid,
+              "flow": "xtls-rprx-vision"
             }
-        ],
-        "tls": {
+          ],
+          "tls": {
+            "enabled": true,
+            "server_name": $server_name,
+            "reality": {
+              "enabled": true,
+              "handshake": {
+                "server": $server_name,
+                "server_port": 443
+              },
+              "private_key": $private_key,
+              "short_id": [$short_id]
+            }
+          }
+        },
+        {
+          "type": "hysteria2",
+          "tag": "hy2-in",
+          "listen": "::",
+          "listen_port": ($hy_listen_port | tonumber),
+          "users": [
+            {
+              "password": $hy_password
+            }
+          ],
+          "tls": {
             "enabled": true,
             "alpn": [
-                "h3"
+              "h3"
             ],
             "certificate_path": "/root/self-cert/cert.pem",
             "key_path": "/root/self-cert/private.key"
-        }
-    },
-    {
-        "type": "vmess",
-        "tag": "vmess-in",
-        "listen": "::",
-        "listen_port": ($vmess_port | tonumber),
-        "users": [
+          }
+        },
+        {
+          "type": "vmess",
+          "tag": "vmess-in",
+          "listen": "::",
+          "listen_port": ($vmess_port | tonumber),
+          "users": [
             {
-                "uuid": $vmess_uuid,
-                "alterId": 0
+              "uuid": $vmess_uuid,  # 这里需要使用对应的 UUID
+              "alterId": 0
             }
-        ],
-        "transport": {
+          ],
+          "transport": {
             "type": "ws",
             "path": $ws_path
+          }
         }
-    }
-  ],
-  "outbounds": [
-    {
-      "type": "direct",
-      "tag": "direct"
-    },
-    {
-      "type": "block",
-      "tag": "block"
-    }
-  ]
-}' > /root/sbox/sbconfig_server.json
+      ],
+      "outbounds": [
+        {
+          "type": "direct",
+          "tag": "direct"
+        },
+        {
+          "type": "block",
+          "tag": "block"
+        }
+      ]
+    }' > /root/sbox/sbconfig_server.json
 }
 
 # 显示界面
