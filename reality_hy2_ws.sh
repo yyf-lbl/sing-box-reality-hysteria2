@@ -236,23 +236,65 @@ configure_reality() {
     echo ""
     echo "自动生成基本参数"
     echo ""
+
+    # 生成 Reality Key Pair
     key_pair=$(/root/sbox/sing-box generate reality-keypair)
+    if [ $? -ne 0 ]; then
+        echo "生成 Key pair 失败"
+        return 1
+    fi
     echo "Key pair生成完成"
     echo ""
+
+    # 提取私钥和公钥
     private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
     public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+    
+    # 将公钥保存为 base64 格式
     echo "$public_key" | base64 > /root/sbox/public.key.b64
+
+    # 生成 UUID 和 Short ID
     declare -g uuid=$(/root/sbox/sing-box generate uuid)
     declare -g short_id=$(/root/sbox/sing-box generate rand --hex 8)
     echo "UUID和短ID生成完成"
     echo ""
+
+    # 读取 Reality 端口
     read -p "请输入Reality端口 (default: 443): " listen_port
     declare -g listen_port=${listen_port:-443}
     echo ""
+
+    # 读取域名
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
     declare -g server_name=${server_name:-itunes.apple.com}
     echo ""
+
+    # 输出配置
+    echo "服务器IP: $(hostname -I | awk '{print $1}')"
+    echo "Reality端口: $listen_port"
+    echo "UUID: $uuid"
+    echo "域名SNI: $server_name"
+    echo "Public Key: $public_key"
+    echo "Short ID: $short_id"
+
+    # 生成配置 JSON
+    json_config=$(cat <<EOF
+{
+  "listen_port": $listen_port,
+  "uuid": "$uuid",
+  "server_name": "$server_name",
+  "public_key": "$public_key",
+  "short_id": "$short_id",
+  "private_key": "$private_key"
 }
+EOF
+)
+    
+    # 保存配置文件
+    echo "$json_config" > /root/sbox/sbconfig_server.json
+    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
+}
+
 
 configure_hysteria2() {
     echo "开始配置hysteria2"
