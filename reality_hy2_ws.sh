@@ -687,6 +687,10 @@ configure_vmess() {
         echo "生成随机路径失败。"
         return 1
     fi
+    # 保存参数到数组
+    vmess_ports+=("$vmess_port")
+    uuids+=("$vmess_uuid")
+    ws_paths+=("$ws_path")
     # Terminate cloudflared process if running
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
@@ -709,10 +713,6 @@ configure_vmess() {
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
     echo "生成的Cloudflare地址已保存。"
     rm -rf argo.log
-       # 保存参数到数组
-  listen_ports+=("$vmess_port")
-    uuids+=("$vmess_uuid")
-    server_names+=("$ws_path")  # 或其他需要的参数
 }
 
 generate_config() {
@@ -738,7 +738,7 @@ generate_config() {
     }'
 
     # 根据选择的协议添加相应的 inbound 配置
-    for protocol in "${protocols[@]}"; do
+   for i in "${!listen_ports[@]}"; do
         case $protocol in
             "vless")
                 json=$(echo "$json" | jq --arg listen_port "${listen_ports[0]}" --arg uuid "${uuids[0]}" --arg server_name "${server_names[0]}" --arg private_key "$private_key" --arg short_id "$short_id" --arg server_ip "$server_ip" '
