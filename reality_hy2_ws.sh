@@ -231,8 +231,10 @@ else
     echo "Error in configuration. Aborting"
 fi
 }
+    # 创建证书存放目录
+    mkdir -p /root/self-cert/
 configure_reality() {
-    echo "开始配置Reality"
+    echo "开始配置 Reality"
     echo ""
     echo "自动生成基本参数"
     echo ""
@@ -243,7 +245,7 @@ configure_reality() {
         echo "生成 Key pair 失败"
         return 1
     fi
-    echo "Key pair生成完成"
+    echo "Key pair 生成完成"
     echo ""
 
     # 提取私钥和公钥
@@ -254,26 +256,26 @@ configure_reality() {
     echo "$public_key" | base64 > /root/sbox/public.key.b64
 
     # 生成 UUID 和 Short ID
-    declare -g uuid=$(/root/sbox/sing-box generate uuid)
-    declare -g short_id=$(/root/sbox/sing-box generate rand --hex 8)
-    echo "UUID和短ID生成完成"
+    uuid=$(/root/sbox/sing-box generate uuid)
+    short_id=$(/root/sbox/sing-box generate rand --hex 8)
+    echo "UUID 和短 ID 生成完成"
     echo ""
 
     # 读取 Reality 端口
-    read -p "请输入Reality端口 (default: 443): " listen_port
-    declare -g listen_port=${listen_port:-443}
+    read -p "请输入 Reality 端口 (default: 443): " listen_port
+    listen_port=${listen_port:-443}
     echo ""
 
     # 读取域名
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
-    declare -g server_name=${server_name:-itunes.apple.com}
+    server_name=${server_name:-itunes.apple.com}
     echo ""
 
     # 输出配置
-    echo "服务器IP: $(hostname -I | awk '{print $1}')"
-    echo "Reality端口: $listen_port"
+    echo "服务器 IP: $(hostname -I | awk '{print $1}')"
+    echo "Reality 端口: $listen_port"
     echo "UUID: $uuid"
-    echo "域名SNI: $server_name"
+    echo "域名 SNI: $server_name"
     echo "Public Key: $public_key"
     echo "Short ID: $short_id"
 
@@ -297,52 +299,109 @@ EOF
 
 
 configure_hysteria2() {
-    echo "开始配置hysteria2"
+    echo "开始配置 Hysteria2"
     echo ""
+
+    # 生成随机密码
     declare -g hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
-    # Ask for listen port
-    read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
+    # 询问监听端口
+    read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
     declare -g hy_listen_port=${hy_listen_port:-8443}
     echo ""
+
+    # 询问自签证书域名
     read -p "输入自签证书域名 (default: bing.com): " hy_server_name
     declare -g hy_server_name=${hy_server_name:-bing.com}
-    mkdir -p /root/self-cert/
-    openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
     echo ""
-    echo "自签证书生成完成"
+
+
+    # 检查是否已存在证书和私钥
+    if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
+        openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+        openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+        echo ""
+        echo "自签证书生成完成"
+    else
+        echo "证书和私钥已存在，跳过生成步骤。"
+    fi
     echo ""
+
+    # 生成配置 JSON
+    json_config=$(cat <<EOF
+{
+  "hy_password": "$hy_password",
+  "hy_listen_port": $hy_listen_port,
+  "hy_server_name": "$hy_server_name",
+  "cert_path": "/root/self-cert/cert.pem",
+  "private_key_path": "/root/self-cert/private.key"
+}
+EOF
+)
+
+    # 保存配置文件
+    echo "$json_config" > /root/sbox/sbconfig_server.json
+    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
 }
 
+
 configure_vmess() {
-    echo "开始配置vmess"
+    echo "开始配置 vmess"
     echo ""
+    
+    # 生成 UUID
     declare -g vmess_uuid=$(/root/sbox/sing-box generate uuid)
-    read -p "请输入vmess端口，默认为15555: " vmess_port
+    
+    # 询问端口
+    read -p "请输入 vmess 端口，默认为 15555: " vmess_port
     declare -g vmess_port=${vmess_port:-15555}
     echo ""
-    read -p "ws路径 (默认随机生成): " ws_path
+    
+    # 询问 WebSocket 路径
+    read -p "ws 路径 (默认随机生成): " ws_path
     declare -g ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
     
+    # 杀死现有的 cloudflared 进程
     pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
         kill "$pid"
     fi
     
+    # 启动 cloudflared
     /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
     sleep 2
     clear
-    echo "等待cloudflare argo生成地址"
+    echo "等待 cloudflare argo 生成地址"
     sleep 5
+    
+    # 获取 Argo 地址
     argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    
+    # 将 Argo 地址编码为 base64
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
+    
+    # 删除日志文件
     rm -rf argo.log
+
+    # 生成配置 JSON
+    json_config=$(cat <<EOF
+{
+  "vmess_uuid": "$vmess_uuid",
+  "vmess_port": $vmess_port,
+  "ws_path": "$ws_path",
+  "argo_url": "$argo"
+}
+EOF
+)
+
+    # 保存配置文件
+    echo "$json_config" > /root/sbox/sbconfig_server.json
+    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
 }
 
 # 配置文件生成
 generate_config() {
-    # 初始化jq的输入
+    # 初始化 jq 的输入
     json_input='{
         "log": {
             "disabled": false,
@@ -362,7 +421,7 @@ generate_config() {
         ]
     }'
 
-    # 添加VLESS配置
+    # 添加 VLESS 配置
     if [[ -n "$listen_port" && -n "$uuid" && -n "$server_name" && -n "$private_key" && -n "$short_id" ]]; then
         json_input=$(echo "$json_input" | jq --arg listen_port "$listen_port" --arg uuid "$uuid" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" '
             .inbounds += [{
@@ -391,7 +450,7 @@ generate_config() {
         )
     fi
 
-    # 添加VMess配置
+    # 添加 VMess 配置
     if [[ -n "$vmess_port" && -n "$vmess_uuid" && -n "$ws_path" ]]; then
         json_input=$(echo "$json_input" | jq --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '
             .inbounds += [{
@@ -411,7 +470,7 @@ generate_config() {
         )
     fi
 
-    # 添加Hysteria2配置
+    # 添加 Hysteria2 配置
     if [[ -n "$hy_listen_port" && -n "$hy_password" ]]; then
         json_input=$(echo "$json_input" | jq --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '
             .inbounds += [{
@@ -433,10 +492,9 @@ generate_config() {
     fi
 
     # 写入配置文件
-    jq -n --argjson config "$json_input" '$config' > /root/sbox/sbconfig_server.json
+    echo "$json_input" | jq '.' > /root/sbox/sbconfig_server.json
+    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
 }
-
-
 # 显示界面
 menu() {
     mkdir -p "/root/sbox/"
