@@ -746,6 +746,7 @@ configure_vmess() {
     echo "生成的Cloudflare地址已保存。"
     rm -rf argo.log
 }
+#配置文件生成
 generate_config() {
     local protocols=("$@")
     local json='{
@@ -769,29 +770,29 @@ generate_config() {
 
     for i in "${!listen_ports[@]}"; do
         protocol=${protocols[$i]}
-        case $protocols in
+        case $protocol in
             "vless")
-                json=$(echo "$json" | jq --arg listen_port "${listen_ports[$i]}" --arg uuid "${uuids[$i]}" --arg server_name "${server_names[$i]}" --arg private_key "$private_key" --arg short_id "$short_ids" '
+                json=$(echo "$json" | jq --arg listen_port "${listen_ports[$i]}" --arg uuid "${uuids[$i]}" --arg server_name "${server_names[$i]}" --arg private_key "$private_key" --arg short_id "${short_ids[$i]}" '
                     .inbounds += [{
                         "type": "vless",
                         "tag": "vless-in",
                         "listen": "::",
-                        "listen_port": ($listen_ports | tonumber),
+                        "listen_port": ($listen_port | tonumber),
                         "users": [{
                             "uuid": $uuid,
                             "flow": "xtls-rprx-vision"
                         }],
                         "tls": {
                             "enabled": true,
-                            "server_name": $server_names,
+                            "server_name": $server_name,
                             "reality": {
                                 "enabled": true,
                                 "handshake": {
-                                    "server": $server_names,
+                                    "server": $server_name,
                                     "server_port": 443
                                 },
                                 "private_key": $private_key,
-                                "short_id": [$short_ids]
+                                "short_id": [$short_id]
                             }
                         }
                     }]')
@@ -802,9 +803,9 @@ generate_config() {
                         "type": "hysteria2",
                         "tag": "hy2-in",
                         "listen": "::",
-                        "listen_port": ($hy_listen_ports | tonumber),
+                        "listen_port": ($hy_listen_port | tonumber),
                         "users": [{
-                            "password": $hy_passwords
+                            "password": $hy_password
                         }],
                         "tls": {
                             "enabled": true,
@@ -820,14 +821,14 @@ generate_config() {
                         "type": "vmess",
                         "tag": "vmess-in",
                         "listen": "::",
-                        "listen_port": ($vmess_ports | tonumber),
+                        "listen_port": ($vmess_port | tonumber),
                         "users": [{
-                            "uuid": $vmess_uuids,
+                            "uuid": $vmess_uuid,
                             "alterId": 0
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_paths
+                            "path": $ws_path
                         }
                     }]')
                 ;;
@@ -839,6 +840,7 @@ generate_config() {
 
     echo "$json" | jq . > /root/sbox/sbconfig_server.json
 }
+
 # 显示界面
 menu() {
     mkdir -p "/root/sbox/"
