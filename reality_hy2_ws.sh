@@ -236,16 +236,6 @@ configure_reality() {
     echo ""
     echo "自动生成基本参数"
     echo ""
-    key_pair=$(/root/sbox/sing-box generate reality-keypair)
-    if [ $? -ne 0 ]; then
-        echo "生成 Key pair 失败"
-        return 1
-    fi
-    echo "Key pair 生成完成"
-    echo ""
-    private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
-    public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
-    echo "$public_key" | base64 > /root/sbox/public.key.b64
     uuid=$(/root/sbox/sing-box generate uuid)
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
     echo "UUID 和短 ID 生成完成"
@@ -441,6 +431,16 @@ menu() {
                 esac
             done
              server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+               key_pair=$(/root/sbox/sing-box generate reality-keypair)
+    if [ $? -ne 0 ]; then
+        echo "生成 Key pair 失败"
+        return 1
+    fi
+    echo "Key pair 生成完成"
+    echo ""
+    private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
+    public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+    echo "$public_key" | base64 > /root/sbox/public.key.b64
               if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
         openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
         openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
