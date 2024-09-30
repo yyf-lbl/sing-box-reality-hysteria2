@@ -363,6 +363,7 @@ generate_config() {
             }
         ]
     }'
+    
     # 添加 VLESS 配置
     if [[ -n "$listen_port" && -n "$uuid" && -n "$server_name" && -n "$private_key" && -n "$short_id" ]]; then
         json_input=$(echo "$json_input" | jq --arg listen_port "$listen_port" --arg uuid "$uuid" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" '
@@ -385,12 +386,13 @@ generate_config() {
                             "server_port": 443
                         },
                         "private_key": $private_key,
-                        "short_id": [$short_id]
+                        "short_id": ($short_id | split(","))
                     }
                 }
             }]'
         )
     fi
+    
     # 添加 VMess 配置
     if [[ -n "$vmess_port" && -n "$vmess_uuid" && -n "$ws_path" ]]; then
         json_input=$(echo "$json_input" | jq --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '
@@ -410,6 +412,7 @@ generate_config() {
             }]'
         )
     fi
+    
     # 添加 Hysteria2 配置
     if [[ -n "$hy_listen_port" && -n "$hy_password" ]]; then
         json_input=$(echo "$json_input" | jq --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '
@@ -430,6 +433,8 @@ generate_config() {
             }]'
         )
     fi
+    
+    # 输出最终的 JSON 配置文件
     echo "$json_input" | jq '.' > /root/sbox/sbconfig_server.json
     echo "配置文件已生成: /root/sbox/sbconfig_server.json"
 }
