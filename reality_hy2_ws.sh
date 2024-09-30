@@ -11,13 +11,14 @@ print_with_delay() {
 show_notice() {
     local message="$1"
 
-    echo "##############################################################################"
-    echo "#                                                                            #"
-    echo "#                                ${message}                                  #"
-    echo "#                                                                            #"
-    echo "##############################################################################"
+    echo "#######################################################################################################################"
+    echo "                                                                                                                       "
+    echo "                                ${message}                                                                             "
+    echo "                                                                                                                       "
+    echo "#######################################################################################################################"
 }
 print_with_delay "sing-reality-hy2-box" 0.05
+echo ""
 echo ""
 install_base(){
   if ! command -v jq &> /dev/null; then
@@ -120,7 +121,7 @@ show_client_configuration() {
   echo ""
   hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
   hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
-  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json) 
+  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
   show_notice "Hysteria2 客户端通用链接" 
   echo ""
@@ -166,6 +167,7 @@ EOF
   echo ""
   echo -e "端口 80 可改为 8080 8880 2052 2082 2086 2095" 
   echo ""
+}
 uninstall_singbox() {
             echo "Uninstalling..."
           systemctl stop sing-box
@@ -233,7 +235,6 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           exit 0
         ;;
       3)  
-          # show client configuration
           show_client_configuration
           exit 0
       ;;	
@@ -244,7 +245,6 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
       5)
           show_notice "Update Sing-box..."
           download_singbox
-          # Check configuration and start the service
           if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
               echo "Configuration checked successfully. Starting sing-box service..."
               systemctl daemon-reload
@@ -290,6 +290,7 @@ echo ""
 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
 server_name=${server_name:-itunes.apple.com}
 echo ""
+# hysteria2
 echo "开始配置hysteria2"
 echo ""
 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
