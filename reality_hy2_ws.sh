@@ -262,19 +262,7 @@ configure_reality() {
     echo "域名 SNI: $server_name"
     echo "Public Key: $public_key"
     echo "Short ID: $short_id"
-    json_config=$(cat <<EOF
-{
-  "listen_port": $listen_port,
-  "uuid": "$uuid",
-  "server_name": "$server_name",
-  "public_key": "$public_key",
-  "short_id": "$short_id",
-  "private_key": "$private_key"
-}
-EOF
-)
-    echo "$json_config" > /root/sbox/sbconfig_server.json
-    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
+generate_config
 }
 configure_hysteria2() {
     echo "开始配置 Hysteria2"
@@ -286,27 +274,7 @@ configure_hysteria2() {
     read -p "输入自签证书域名 (default: bing.com): " hy_server_name
    hy_server_name=${hy_server_name:-bing.com}
     echo ""
-    if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
-        openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-        openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-        echo ""
-        echo "自签证书生成完成"
-    else
-        echo "证书和私钥已存在，跳过生成步骤。"
-    fi
-    echo ""
-    json_config=$(cat <<EOF
-{
-  "hy_password": "$hy_password",
-  "hy_listen_port": $hy_listen_port,
-  "hy_server_name": "$hy_server_name",
-  "cert_path": "/root/self-cert/cert.pem",
-  "private_key_path": "/root/self-cert/private.key"
-}
-EOF
-)
-    echo "$json_config" > /root/sbox/sbconfig_server.json
-    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
+ generate_config
 }
 configure_vmess() {
     echo "开始配置 vmess"
@@ -329,18 +297,7 @@ configure_vmess() {
     argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
     rm -rf argo.log
-    json_config=$(cat <<EOF
-{
-  "vmess_uuid": "$vmess_uuid",
-  "vmess_port": $vmess_port,
-  "ws_path": "$ws_path",
-  "argo_url": "$argo"
-}
-EOF
-)
-    # 保存配置文件
-    echo "$json_config" > /root/sbox/sbconfig_server.json
-    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
+generate_config
 }
 # 配置文件生成
 generate_config() {
@@ -484,7 +441,14 @@ menu() {
                 esac
             done
              server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-        generate_config 
+              if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
+        openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+        openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+        echo ""
+        echo "自签证书生成完成"
+    else
+        echo "证书和私钥已存在，跳过生成步骤。"
+    fi
         systemctl daemon-reload
         systemctl enable sing-box
         systemctl start sing-box
