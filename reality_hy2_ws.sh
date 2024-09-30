@@ -303,16 +303,16 @@ configure_hysteria2() {
     echo ""
 
     # 生成随机密码
-    declare -g hy_password=$(/root/sbox/sing-box generate rand --hex 8)
+ hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
     # 询问监听端口
     read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
-    declare -g hy_listen_port=${hy_listen_port:-8443}
+    hy_listen_port=${hy_listen_port:-8443}
     echo ""
 
     # 询问自签证书域名
     read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-    declare -g hy_server_name=${hy_server_name:-bing.com}
+   hy_server_name=${hy_server_name:-bing.com}
     echo ""
 
 
@@ -350,16 +350,16 @@ configure_vmess() {
     echo ""
     
     # 生成 UUID
-    declare -g vmess_uuid=$(/root/sbox/sing-box generate uuid)
+  vmess_uuid=$(/root/sbox/sing-box generate uuid)
     
     # 询问端口
     read -p "请输入 vmess 端口，默认为 15555: " vmess_port
-    declare -g vmess_port=${vmess_port:-15555}
+ vmess_port=${vmess_port:-15555}
     echo ""
     
     # 询问 WebSocket 路径
     read -p "ws 路径 (默认随机生成): " ws_path
-    declare -g ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+    ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
     
     # 杀死现有的 cloudflared 进程
     pid=$(pgrep -f cloudflared)
