@@ -18,7 +18,6 @@ show_notice() {
 }
 print_with_delay "sing-reality-hy2-box" 0.05
 echo ""
-echo ""
 install_base(){
   if ! command -v jq &> /dev/null; then
       echo "jq is not installed. Installing..."
