@@ -221,6 +221,9 @@ read -p "Enter your choice (0-7): " choice
 case $choice in
     1)
         echo "开始安装sing-box服务..."
+          mkdir -p "/root/sbox/"
+         download_singbox
+        download_cloudflared
         install_singbox
         ;;
     2)
@@ -303,18 +306,6 @@ case $choice in
 esac
 
 install_singbox() {
-    # 创建 sbox 目录
-    mkdir -p "/root/sbox/"
-    
-    # 检查 sing-box 是否存在
-    if [ ! -f "/root/sbox/sing-box" ]; then
-        echo "sing-box 可执行文件未找到！"
-        exit 1
-    fi
-
-    # 下载 sing-box 和 cloudflared
-    download_singbox
-    download_cloudflared
 
     echo "开始配置 Reality"
     echo ""
