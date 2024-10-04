@@ -229,18 +229,15 @@ configure_reality() {
     echo ""
 }
 configure_hysteria2() {
-    echo "开始配置 Hysteria2"
-    echo ""
-    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-    export hy_password
-    echo "随机密码 $hy_password"
-    read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
-    hy_listen_port=${hy_listen_port:-8443}
-    export hy_listen_port
-    echo ""
-    read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-    hy_server_name=${hy_server_name:-bing.com}
-    export hy_server_name
+    echo "开始配置hysteria2"
+echo ""
+hy_password=$(/root/sbox/sing-box generate rand --hex 8)
+echo "你的密码为：$hy_password"
+read -p "请输入hysteria2监听端口 (默认: 8443): " hy_listen_port
+hy_listen_port=${hy_listen_port:-8443}
+echo "你的端口为：$hy_listen_port"
+read -p "输入自签证书域名 (default: bing.com): " hy_server_name
+hy_server_name=${hy_server_name:-bing.com}
     echo ""
     mkdir -p /root/self-cert
     mkdir -p /root/sbox
