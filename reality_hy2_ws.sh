@@ -282,20 +282,28 @@ EOF
 configure_hysteria2() {
     echo "开始配置 Hysteria2"
     echo ""
-    # 生成随机密码
- hy_password=$(/root/sbox/sing-box generate rand --hex 8)
- echo "随机密码 $hy_password"
-    # 询问监听端口
+
+    # 生成随机密码并设为全局变量
+    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
+    export hy_password
+    echo "随机密码 $hy_password"
+    
+    # 询问监听端口并设为全局变量
     read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
     hy_listen_port=${hy_listen_port:-8443}
+    export hy_listen_port
     echo ""
-    # 询问自签证书域名
+
+    # 询问自签证书域名并设为全局变量
     read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-   hy_server_name=${hy_server_name:-bing.com}
+    hy_server_name=${hy_server_name:-bing.com}
+    export hy_server_name
     echo ""
+
     # 确保目录存在
     mkdir -p /root/self-cert
     mkdir -p /root/sbox
+
     # 检查是否已存在证书和私钥
     if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
         openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
@@ -306,21 +314,8 @@ configure_hysteria2() {
         echo "证书和私钥已存在，跳过生成步骤。"
     fi
     echo ""
-    # 生成配置 JSON
-    json_config=$(cat <<EOF
-{
-  "hy_password": "$hy_password",
-  "hy_listen_port": $hy_listen_port,
-  "hy_server_name": "$hy_server_name",
-  "cert_path": "/root/self-cert/cert.pem",
-  "private_key_path": "/root/self-cert/private.key"
 }
-EOF
-)
-    # 保存配置文件
-    echo "$json_config" > /root/sbox/sbconfig_server.json
-    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
-}
+
 configure_vmess() {
     echo "开始配置 vmess"
     echo ""
