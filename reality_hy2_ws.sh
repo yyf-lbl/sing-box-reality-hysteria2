@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# Function to print characters with delay
 print_with_delay() {
     text="$1"
     delay="$2"
@@ -8,17 +10,23 @@ print_with_delay() {
     done
     echo
 }
+#notice
 show_notice() {
     local message="$1"
-    echo "############################################################################"
-    echo "||                                                                          "
-    echo "||                                ${message}                                "
-    echo "||                                                                          "
-    echo "############################################################################"
+
+    echo "#######################################################################################################################"
+    echo "                                                                                                                       "
+    echo "                                ${message}                                                                             "
+    echo "                                                                                                                       "
+    echo "#######################################################################################################################"
 }
-print_with_delay "sing-reality-hy2-box" 0.05
+# Introduction animation
+print_with_delay "欢迎使用三协议一键脚本" 0.05
 echo ""
+echo ""
+# install base
 install_base(){
+  # Check if jq is installed, and install it if not
   if ! command -v jq &> /dev/null; then
       echo "jq is not installed. Installing..."
       if [ -n "$(command -v apt)" ]; then
@@ -35,20 +43,26 @@ install_base(){
       fi
   fi
 }
+# regenrate cloudflared argo
 regenarte_cloudflared_argo(){
   pid=$(pgrep -f cloudflared)
   if [ -n "$pid" ]; then
+    # 终止进程
     kill "$pid"
   fi
+
   vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+  #生成地址
   /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
   sleep 2
   clear
   echo 等待cloudflare argo生成地址
   sleep 5
+  #连接到域名
   argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
   echo "$argo" | base64 > /root/sbox/argo.txt.b64
   rm -rf argo.log
+
   }
 download_singbox(){
   arch=$(uname -m)
@@ -78,6 +92,7 @@ download_singbox(){
 }
 download_cloudflared(){
   arch=$(uname -m)
+  # Map architecture names
   case ${arch} in
       x86_64)
           cf_arch="amd64"
@@ -119,7 +134,7 @@ show_client_configuration() {
   echo ""
   hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
   hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
-  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
+  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json) 
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
   show_notice "Hysteria2 客户端通用链接" 
   echo ""
@@ -180,94 +195,42 @@ uninstall_singbox() {
           rm /root/self-cert/cert.pem
           rm -rf /root/self-cert/
           rm -rf /root/sbox/
+          if [ -f /root/sbox/argo.txt.b64 ]; then
+  rm /root/sbox/argo.txt.b64
+fi
           echo "DONE!"
 }
 install_base
-if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/root/sbox/argo.txt.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
-    echo "sing-box-reality-hysteria2已经安装"
-    echo ""
-    echo "请选择选项:"
-    echo ""
-    echo "1. 重新安装"
-    echo "2. 修改配置"
-    echo "3. 显示客户端配置"
-    echo "4. 卸载"
-    echo "5. 更新sing-box内核"
-    echo "6. 手动重启cloudflared"
-    echo ""
-    read -p "Enter your choice (1-6): " choice
-    case $choice in
-        1)
-          show_notice "Reinstalling..."
-          systemctl stop sing-box
-          systemctl disable sing-box > /dev/null 2>&1
-          rm /etc/systemd/system/sing-box.service
-          rm /root/sbox/sbconfig_server.json
-          rm /root/sbox/sing-box
-          rm /root/sbox/cloudflared-linux
-          rm /root/sbox/argo.txt.b64
-          rm /root/sbox/public.key.b64
-          rm /root/self-cert/private.key
-          rm /root/self-cert/cert.pem
-          rm -rf /root/self-cert/
-          rm -rf /root/sbox/
-        ;;
-        2)
-          show_notice "开始修改reality端口和域名"
-          current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
-          read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
-          listen_port=${listen_port:-$current_listen_port}
-          current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
-          read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
-          server_name=${server_name:-$current_server_name}
-          echo ""
-          show_notice "开始修改hysteria2端口"
-          echo ""
-          hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
-          read -p "请属于想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
-          hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
-          jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' /root/sbox/sbconfig_server.json > /root/sb_modified.json
-          mv /root/sb_modified.json /root/sbox/sbconfig_server.json
-          systemctl restart sing-box
-          show_client_configuration
-          exit 0
-        ;;
-      3)  
-          show_client_configuration
-          exit 0
-      ;;	
-      4)
-          uninstall_singbox
-          exit 0
-          ;;
-      5)
-          show_notice "Update Sing-box..."
-          download_singbox
-          if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-              echo "Configuration checked successfully. Starting sing-box service..."
-              systemctl daemon-reload
-              systemctl enable sing-box > /dev/null 2>&1
-              systemctl start sing-box
-              systemctl restart sing-box
-          fi
-          echo ""  
-          exit 1
-          ;;
-      6)
-          regenarte_cloudflared_argo
-          echo "重新启动完成，查看新的vmess客户端信息"
-          show_client_configuration
-          exit 1
-          ;;
-      *)
-          echo "Invalid choice. Exiting."
-          exit 1
-          ;;
-	esac
-	fi
-mkdir -p "/root/sbox/"
-download_singbox
-download_cloudflared
+cat > /etc/systemd/system/sing-box.service <<EOF
+[Unit]
+After=network.target nss-lookup.target
+[Service]
+User=root
+WorkingDirectory=/root
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+ExecReload=/bin/kill -HUP \$MAINPID
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=infinity
+[Install]
+WantedBy=multi-user.target
+EOF
+# 检测配置并启动服务
+start_singbox(){
+if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+    echo "Configuration checked successfully. Starting sing-box service..."
+    systemctl daemon-reload
+    systemctl enable sing-box > /dev/null 2>&1
+    systemctl start sing-box
+    systemctl restart sing-box
+    show_client_configuration
+else
+    echo "Error in configuration. Aborting"
+fi
+}
+configure_reality() {
 echo "开始配置Reality"
 echo ""
 echo "自动生成基本参数"
@@ -288,8 +251,9 @@ echo ""
 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
 server_name=${server_name:-itunes.apple.com}
 echo ""
-# hysteria2
-echo "开始配置hysteria2"
+}
+configure_hysteria2() {
+   echo "开始配置hysteria2"
 echo ""
 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 read -p "请输入hysteria2监听端口 (default: 8443): " hy_listen_port
@@ -301,7 +265,9 @@ mkdir -p /root/self-cert/ && openssl ecparam -genkey -name prime256v1 -out /root
 echo ""
 echo "自签证书生成完成"
 echo ""
-echo "开始配置vmess"
+}
+configure_vmess() {
+   echo "开始配置vmess"
 echo ""
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
 read -p "请输入vmess端口，默认为15555: " vmess_port
@@ -321,109 +287,233 @@ sleep 5
 argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 rm -rf argo.log
-server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid"  --arg ws_path "$ws_path" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" --arg uuid "$uuid" --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" --arg server_ip "$server_ip" '{
-  "log": {
-    "disabled": false,
-    "level": "info",
-    "timestamp": true
-  },
-  "inbounds": [
-    {
-      "type": "vless",
-      "tag": "vless-in",
-      "listen": "::",
-      "listen_port": ($listen_port | tonumber),
-      "users": [
-        {
-          "uuid": $uuid,
-          "flow": "xtls-rprx-vision"
-        }
-      ],
-      "tls": {
-        "enabled": true,
-        "server_name": $server_name,
-          "reality": {
-          "enabled": true,
-          "handshake": {
-            "server": $server_name,
-            "server_port": 443
-          },
-          "private_key": $private_key,
-          "short_id": [$short_id]
-        }
-      }
-    },
-    {
-        "type": "hysteria2",
-        "tag": "hy2-in",
-        "listen": "::",
-        "listen_port": ($hy_listen_port | tonumber),
-        "users": [
+}
+generate_config() {
+    json_input='{
+        "log": {
+            "disabled": false,
+            "level": "info",
+            "timestamp": true
+        },
+        "inbounds": [],
+        "outbounds": [
             {
-                "password": $hy_password
-            }
-        ],
-        "tls": {
-            "enabled": true,
-            "alpn": [
-                "h3"
-            ],
-            "certificate_path": "/root/self-cert/cert.pem",
-            "key_path": "/root/self-cert/private.key"
-        }
-    },
-    {
-        "type": "vmess",
-        "tag": "vmess-in",
-        "listen": "::",
-        "listen_port": ($vmess_port | tonumber),
-        "users": [
+                "type": "direct",
+                "tag": "direct"
+            },
             {
-                "uuid": $vmess_uuid,
-                "alterId": 0
+                "type": "block",
+                "tag": "block"
             }
-        ],
-        "transport": {
-            "type": "ws",
-            "path": $ws_path
-        }
-    }
-  ],
-  "outbounds": [
-    {
-      "type": "direct",
-      "tag": "direct"
-    },
-    {
-      "type": "block",
-      "tag": "block"
-    }
-  ]
-}' > /root/sbox/sbconfig_server.json
-cat > /etc/systemd/system/sing-box.service <<EOF
-[Unit]
-After=network.target nss-lookup.target
-[Service]
-User=root
-WorkingDirectory=/root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
-ExecReload=/bin/kill -HUP \$MAINPID
-Restart=on-failure
-RestartSec=10
-LimitNOFILE=infinity
-[Install]
-WantedBy=multi-user.target
-EOF
-if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo "Configuration checked successfully. Starting sing-box service..."
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
-    systemctl restart sing-box
-    show_client_configuration
-else
-    echo "Error in configuration. Aborting"
-fi
+        ]
+    }' 
+    # 添加 VLESS 配置
+    if [[ -n "$listen_port" && -n "$uuid" && -n "$server_name" && -n "$private_key" && -n "$short_id" ]]; then
+        json_input=$(echo "$json_input" | jq --arg listen_port "$listen_port" --arg uuid "$uuid" --arg server_name "$server_name" --arg private_key "$private_key" --arg short_id "$short_id" '
+            .inbounds += [{
+                "type": "vless",
+                "tag": "vless-in",
+                "listen": "::",
+                "listen_port": ($listen_port | tonumber),
+                "users": [{
+                    "uuid": $uuid,
+                    "flow": "xtls-rprx-vision"
+                }],
+                "tls": {
+                    "enabled": true,
+                    "server_name": $server_name,
+                    "reality": {
+                        "enabled": true,
+                        "handshake": {
+                            "server": $server_name,
+                            "server_port": 443
+                        },
+                        "private_key": $private_key,
+                        "short_id": ($short_id | split(","))
+                    }
+                }
+            }]'
+        )
+    fi   
+    # 添加 VMess 配置
+    if [[ -n "$vmess_port" && -n "$vmess_uuid" && -n "$ws_path" ]]; then
+        json_input=$(echo "$json_input" | jq --arg vmess_port "$vmess_port" --arg vmess_uuid "$vmess_uuid" --arg ws_path "$ws_path" '
+            .inbounds += [{
+                "type": "vmess",
+                "tag": "vmess-in",
+                "listen": "::",
+                "listen_port": ($vmess_port | tonumber),
+                "users": [{
+                    "uuid": $vmess_uuid,
+                    "alterId": 0
+                }],
+                "transport": {
+                    "type": "ws",
+                    "path": $ws_path
+                }
+            }]'
+        )
+    fi    
+    # 添加 Hysteria2 配置
+    if [[ -n "$hy_listen_port" && -n "$hy_password" ]]; then
+        json_input=$(echo "$json_input" | jq --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '
+            .inbounds += [{
+                "type": "hysteria2",
+                "tag": "hy2-in",
+                "listen": "::",
+                "listen_port": ($hy_listen_port | tonumber),
+                "users": [{
+                    "password": $hy_password
+                }],
+                "tls": {
+                    "enabled": true,
+                    "alpn": ["h3"],
+                    "certificate_path": "/root/self-cert/cert.pem",
+                    "key_path": "/root/self-cert/private.key"
+                }
+            }]'
+        )
+    fi    
+    # 输出最终的 JSON 配置文件
+    echo "$json_input" | jq '.' > /root/sbox/sbconfig_server.json
+    echo "配置文件已生成: /root/sbox/sbconfig_server.json"
+}
+menu() {
+    mkdir -p "/root/sbox/"
+    download_singbox
+    download_cloudflared
+    echo ""
+    echo "请选择选项:"
+    echo ""
+    echo "1. 安装sing-box"
+    echo "2. 重新安装"
+    echo "3. 修改配置"
+    echo "4. 显示客户端配置"
+    echo "5. 卸载"
+    echo "6. 更新sing-box内核"
+    echo "7. 手动重启cloudflared"
+    echo "8. 手动重启sing-box"
+    echo "0. 退出脚本"
+    echo ""
+    read -p "Enter your choice (0-8): " choice
+    case $choice in
+        1)
+            echo "请选择要安装的协议（可以选择多个，用空格分隔）："
+            echo "1. VLESS"
+            echo "2. VMESS"
+            echo "3. Hysteria2"
+            read -p "Enter your choices (e.g., 1 2 3): " protocols
+
+            for protocol in $protocols; do
+                case $protocols in
+                    1)
+                        echo "正在安装 VLESS..."
+                        configure_reality
+                        ;;
+                    2)
+                        echo "正在安装 VMESS..."
+                        configure_vmess
+                        ;;
+                    3)
+                        echo "正在安装 Hysteria2..."
+                        configure_hysteria2
+                        ;;
+                    *)
+                        echo "无效的协议选择: $protocols"
+                        ;;
+                esac
+            done
+             server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+               key_pair=$(/root/sbox/sing-box generate reality-keypair)
+    if [ $? -ne 0 ]; then
+        echo "生成 Key pair 失败"
+        return 1
+    fi
+    echo "Key pair 生成完成"
+    echo ""
+    private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
+    public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+    echo "$public_key" | base64 > /root/sbox/public.key.b64
+              if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
+        openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+        openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+        echo ""
+        echo "自签证书生成完成"
+    else
+        echo "证书和私钥已存在，跳过生成步骤。"
+    fi
+        systemctl daemon-reload
+        systemctl enable sing-box
+        systemctl start sing-box
+        echo "服务已启动" 
+        show_client_configuration
+            ;;
+        2)
+            show_notice "Reinstalling..."
+            systemctl stop sing-box
+            systemctl disable sing-box > /dev/null 2>&1
+            rm -rf /etc/systemd/system/sing-box.service /root/sbox/sbconfig_server.json /root/sbox/sing-box /root/sbox/cloudflared-linux /root/sbox/argo.txt.b64 /root/sbox/public.key.b64 /root/self-cert/private.key /root/self-cert/cert.pem /root/self-cert/
+            ;;
+        3)
+            show_notice "开始修改reality端口和域名"
+            current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
+            read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
+            listen_port=${listen_port:-$current_listen_port}
+            current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
+            read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
+            server_name=${server_name:-$current_server_name}
+            echo ""
+            show_notice "开始修改hysteria2端口"
+            hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+            read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
+            hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+            jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" \
+                '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' \
+                /root/sbox/sbconfig_server.json > /root/sb_modified.json 
+            mv /root/sb_modified.json /root/sbox/sbconfig_server.json
+            systemctl restart sing-box
+            show_client_configuration
+            exit 0
+            ;;
+        4)
+            show_client_configuration
+            exit 0
+            ;;
+        5)
+            uninstall_singbox
+            exit 0
+            ;;
+        6)
+            show_notice "更新 Sing-box..."
+            download_singbox
+            if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+                echo "配置检查成功. 启动sing-box服务..."
+                systemctl daemon-reload
+                systemctl enable sing-box > /dev/null 2>&1
+                systemctl start sing-box
+                systemctl restart sing-box
+            fi
+            echo ""  
+            exit 1
+            ;;
+        7)
+            regenarte_cloudflared_argo
+            echo "重新启动完成，查看新的vmess客户端信息"
+            show_client_configuration
+            exit 1
+            ;;
+        8)
+            start_singbox
+            exit 0
+            ;;   
+        0)
+            echo "退出脚本"
+            exit 0
+            ;;
+        *)
+            echo "无效的选择. 退出."
+            exit 1
+            ;;
+    esac
+}
+menu
