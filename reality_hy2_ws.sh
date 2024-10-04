@@ -273,9 +273,9 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     read -p "Enter your choice (1-6): " choice
 
     case $choice in
-        1）
-	   install_sing-box
-	 ;;
+        1)
+        install_sing-box
+        ;;
         2)
           show_notice "Reinstalling..."
           systemctl stop sing-box
