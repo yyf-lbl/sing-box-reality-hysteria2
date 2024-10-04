@@ -359,9 +359,10 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           show_client_configuration
           exit 1
           ;;
-     0）
-         exit 0
-          ;;
+     0)  # 这里应该用英文的0和括号
+        echo "退出脚本"
+        exit 0
+        ;;
        
       *)
           echo "Invalid choice. Exiting."
