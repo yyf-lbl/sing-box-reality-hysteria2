@@ -206,7 +206,7 @@ uninstall_singbox() {
 install_base
 
 # Check if reality.json, sing-box, and sing-box.service already exist
-if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [ -f "/root/sbox/public.key.b64" ] && [ -f "/root/sbox/argo.txt.b64" ] && [ -f "/etc/systemd/system/sing-box.service" ]; then
+
 
     echo "sing-box-reality-hysteria2已经安装"
     echo ""
@@ -317,8 +317,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           echo "Invalid choice. Exiting."
           exit 1
           ;;
-	esac
-	fi
+	
  
 install_sing-box() {
 
