@@ -1,4 +1,7 @@
 #!/bin/bash
+hy_port=""
+hy_psd=""
+hy_name=""
 print_with_delay() {
     text="$1"
     delay="$2"
@@ -121,10 +124,7 @@ show_client_configuration() {
   echo "Public Key: $public_key"
   echo "Short ID: $short_id"
   echo ""
-  hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
-  hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
-  hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json) 
-  hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
+  hy2_server_link="hysteria2://$hy_psd@$server_ip:$hy_port?insecure=1&sni=$hy_name"
   show_notice "Hysteria2 客户端通用链接" 
   echo ""
   echo "官方 hysteria2通用链接格式"
@@ -134,9 +134,9 @@ show_client_configuration() {
   show_notice "Hysteria2 客户端通用参数" 
   echo ""
   echo "服务器ip: $server_ip"
-  echo "端口号: $hy_current_listen_port"
-  echo "password: $hy_password"
-  echo "域名SNI: $hy_current_server_name"
+  echo "端口号: $hy_port"
+  echo "password: $hy_psd"
+  echo "域名SNI: $hy_name"
   echo "跳过证书验证: True"
   echo ""
   show_notice "Hysteria2 客户端yaml文件" 
@@ -233,12 +233,14 @@ configure_hysteria2() {
 echo ""
 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 echo "你的密码为：$hy_password"
+hy_psd="$hy_password"
 read -p "请输入hysteria2监听端口 (默认: 8443): " hy_listen_port
 hy_listen_port=${hy_listen_port:-8443}
 echo "你的端口为：$hy_listen_port"
+hy_port="$hy_listen_port"
 read -p "输入自签证书域名 (default: bing.com): " hy_server_name
 hy_server_name=${hy_server_name:-bing.com}
-    echo ""
+   hy_name="$hy_server_name"
     mkdir -p /root/self-cert
     mkdir -p /root/sbox
     if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
@@ -337,15 +339,15 @@ generate_config() {
             }]'
         )
     fi
-    if [[ -n "$hy_listen_port" && -n "$hy_password" ]]; then
-        json_input=$(echo "$json_input" | jq --arg hy_listen_port "$hy_listen_port" --arg hy_password "$hy_password" '
+    if [[ -n "$hy_port" && -n "$hy_psd" ]]; then
+        json_input=$(echo "$json_input" | jq --arg hy_listen_port "$hy_port" --arg hy_password "$hy_psd" '
             .inbounds += [{
                 "type": "hysteria2",
                 "tag": "hy2-in",
                 "listen": "::",
-                "listen_port": ($hy_listen_port | tonumber),
+                "listen_port": ($hy_port | tonumber),
                 "users": [{
-                    "password": $hy_password
+                    "password": $hy_psd
                 }],
                 "tls": {
                     "enabled": true,
