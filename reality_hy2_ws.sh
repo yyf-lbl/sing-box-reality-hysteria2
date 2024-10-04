@@ -146,27 +146,11 @@ show_client_configuration() {
   # Retrieve the server IP address
   server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
   echo ""
-  echo ""
   show_notice "Reality 客户端通用链接" 
-  echo ""
   echo ""
   server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
   echo ""
-  echo ""
   echo "$server_link"
-  echo ""
-  echo ""
-  # Print the server details
-  show_notice "Reality 客户端通用参数" 
-  echo ""
-  echo ""
-  echo "服务器ip: $server_ip"
-  echo "监听端口: $current_listen_port"
-  echo "UUID: $uuid"
-  echo "域名SNI: $current_server_name"
-  echo "Public Key: $public_key"
-  echo "Short ID: $short_id"
-  echo ""
   echo ""
   # Get current listen port
   hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
@@ -174,8 +158,7 @@ show_client_configuration() {
   hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
   # Get the password
   hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
-  # Generate the link
-  
+  # Generate the link  
   hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
 
   show_notice "Hysteria2 客户端通用链接" 
@@ -184,41 +167,7 @@ show_client_configuration() {
   echo ""
   echo "$hy2_server_link"
   echo ""
-  echo ""   
-  # Print the server details
-  show_notice "Hysteria2 客户端通用参数" 
-  echo ""
-  echo ""  
-  echo "服务器ip: $server_ip"
-  echo "端口号: $hy_current_listen_port"
-  echo "password: $hy_password"
-  echo "域名SNI: $hy_current_server_name"
-  echo "跳过证书验证: True"
-  echo ""
-  echo ""
-  show_notice "Hysteria2 客户端yaml文件" 
-cat << EOF
-
-server: $server_ip:$hy_current_listen_port
-
-auth: $hy_password
-
-tls:
-  sni: $hy_current_server_name
-  insecure: true
-
-# 可自己修改对应带宽，不添加则默认为bbr，否则使用hy2的brutal拥塞控制
-# bandwidth:
-#   up: 100 mbps
-#   down: 100 mbps
-
-fastOpen: true
-
-socks5:
-  listen: 127.0.0.1:5080
-
-EOF
-
+  
   argo=$(base64 --decode /root/sbox/argo.txt.b64)
   vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
   ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
