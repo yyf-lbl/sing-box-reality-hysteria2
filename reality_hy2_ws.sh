@@ -304,7 +304,7 @@ configure_hysteria2() {
 
     # 生成随机密码
  hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-
+ echo "随机密码 $hy_password"
     # 询问监听端口
     read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
     hy_listen_port=${hy_listen_port:-8443}
