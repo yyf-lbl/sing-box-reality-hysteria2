@@ -360,7 +360,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           exit 1
           ;;
      0)  # 这里应该用英文的0和括号
-        echo "退出脚本"
+        echo "已退出脚本"
         exit 0
         ;;
        
