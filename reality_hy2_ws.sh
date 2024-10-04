@@ -204,107 +204,6 @@ uninstall_singbox() {
           echo "DONE!"
 }
 install_base
-
-echo "sing-box-reality-hysteria2已经安装"
-echo ""
-echo "请选择选项:"
-echo "1. 安装sing-box服务"
-echo "2. 重新安装"
-echo "3. 修改配置"
-echo "4. 显示客户端配置"
-echo "5. 卸载"
-echo "6. 更新sing-box内核"
-echo "7. 手动重启cloudflared"
-echo "0. 退出脚本"
-read -p "Enter your choice (0-7): " choice
-
-case $choice in
-    1)
-        echo "开始安装sing-box服务..."
-          mkdir -p "/root/sbox/"
-         download_singbox
-        download_cloudflared
-        install_singbox
-        ;;
-    2)
-        show_notice "重新安装中..."
-        systemctl stop sing-box
-        systemctl disable sing-box > /dev/null 2>&1
-        rm /etc/systemd/system/sing-box.service
-        rm /root/sbox/sbconfig_server.json
-        rm /root/sbox/sing-box
-        rm /root/sbox/cloudflared-linux
-        rm /root/sbox/argo.txt.b64
-        rm /root/sbox/public.key.b64
-        rm -rf /root/self-cert/
-        rm -rf /root/sbox/
-        
-        # 重新安装的步骤
-        install_singbox
-        ;;
-    3)
-        show_notice "开始修改reality端口和域名"
-        current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
-        read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
-        listen_port=${listen_port:-$current_listen_port}
-        
-        current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
-        read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
-        server_name=${server_name:-$current_server_name}
-
-        show_notice "开始修改hysteria2端口"
-        hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
-        read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
-        hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
-
-        jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" \
-            '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' \
-            /root/sbox/sbconfig_server.json > /root/sb_modified.json
-
-        mv /root/sb_modified.json /root/sbox/sbconfig_server.json
-
-        echo "配置修改完成，重新启动sing-box服务..."
-        systemctl restart sing-box
-        show_client_configuration
-        exit 0
-        ;;
-    4)  
-        show_client_configuration
-        exit 0
-        ;;	
-    5)
-        uninstall_singbox
-        exit 0
-        ;;
-    6)
-        show_notice "更新 Sing-box..."
-        download_singbox
-        if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-            echo "配置检查成功，启动sing-box服务..."
-            systemctl daemon-reload
-            systemctl enable sing-box > /dev/null 2>&1
-            systemctl start sing-box
-            systemctl restart sing-box
-        fi
-        echo ""
-        exit 1
-        ;;
-    7)
-        regenarte_cloudflared_argo
-        echo "重新启动完成，查看新的vmess客户端信息"
-        show_client_configuration
-        exit 1
-        ;;
-    0)
-        echo "已退出脚本"
-        exit 0
-        ;;
-    *)
-        echo "无效选项。正在退出。"
-        exit 1
-        ;;
-esac
-
 install_singbox() {
 
     echo "开始配置 Reality"
@@ -492,6 +391,107 @@ install_singbox() {
 
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
+
+echo "sing-box-reality-hysteria2已经安装"
+echo ""
+echo "请选择选项:"
+echo "1. 安装sing-box服务"
+echo "2. 重新安装"
+echo "3. 修改配置"
+echo "4. 显示客户端配置"
+echo "5. 卸载"
+echo "6. 更新sing-box内核"
+echo "7. 手动重启cloudflared"
+echo "0. 退出脚本"
+read -p "Enter your choice (0-7): " choice
+
+case $choice in
+    1)
+        echo "开始安装sing-box服务..."
+          mkdir -p "/root/sbox/"
+         download_singbox
+        download_cloudflared
+        install_singbox
+        ;;
+    2)
+        show_notice "重新安装中..."
+        systemctl stop sing-box
+        systemctl disable sing-box > /dev/null 2>&1
+        rm /etc/systemd/system/sing-box.service
+        rm /root/sbox/sbconfig_server.json
+        rm /root/sbox/sing-box
+        rm /root/sbox/cloudflared-linux
+        rm /root/sbox/argo.txt.b64
+        rm /root/sbox/public.key.b64
+        rm -rf /root/self-cert/
+        rm -rf /root/sbox/
+        
+        # 重新安装的步骤
+        install_singbox
+        ;;
+    3)
+        show_notice "开始修改reality端口和域名"
+        current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
+        listen_port=${listen_port:-$current_listen_port}
+        
+        current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
+        server_name=${server_name:-$current_server_name}
+
+        show_notice "开始修改hysteria2端口"
+        hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
+        hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+
+        jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" \
+            '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' \
+            /root/sbox/sbconfig_server.json > /root/sb_modified.json
+
+        mv /root/sb_modified.json /root/sbox/sbconfig_server.json
+
+        echo "配置修改完成，重新启动sing-box服务..."
+        systemctl restart sing-box
+        show_client_configuration
+        exit 0
+        ;;
+    4)  
+        show_client_configuration
+        exit 0
+        ;;	
+    5)
+        uninstall_singbox
+        exit 0
+        ;;
+    6)
+        show_notice "更新 Sing-box..."
+        download_singbox
+        if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+            echo "配置检查成功，启动sing-box服务..."
+            systemctl daemon-reload
+            systemctl enable sing-box > /dev/null 2>&1
+            systemctl start sing-box
+            systemctl restart sing-box
+        fi
+        echo ""
+        exit 1
+        ;;
+    7)
+        regenarte_cloudflared_argo
+        echo "重新启动完成，查看新的vmess客户端信息"
+        show_client_configuration
+        exit 1
+        ;;
+    0)
+        echo "已退出脚本"
+        exit 0
+        ;;
+    *)
+        echo "无效选项。正在退出。"
+        exit 1
+        ;;
+esac
+
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
