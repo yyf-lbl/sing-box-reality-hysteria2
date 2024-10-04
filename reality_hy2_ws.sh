@@ -270,7 +270,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     echo "6. 更新sing-box内核"
     echo "7. 手动重启cloudflared"
     echo "0. 退出脚本"
-    read -p "Enter your choice (1-6): " choice
+    read -p "Enter your choice (0-7): " choice
 
     case $choice in
         1)
@@ -359,22 +359,26 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           show_client_configuration
           exit 1
           ;;
+     0）
+         exit 0
+          ;;
+       
       *)
           echo "Invalid choice. Exiting."
           exit 1
           ;;
 	esac
 	fi
+ 
+install_sing-box() {
 
-install_sing-box(){
-
-mkdir -p "/root/sbox/"
-download_singbox
-download_cloudflared
-# reality
-echo "开始配置Reality"
-echo ""
-# Generate key pair
+    mkdir -p "/root/sbox/"
+    download_singbox
+    download_cloudflared
+   # reality
+    echo "开始配置Reality"
+   echo ""
+   # Generate key pair
 echo "自动生成基本参数"
 echo ""
 key_pair=$(/root/sbox/sing-box generate reality-keypair)
