@@ -223,7 +223,7 @@ install_base
 
     case $choice in
         1)
-        install_sing-box
+       install_singbox
         ;;
         2)
           show_notice "Reinstalling..."
@@ -319,7 +319,7 @@ install_base
           ;;
 	
  
-install_sing-box() {
+install_singbox() {
 
     mkdir -p "/root/sbox/"
     download_singbox
