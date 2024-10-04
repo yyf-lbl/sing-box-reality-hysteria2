@@ -320,39 +320,41 @@ install_base
 	
  
 install_singbox() {
-
     mkdir -p "/root/sbox/"
+    
+    # 检查 sing-box 是否存在
+    if [ ! -f "/root/sbox/sing-box" ]; then
+        echo "sing-box executable not found!"
+        exit 1
+    fi
+
     download_singbox
     download_cloudflared
-   # reality
+
     echo "开始配置Reality"
-   echo ""
-   # Generate key pair
-echo "自动生成基本参数"
-echo ""
-key_pair=$(/root/sbox/sing-box generate reality-keypair)
-echo "Key pair生成完成"
-echo ""
+    echo ""
+    
+    # 自动生成基本参数
+    key_pair=$(/root/sbox/sing-box generate reality-keypair)
+    if [ $? -ne 0 ]; then
+        echo "Failed to generate reality key pair."
+        exit 1
+    fi
+    
+    private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
+    public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+    echo "$public_key" | base64 > /root/sbox/public.key.b64
 
-# Extract private key and public key
-private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
-public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
+    # 生成必要的值
+    uuid=$(/root/sbox/sing-box generate uuid)
+    short_id=$(/root/sbox/sing-box generate rand --hex 8)
 
-# Save the public key in a file using base64 encoding
-echo "$public_key" | base64 > /root/sbox/public.key.b64
+    # 获取用户输入
+    read -p "请输入Reality端口 (default: 443): " listen_port
+    listen_port=${listen_port:-443}
 
-# Generate necessary values
-uuid=$(/root/sbox/sing-box generate uuid)
-short_id=$(/root/sbox/sing-box generate rand --hex 8)
-echo "uuid和短id 生成完成"
-echo ""
-# Ask for listen port
-read -p "请输入Reality端口 (default: 443): " listen_port
-listen_port=${listen_port:-443}
-echo ""
-# Ask for server name (sni)
-read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
-server_name=${server_name:-itunes.apple.com}
+    read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
+    server_name=${server_name:-itunes.apple.com}
 echo ""
 # hysteria2
 echo "开始配置hysteria2"
@@ -484,7 +486,6 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
     }
   ]
 }' > /root/sbox/sbconfig_server.json
-
 }
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
