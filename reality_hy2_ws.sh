@@ -262,20 +262,21 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
     echo "sing-box-reality-hysteria2已经安装"
     echo ""
     echo "请选择选项:"
-    echo ""
-    echo "1. 重新安装"
-    echo "2. 修改配置"
-    echo "3. 显示客户端配置"
-    echo "4. 卸载"
-    echo "5. 更新sing-box内核"
-    echo "6. 手动重启cloudflared"
-    echo ""
+    echo "1. 安装sing-box服务"
+    echo "2. 重新安装"
+    echo "3. 修改配置"
+    echo "4. 显示客户端配置"
+    echo "5. 卸载"
+    echo "6. 更新sing-box内核"
+    echo "7. 手动重启cloudflared"
+    echo "0. 退出脚本"
     read -p "Enter your choice (1-6): " choice
 
     case $choice in
-        1)
+        1）install_sing-box
+	 ;;
+        2)
           show_notice "Reinstalling..."
-          # Uninstall previous installation
           systemctl stop sing-box
           systemctl disable sing-box > /dev/null 2>&1
           rm /etc/systemd/system/sing-box.service
@@ -291,7 +292,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           
           # Proceed with installation
         ;;
-        2)
+        3)
           #Reality modify
           show_notice "开始修改reality端口和域名"
           # Get current listen port
@@ -328,16 +329,16 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           show_client_configuration
           exit 0
         ;;
-      3)  
+      4)  
           # show client configuration
           show_client_configuration
           exit 0
       ;;	
-      4)
+      5)
           uninstall_singbox
           exit 0
           ;;
-      5)
+      6)
           show_notice "Update Sing-box..."
           download_singbox
           # Check configuration and start the service
@@ -351,7 +352,7 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
           echo ""  
           exit 1
           ;;
-      6)
+      7)
           regenarte_cloudflared_argo
           echo "重新启动完成，查看新的vmess客户端信息"
           show_client_configuration
@@ -364,12 +365,11 @@ if [ -f "/root/sbox/sbconfig_server.json" ] && [ -f "/root/sbox/sing-box" ] && [
 	esac
 	fi
 
+install_sing-box(){
+
 mkdir -p "/root/sbox/"
-
 download_singbox
-
 download_cloudflared
-
 # reality
 echo "开始配置Reality"
 echo ""
@@ -531,8 +531,7 @@ jq -n --arg listen_port "$listen_port" --arg vmess_port "$vmess_port" --arg vmes
   ]
 }' > /root/sbox/sbconfig_server.json
 
-
-
+}
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
