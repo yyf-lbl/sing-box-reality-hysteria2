@@ -201,23 +201,6 @@ fi
           echo "DONE!"
 }
 install_base
-
-cat > /etc/systemd/system/sing-box.service <<EOF
-[Unit]
-After=network.target nss-lookup.target
-[Service]
-User=root
-WorkingDirectory=/root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
-ExecReload=/bin/kill -HUP \$MAINPID
-Restart=on-failure
-RestartSec=10
-LimitNOFILE=infinity
-[Install]
-WantedBy=multi-user.target
-EOF
 # 检测配置并启动服务
 start_singbox(){
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
@@ -231,8 +214,6 @@ else
     echo "Error in configuration. Aborting"
 fi
 }
-    # 创建证书存放目录
-    mkdir -p /root/self-cert/
 configure_reality() {
     echo "开始配置 Reality"
     echo ""
@@ -301,7 +282,6 @@ EOF
 configure_hysteria2() {
     echo "开始配置 Hysteria2"
     echo ""
-
     # 生成随机密码
  hy_password=$(/root/sbox/sing-box generate rand --hex 8)
  echo "随机密码 $hy_password"
@@ -309,13 +289,13 @@ configure_hysteria2() {
     read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
     hy_listen_port=${hy_listen_port:-8443}
     echo ""
-
     # 询问自签证书域名
     read -p "输入自签证书域名 (default: bing.com): " hy_server_name
    hy_server_name=${hy_server_name:-bing.com}
     echo ""
-
-
+    # 确保目录存在
+    mkdir -p /root/self-cert
+    mkdir -p /root/sbox
     # 检查是否已存在证书和私钥
     if [[ ! -f /root/self-cert/cert.pem || ! -f /root/self-cert/private.key ]]; then
         openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
@@ -326,7 +306,6 @@ configure_hysteria2() {
         echo "证书和私钥已存在，跳过生成步骤。"
     fi
     echo ""
-
     # 生成配置 JSON
     json_config=$(cat <<EOF
 {
@@ -338,13 +317,10 @@ configure_hysteria2() {
 }
 EOF
 )
-
     # 保存配置文件
     echo "$json_config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成: /root/sbox/sbconfig_server.json"
 }
-
-
 configure_vmess() {
     echo "开始配置 vmess"
     echo ""
@@ -632,3 +608,19 @@ fi
     esac
 }
 menu
+cat > /etc/systemd/system/sing-box.service <<EOF
+[Unit]
+After=network.target nss-lookup.target
+[Service]
+User=root
+WorkingDirectory=/root
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+ExecReload=/bin/kill -HUP \$MAINPID
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=infinity
+[Install]
+WantedBy=multi-user.target
+EOF
