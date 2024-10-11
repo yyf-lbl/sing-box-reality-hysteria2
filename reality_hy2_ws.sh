@@ -125,64 +125,79 @@ download_cloudflared(){
 }
 # client configuration
 show_client_configuration() {
-  echo ""  
- # Check which protocols are installed
-  installed_protocols=() 
-  # 检查 VLESS 协议
-  if jq -e '.inbounds | .[].protocol == "vless"' /root/sbox/sbconfig_server.json > /dev/null; then
-    installed_protocols+=("vless")
+ echo "正在执行 show_client_configuration 函数..."
+  
+  # 检查已安装的协议
+  installed_protocols=()
+  echo "正在检查已安装的协议..."
+
+  # 检查 JSON 文件是否存在
+  if [[ ! -f /root/sbox/sbconfig_server.json ]]; then
+    echo "配置文件不存在：/root/sbox/sbconfig_server.json"
+    return 1
   fi
-  # 检查 Hysteria2 协议
-  if jq -e '.inbounds | .[].protocol == "hysteria2"' /root/sbox/sbconfig_server.json > /dev/null; then
-    installed_protocols+=("hysteria2")
-  fi 
-  # 检查 VMess 协议
-  if jq -e '.inbounds | .[].protocol == "vmess"' /root/sbox/sbconfig_server.json > /dev/null; then
-    installed_protocols+=("vmess")
-  fi
-  # 生成 Reality 客户端链接（如果 VLESS 已安装）
+
+  # 检查协议
+  for protocol in "vless" "hysteria2" "vmess"; do
+    if jq -e ".inbounds | .[].protocol == \"$protocol\"" /root/sbox/sbconfig_server.json > /dev/null; then
+      installed_protocols+=("$protocol")
+      echo "已找到协议：$protocol"
+    fi
+  done
+
+  # 获取服务器IP
+  server_ip=$(curl -s4m8 ip.sb -k) || { echo "无法获取服务器IP地址"; return 1; }
+  echo "获取到服务器IP地址：$server_ip"
+
+  # 生成 VLESS 客户端链接
   if [[ " ${installed_protocols[@]} " =~ "vless" ]]; then
     echo "Reality 客户端通用链接"
     echo ""
-    current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
-    current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
-    uuid=$(jq -r '.inbounds[0].users[0].uuid' /root/sbox/sbconfig_server.json)
+    current_listen_port=$(jq -r '.inbounds[] | select(.protocol=="vless").listen_port' /root/sbox/sbconfig_server.json)
+    current_server_name=$(jq -r '.inbounds[] | select(.protocol=="vless").tls.server_name' /root/sbox/sbconfig_server.json)
+    uuid=$(jq -r '.inbounds[] | select(.protocol=="vless").users[0].uuid' /root/sbox/sbconfig_server.json)
     public_key=$(base64 --decode /root/sbox/public.key.b64)
-    short_id=$(jq -r '.inbounds[0].tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
-    server_ip=$(curl -s4m8 ip.sb -k) || { echo "无法获取服务器IP地址"; return 1; }
+    short_id=$(jq -r '.inbounds[] | select(.protocol=="vless").tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
+
     server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
     echo "$server_link"
     echo ""
   fi
-  # 生成 Hysteria2 客户端链接（如果 Hysteria2 已安装）
+
+  # 生成 Hysteria2 客户端链接
   if [[ " ${installed_protocols[@]} " =~ "hysteria2" ]]; then
     echo "Hysteria2 客户端通用链接"
-    echo "" 
-    hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+    echo ""
+    hy_current_listen_port=$(jq -r '.inbounds[] | select(.protocol=="hysteria2").listen_port' /root/sbox/sbconfig_server.json)
     hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
-    hy_password=$(jq -r '.inbounds[1].users[0].password' /root/sbox/sbconfig_server.json)
+    hy_password=$(jq -r '.inbounds[] | select(.protocol=="hysteria2").users[0].password' /root/sbox/sbconfig_server.json)
     hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
     echo "$hy2_server_link"
     echo ""
   fi
-  # 生成 VMess 客户端链接（如果 VMess 已安装）
+
+  # 生成 VMess 客户端链接
   if [[ " ${installed_protocols[@]} " =~ "vmess" ]]; then
     echo "vmess ws 通用链接参数"
-    echo "" 
+    echo ""
     argo=$(base64 --decode /root/sbox/argo.txt.b64)
-    vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
-    ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
+    vmess_uuid=$(jq -r '.inbounds[] | select(.protocol=="vmess").users[0].uuid' /root/sbox/sbconfig_server.json)
+    ws_path=$(jq -r '.inbounds[] | select(.protocol=="vmess").transport.path' /root/sbox/sbconfig_server.json)
+
     echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
-    echo "" 
+    echo ""
+    
     vmess_link1='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
     echo "$vmess_link1"
     echo -e "端口 443 可改为 2053 2083 2087 2096 8443\n"
+    
     vmess_link2='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
     echo "$vmess_link2"
-    echo -e "端口 80 可改为 8080 8880 2052 2082 2086 2095" 
+    echo -e "端口 80 可改为 8080 8880 2052 2082 2086 2095"
     echo ""
   fi
 }
+
 uninstall_singbox() {
     echo "Uninstalling..."
     # Stop and disable sing-box service
