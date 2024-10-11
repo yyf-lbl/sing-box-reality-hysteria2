@@ -187,11 +187,13 @@ show_client_configuration() {
 
         echo "VMess ws 通用链接参数："
         echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
-
+        echo -e "以下端口 443 可改为 2053 2083 2087 2096 8443"
+        echo ""
         vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
         echo "$vmess_link_tls"
         echo ""
-
+        echo -e "以下端口 80 可改为 8080 8880 2052 2082 2086 2095" 
+        echo ""
         vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
         echo "$vmess_link_no_tls"
         echo ""
