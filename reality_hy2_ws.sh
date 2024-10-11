@@ -200,12 +200,11 @@ show_client_configuration() {
     fi
 }
 uninstall_singbox() {
-    echo "正在卸载..."
-    # Attempt to stop and disable the sing-box service, suppressing errors if not found
+    echo "正在卸载sing-box服务..."
+    # 尝试停止并禁用singbox服务，如果未发现错误，则抑制错误
     systemctl stop sing-box 2>/dev/null
     systemctl disable sing-box 2>/dev/null
-
-    # Define files and directories to remove
+    # 定义要删除的文件和目录
     files_to_remove=(
         "/etc/systemd/system/sing-box.service"
         "/root/sbox/sbconfig_server.json"
@@ -220,32 +219,26 @@ uninstall_singbox() {
         "/root/self-cert/"
         "/root/sbox/"
     )
-
-    # Remove files
+    # 删除文件并检查是否成功
     for file in "${files_to_remove[@]}"; do
         if [ -e "$file" ]; then
-            rm "$file"
-            echo "Removed: $file"
-        else
-            # 只在调试模式下输出
-            # echo "File not found, skipping: $file"
-            :
+            rm "$file" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                echo "Failed to remove $file."
+            fi
         fi
     done
-
-    # Remove directories
+    # 删除目录并检查是否成功
     for dir in "${directories_to_remove[@]}"; do
         if [ -d "$dir" ]; then
-            rm -rf "$dir"
-            echo "Removed directory: $dir"
-        else
-            # 只在调试模式下输出
-            # echo "Directory not found, skipping: $dir"
-            :
+            rm -rf "$dir" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                echo "Failed to remove directory $dir."
+            fi
         fi
     done
-
-    echo "卸载成功!"
+    echo "sing-box已成功卸载!"
+    echo "所有sing-box配置文件已完全移除"
 }
 install_base
 install_singbox() {
