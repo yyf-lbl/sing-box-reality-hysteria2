@@ -403,11 +403,9 @@ echo "4. 显示客户端配置"
 echo "5. 卸载"
 echo "6. 更新sing-box内核"
 echo "7. 手动重启cloudflared"
-echo "8. 启动服务"
-echo "9. 停止服务"
-echo "10. 服务状态"
+echo "8. 手动重启sing-box服务"
 echo "0. 退出脚本"
-read -p "Enter your choice (0-10): " choice
+read -p "输入您的选择 (0-10): " choice
 case $choice in
     1)
         echo "开始安装sing-box服务..."
@@ -485,16 +483,23 @@ case $choice in
         exit 1
         ;;
     8)  
-        start_sing_box
+        if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+    echo "配置检查成功，正在启动 sing-box 服务..."
+    systemctl daemon-reload
+    systemctl enable sing-box > /dev/null 2>&1
+    systemctl start sing-box
+    if systemctl is-active --quiet sing-box; then
+        echo "sing-box 服务已成功启动！"
+    else
+        echo "sing-box 服务启动失败！"
+    fi
+    systemctl restart sing-box
+    show_client_configuration
+else
+    echo "配置错误，sing-box 服务未启动！"
+fi
         ;;
-   9)  
-        stop_sing_box
-    
-        ;;
-   10)  
-        status_sing_box
 
-        ;;
     0)
         echo "已退出脚本"
         exit 0
@@ -522,13 +527,5 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 # Check configuration and start the service
-if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo "Configuration checked successfully. Starting sing-box service..."
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
-    systemctl restart sing-box
-    show_client_configuration
-else
-    echo "Error in configuration. Aborting"
-fi
+
+
