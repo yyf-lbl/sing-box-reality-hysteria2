@@ -205,37 +205,9 @@ uninstall_singbox() {
 }
 install_base
 install_singbox() {
-    echo "开始安装 Sing-Box..."
-    # 提示用户选择协议
-    declare -a protocols
-    echo "请选择要安装的协议（用空格分隔，默认安装所有协议）:"
-    echo "1) VLESS"
-    echo "2) VMess"
-    echo "3) Hysteria2"
-    read -p "请输入选择（如 1 2 3，默认为 1 2 3）: " user_choice
-    user_choice=${user_choice:-"1 2 3"}
-
-    # 根据用户选择生成协议列表
-    for choice in $user_choice; do
-        case $choice in
-            1)
-                protocols+=("vless")
-                ;;
-            2)
-                protocols+=("vmess")
-                ;;
-            3)
-                protocols+=("hysteria")
-                ;;
-            *)
-                echo "无效的选择: $choice"
-                ;;
-        esac
-    done
-
-    # 询问用户输入信息
-    read -p "请输入 VLESS 端口，默认为 15555: " vless_port
-    key_pair=$(/root/sbox/sing-box generate reality-keypair)
+  
+vless(){
+ key_pair=$(/root/sbox/sing-box generate reality-keypair)
     if [ $? -ne 0 ]; then
         echo "生成 Reality 密钥对失败。"
         exit 1
@@ -247,7 +219,7 @@ install_singbox() {
 
     # 将公钥以 base64 编码保存到文件
     echo "$public_key" | base64 > /root/sbox/public.key.b64
-
+   read -p "请输入 VLESS 端口，默认为 15555: " vless_port
     # 生成必要的值
     uuid=$(/root/sbox/sing-box generate uuid)
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
@@ -263,9 +235,9 @@ install_singbox() {
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
     server_name=${server_name:-itunes.apple.com}
     echo ""
-
-
-    read -p "请输入 VMess 端口，默认为 15556: " vmess_port
+}
+vmess(){
+  read -p "请输入 VMess 端口，默认为 15556: " vmess_port
       echo "开始配置 VMess"
     echo ""
 
@@ -300,8 +272,9 @@ install_singbox() {
     read -p "请输入 Hysteria2 端口，默认为 15557: " hysteria_port
     echo "开始配置 Hysteria2"
     echo ""
-
-    # 生成 Hysteria 需要的值
+}
+hysteria(){
+   # 生成 Hysteria 需要的值
     hy_password=$(/root/sbox/sing-box generate rand --hex 8)
 
     # 获取 Hysteria 监听端口
@@ -320,6 +293,35 @@ install_singbox() {
     echo ""
     echo "自签证书生成完成"
     echo ""
+}
+    echo "开始安装 Sing-Box..."
+    # 提示用户选择协议
+    declare -a protocols
+    echo "请选择要安装的协议（用空格分隔，默认安装所有协议）:"
+    echo "1) VLESS"
+    echo "2) VMess"
+    echo "3) Hysteria2"
+    read -p "请输入选择（如 1 2 3，默认为 1 2 3）: " user_choice
+    user_choice=${user_choice:-"1 2 3"}
+
+    # 根据用户选择生成协议列表
+    for choice in $user_choice; do
+        case $choice in
+            1)
+               vless
+                ;;
+            2)
+                vmess
+                ;;
+            3)
+              hysteria
+                ;;
+            *)
+                echo "无效的选择: $choice"
+                ;;
+        esac
+    done
+
   # 获取服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 
