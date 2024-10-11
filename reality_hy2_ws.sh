@@ -514,6 +514,21 @@ LimitNOFILE=infinity
 [Install]
 WantedBy=multi-user.target
 EOF
-
+      # 检查配置并启动服务
+   if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+      echo "配置检查成功，正在启动 sing-box 服务..."
+      systemctl daemon-reload
+      systemctl enable sing-box > /dev/null 2>&1
+      systemctl start sing-box
+    if systemctl is-active --quiet sing-box; then
+        echo "sing-box 服务已成功启动！"
+    else
+        echo "sing-box 服务启动失败！"
+    fi
+    systemctl restart sing-box
+    show_client_configuration
+else
+    echo "配置错误，sing-box 服务未启动！"
+fi
 
 
