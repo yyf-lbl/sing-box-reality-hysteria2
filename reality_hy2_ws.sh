@@ -388,8 +388,11 @@ echo "4. 显示客户端配置"
 echo "5. 卸载"
 echo "6. 更新sing-box内核"
 echo "7. 手动重启cloudflared"
+echo "8. 启动服务"
+echo "9. 停止服务"
+echo "10. 服务状态"
 echo "0. 退出脚本"
-read -p "Enter your choice (0-7): " choice
+read -p "Enter your choice (0-10): " choice
 case $choice in
     1)
         echo "开始安装sing-box服务..."
@@ -409,8 +412,7 @@ case $choice in
         rm /root/sbox/argo.txt.b64
         rm /root/sbox/public.key.b64
         rm -rf /root/self-cert/
-        rm -rf /root/sbox/
-        
+        rm -rf /root/sbox/  
         # 重新安装的步骤
         install_singbox
         ;;
@@ -467,6 +469,18 @@ case $choice in
         show_client_configuration
         exit 1
         ;;
+    8)  
+        start_sing_box
+        exit 1
+        ;;
+   9)  
+        stop_sing_box
+        exit 1
+        ;;
+   10)  
+        status_sing_box
+        exit 1
+        ;;
     0)
         echo "已退出脚本"
         exit 0
@@ -504,3 +518,17 @@ if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
 else
     echo "Error in configuration. Aborting"
 fi
+ start_sing_box() {
+     systemctl start sing-box
+    echo "sing-box服务已启动"
+}
+
+ stop_sing_box() {
+     systemctl stop sing-box
+    echo "sing-box服务已停止"
+}
+
+ status_sing_box() {
+     systemctl status sing-box
+     echo "sing-box服务正在运行!"
+}
