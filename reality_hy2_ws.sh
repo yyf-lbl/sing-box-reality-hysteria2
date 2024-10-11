@@ -240,7 +240,6 @@ install_singbox() {
                 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
                 server_name=${server_name:-itunes.apple.com}
                 echo "Reality 配置完成"
-                show_client_configuration
                 ;;
             2)
                 echo "开始配置 Hysteria2"
@@ -254,7 +253,6 @@ install_singbox() {
                 openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
                 openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
                 echo "Hysteria2 配置完成"
-                show_client_configuration
                 ;;
             3)
                 echo "开始配置 VMess"
@@ -265,7 +263,6 @@ install_singbox() {
                 read -p "ws 路径 (默认随机生成): " ws_path
                 ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
                 echo "VMess 配置完成"
-                show_client_configuration
                 ;;
             *)
                 echo "无效选项: $option，请选择 1-3"
@@ -275,6 +272,8 @@ install_singbox() {
     done
     # 获取服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+     # 调用 show_client_configuration 函数
+    show_client_configuration
 # 初始化一个空的 JSON 对象
 json_config='{
     "log": {
@@ -426,7 +425,8 @@ case $choice in
         exit 0
         ;;
     4)  
-        show_client_configuration
+        # 调用 show_client_configuration 函数
+    show_client_configuration
         exit 0
         ;;	
     5)
