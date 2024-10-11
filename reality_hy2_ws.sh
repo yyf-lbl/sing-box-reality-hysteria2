@@ -361,10 +361,6 @@ rm -rf argo.log
                     }]')
                 ;;
 
-            *)
-                echo "无效选择: $choice"
-                ;; 
-
             3)
                echo "开始配置 Hysteria2"
                 echo ""
@@ -398,7 +394,10 @@ rm -rf argo.log
                             "key_path": "/root/self-cert/private.key"
                         }
                     }]')
-                ;;               
+                ;;  
+              *)
+                echo "无效选择: $choice"
+                ;;    
         esac
     done
 
