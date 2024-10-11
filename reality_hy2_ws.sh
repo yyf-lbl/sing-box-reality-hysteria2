@@ -501,8 +501,6 @@ if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     # 启用并启动服务
     if systemctl enable sing-box > /dev/null 2>&1 && systemctl start sing-box; then
         echo "Sing-box service started successfully."     
-        # 显示客户端配置
-        show_client_configuration
     else
         echo "Failed to start the sing-box service."
     fi
