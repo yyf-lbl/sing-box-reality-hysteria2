@@ -471,15 +471,14 @@ case $choice in
         ;;
     8)  
         start_sing_box
-        exit 1
         ;;
    9)  
         stop_sing_box
-        exit 1
+    
         ;;
    10)  
         status_sing_box
-        exit 1
+
         ;;
     0)
         echo "已退出脚本"
@@ -518,17 +517,17 @@ if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
 else
     echo "Error in configuration. Aborting"
 fi
- start_sing_box() {
+function start_sing_box() {
      systemctl start sing-box
     echo "sing-box服务已启动"
 }
 
- stop_sing_box() {
+function stop_sing_box() {
      systemctl stop sing-box
     echo "sing-box服务已停止"
 }
 
- status_sing_box() {
+function status_sing_box() {
      systemctl status sing-box
      echo "sing-box服务正在运行!"
 }
