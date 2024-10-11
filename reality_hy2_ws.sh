@@ -1,5 +1,5 @@
 #!/bin/bash
-
+listen_port=443  # 设置默认值
 # Function to print characters with delay
 print_with_delay() {
     text="$1"
@@ -254,8 +254,8 @@ install_singbox() {
                 
                 uuid=$(/root/sbox/sing-box generate uuid)
                 short_id=$(/root/sbox/sing-box generate rand --hex 8)
-                read -p "请输入 Reality 端口 (default: 443): " listen_port
-                listen_port=${listen_port:-443}
+                read -p "请输入 Reality 端口 (default: 443): " input_port
+                listen_port=${input_port:-$listen_port}  # 如果用户没有输入，则保持默认值
                 echo "输入的 Reality 端口: $listen_port"
                 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
                 server_name=${server_name:-itunes.apple.com}
