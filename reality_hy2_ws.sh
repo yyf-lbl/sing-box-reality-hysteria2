@@ -21,7 +21,7 @@ show_notice() {
     echo "#######################################################################################################################"
 }
 # Introduction animation
-print_with_delay "sing-reality-hy2-box" 0.05
+print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
 echo ""
 # install base
@@ -201,6 +201,7 @@ show_client_configuration() {
 }
 uninstall_singbox() {
     echo "正在卸载sing-box服务..."
+    sleep 3
     # 尝试停止并禁用singbox服务，如果未发现错误，则抑制错误
     systemctl stop sing-box 2>/dev/null
     systemctl disable sing-box 2>/dev/null
@@ -242,6 +243,7 @@ uninstall_singbox() {
 }
 install_base
 install_singbox() {
+ 
   while true; do
     echo "请选择要安装的协议（输入数字，多个选择用空格分隔）:"
     echo "1) Reality"
@@ -415,7 +417,7 @@ rm -rf argo.log
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
-echo ""
+echo "脚本支持:VLESS VMESS HY2 协议"
 echo "请选择选项:"
 echo "1. 安装sing-box服务"
 echo "2. 重新安装"
