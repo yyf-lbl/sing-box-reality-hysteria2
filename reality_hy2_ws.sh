@@ -471,18 +471,13 @@ case $choice in
         ;;
     8)  
        # 检查配置并启动服务
-   if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-      systemctl daemon-reload
-      systemctl enable sing-box > /dev/null 2>&1
-      systemctl start sing-box
-    if systemctl is-active --quiet sing-box; then
-        echo ""
-    else
-        echo "！"
-    fi
+ if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+    systemctl daemon-reload
+    systemctl enable sing-box > /dev/null 2>&1
+    systemctl start sing-box
     systemctl restart sing-box
 else
-    echo "配置错误，sing-box 服务未启动！"
+    echo "Error in configuration. Aborting"
 fi
         ;;
 
