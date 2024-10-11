@@ -379,20 +379,7 @@ rm -rf argo.log
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
-function start_sing_box() {
-     systemctl start sing-box
-    echo "sing-box服务已启动"
-}
 
-function stop_sing_box() {
-     systemctl stop sing-box
-    echo "sing-box服务已停止"
-}
-
-function status_sing_box() {
-     systemctl status sing-box
-     echo "sing-box服务正在运行!"
-}
 # 用户交互界面
 echo "脚本支持:VLESS VMESS HY2 协议"
 echo "请选择选项:"
@@ -483,11 +470,12 @@ case $choice in
         exit 1
         ;;
     8)  
-        if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo "配置检查成功，正在启动 sing-box 服务..."
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
+       # 检查配置并启动服务
+   if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+      echo "配置检查成功，正在启动 sing-box 服务..."
+      systemctl daemon-reload
+      systemctl enable sing-box > /dev/null 2>&1
+      systemctl start sing-box
     if systemctl is-active --quiet sing-box; then
         echo "sing-box 服务已成功启动！"
     else
@@ -526,6 +514,6 @@ LimitNOFILE=infinity
 [Install]
 WantedBy=multi-user.target
 EOF
-# Check configuration and start the service
+
 
 
