@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Function to print characters with delay
 print_with_delay() {
     text="$1"
@@ -50,7 +49,6 @@ regenarte_cloudflared_argo(){
     # 终止进程
     kill "$pid"
   fi
-
   vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
   #生成地址
   /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
@@ -62,7 +60,6 @@ regenarte_cloudflared_argo(){
   argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
   echo "$argo" | base64 > /root/sbox/argo.txt.b64
   rm -rf argo.log
-
   }
 # download singbox and cloudflared
 download_singbox(){
@@ -80,37 +77,21 @@ download_singbox(){
           arch="armv7"
           ;;
   esac
-  # Fetch the latest (including pre-releases) release version number from GitHub API
-  # 正式版
-  #latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | head -n 1)
-  #beta版本
   latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
   latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
   echo "Latest version: $latest_version"
-  # Detect server architecture
-  # Prepare package names
   package_name="sing-box-${latest_version}-linux-${arch}"
-  # Prepare download URL
   url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-  # Download the latest release package (.tar.gz) from GitHub
   curl -sLo "/root/${package_name}.tar.gz" "$url"
-
-  # Extract the package and move the binary to /root
   tar -xzf "/root/${package_name}.tar.gz" -C /root
   mv "/root/${package_name}/sing-box" /root/sbox
-
-  # Cleanup the package
   rm -r "/root/${package_name}.tar.gz" "/root/${package_name}"
-
-  # Set the permissions
   chown root:root /root/sbox/sing-box
   chmod +x /root/sbox/sing-box
 }
-
 # download singbox and cloudflared
 download_cloudflared(){
   arch=$(uname -m)
-  # Map architecture names
   case ${arch} in
       x86_64)
           cf_arch="amd64"
@@ -122,36 +103,26 @@ download_cloudflared(){
           cf_arch="arm"
           ;;
   esac
-
-  # install cloudflared linux
   cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
   curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
   chmod +x /root/sbox/cloudflared-linux
   echo ""
 }
-
-
-# client configuration
 show_client_configuration() {
     # 检查配置文件是否存在
     if [[ ! -f /root/sbox/sbconfig_server.json ]]; then
         echo "配置文件不存在！"
         return 1
     fi
-
     echo ""
-
     # 获取所有安装的协议数量
     inbound_count=$(jq '.inbounds | length' /root/sbox/sbconfig_server.json)
-
     if [[ $inbound_count -eq 0 ]]; then
         echo "没有安装任何协议！"
         return 1
     fi
-
     # 获取服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-
     # 生成 Reality 客户端链接
     if jq -e '.inbounds[] | select(.type == "vless")' /root/sbox/sbconfig_server.json > /dev/null; then
         # 获取 Reality 配置
@@ -166,7 +137,6 @@ show_client_configuration() {
         echo "$server_link"
         echo ""
     fi
-
     # 生成 Hysteria2 客户端链接
     if jq -e '.inbounds[] | select(.type == "hysteria2")' /root/sbox/sbconfig_server.json > /dev/null; then
         hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
@@ -178,13 +148,11 @@ show_client_configuration() {
         echo "$hy2_server_link"
         echo ""
     fi
-
     # 生成 VMess 客户端链接
     if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
         vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
         ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
         argo=$(base64 --decode /root/sbox/argo.txt.b64)
-
         echo "VMess ws 通用链接参数："
         echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
         echo -e "以下端口 443 可改为 2053 2083 2087 2096 8443"
@@ -242,18 +210,15 @@ uninstall_singbox() {
     echo "所有sing-box配置文件已完全移除"
 }
 install_base
-install_singbox() {
- 
+install_singbox() { 
   while true; do
     echo "请选择要安装的协议（输入数字，多个选择用空格分隔）:"
     echo "1) Reality"
     echo "2) VMess"
     echo "3) Hysteria2"
     read -p "你的选择: " choices
-
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
-
     # 检查输入的选择是否有效
     valid=true
     for choice in "${selected_protocols[@]}"; do
@@ -262,7 +227,6 @@ install_singbox() {
             break
         fi
     done
-
     if $valid; then
         # 有效输入，跳出循环
         break
@@ -270,13 +234,11 @@ install_singbox() {
         echo "输入无效，请选择 1, 2 或 3。"
     fi
 done
-
     # 初始化配置变量
     listen_port=443
     vmess_port=15555
     hy_listen_port=8443
     config="{\"log\": {\"disabled\": false, \"level\": \"info\", \"timestamp\": true}, \"inbounds\": [], \"outbounds\": [{\"type\": \"direct\", \"tag\": \"direct\"}, {\"type\": \"block\", \"tag\": \"block\"}]}"
-
     for choice in $choices; do
         case $choice in
             1)
@@ -428,7 +390,6 @@ echo "6. 更新sing-box内核"
 echo "7. 手动重启cloudflared"
 echo "0. 退出脚本"
 read -p "Enter your choice (0-7): " choice
-
 case $choice in
     1)
         echo "开始安装sing-box服务..."
@@ -515,12 +476,10 @@ case $choice in
         exit 1
         ;;
 esac
-
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
 After=network.target nss-lookup.target
-
 [Service]
 User=root
 WorkingDirectory=/root
@@ -531,12 +490,9 @@ ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
 LimitNOFILE=infinity
-
 [Install]
 WantedBy=multi-user.target
 EOF
-
-
 # Check configuration and start the service
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     echo "Configuration checked successfully. Starting sing-box service..."
@@ -544,10 +500,7 @@ if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
     systemctl restart sing-box
-
     show_client_configuration
-
-
 else
     echo "Error in configuration. Aborting"
 fi
