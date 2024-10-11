@@ -482,7 +482,6 @@ case $choice in
         echo "sing-box 服务启动失败！"
     fi
     systemctl restart sing-box
-    show_client_configuration
 else
     echo "配置错误，sing-box 服务未启动！"
 fi
