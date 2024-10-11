@@ -281,29 +281,24 @@ done
             1)
                 echo "开始配置 Reality"
                 echo ""
-
                 # 生成 Reality 密钥对
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
                 if [ $? -ne 0 ]; then
                     echo "生成 Reality 密钥对失败。"
                     exit 1
                 fi
-
                 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
                 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
                 echo "$public_key" | base64 > /root/sbox/public.key.b64
-
                 uuid=$(/root/sbox/sing-box generate uuid)
                 short_id=$(/root/sbox/sing-box generate rand --hex 8)
                 echo "UUID 和短 ID 生成完成"
                 echo ""
-
                 read -p "请输入 Reality 端口 (default: 443): " listen_port_input
                 listen_port=${listen_port_input:-443}
                 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name_input
                 server_name=${server_name_input:-itunes.apple.com}
                 echo ""
-
                 config=$(echo "$config" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
@@ -347,13 +342,11 @@ vmess_port=${vmess_port:-15555}
 echo ""
 read -p "ws路径 (默认随机生成): " ws_path
 ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-
 pid=$(pgrep -f cloudflared)
 if [ -n "$pid" ]; then
   # 终止进程
   kill "$pid"
 fi
-
 #生成地址
 /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
 sleep 2
@@ -364,7 +357,6 @@ sleep 5
 argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 rm -rf argo.log
-
                 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
@@ -387,19 +379,16 @@ rm -rf argo.log
             3)
                echo "开始配置 Hysteria2"
                 echo ""
-
                 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
                 read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port_input
                 hy_listen_port=${hy_listen_port_input:-8443}
                 read -p "输入自签证书域名 (default: bing.com): " hy_server_name_input
                 hy_server_name=${hy_server_name_input:-bing.com}
-
                 mkdir -p /root/self-cert/
                 openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
                 openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
                 echo "自签证书生成完成"
                 echo ""
-
                 config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
@@ -423,12 +412,10 @@ rm -rf argo.log
                 ;;    
         esac
     done
-
     # 生成最终配置文件
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
-echo "sing-box-reality-hysteria2已经安装"
 echo ""
 echo "请选择选项:"
 echo "1. 安装sing-box服务"
