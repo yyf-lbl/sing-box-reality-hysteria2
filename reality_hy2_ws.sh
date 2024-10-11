@@ -220,11 +220,32 @@ uninstall_singbox() {
 }
 install_base
 install_singbox() {
+  while true; do
     echo "请选择要安装的协议（输入数字，多个选择用空格分隔）:"
     echo "1) Reality"
-    echo "2) Hysteria2"
-    echo "3) VMess"
+    echo "2) VMess"
+    echo "3) Hysteria2"
     read -p "你的选择: " choices
+
+    # 将用户输入的选择转为数组
+    read -a selected_protocols <<< "$choices"
+
+    # 检查输入的选择是否有效
+    valid=true
+    for choice in "${selected_protocols[@]}"; do
+        if ! [[ "$choice" =~ ^[1-3]$ ]]; then
+            valid=false
+            break
+        fi
+    done
+
+    if $valid; then
+        # 有效输入，跳出循环
+        break
+    else
+        echo "输入无效，请选择 1, 2 或 3。"
+    fi
+done
 
     # 初始化配置变量
     listen_port=443
@@ -291,41 +312,6 @@ install_singbox() {
                 ;;
 
             2)
-                echo "开始配置 Hysteria2"
-                echo ""
-
-                hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-                read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port_input
-                hy_listen_port=${hy_listen_port_input:-8443}
-                read -p "输入自签证书域名 (default: bing.com): " hy_server_name_input
-                hy_server_name=${hy_server_name_input:-bing.com}
-
-                mkdir -p /root/self-cert/
-                openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-                openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-                echo "自签证书生成完成"
-                echo ""
-
-                config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
-                    --arg hy_password "$hy_password" \
-                    '.inbounds += [{
-                        "type": "hysteria2",
-                        "tag": "hy2-in",
-                        "listen": "::",
-                        "listen_port": ($hy_listen_port | tonumber),
-                        "users": [{
-                            "password": $hy_password
-                        }],
-                        "tls": {
-                            "enabled": true,
-                            "alpn": ["h3"],
-                            "certificate_path": "/root/self-cert/cert.pem",
-                            "key_path": "/root/self-cert/private.key"
-                        }
-                    }]')
-                ;;
-
-            3)
                 echo "开始配置 VMess"
                 echo ""
 
@@ -377,7 +363,42 @@ rm -rf argo.log
 
             *)
                 echo "无效选择: $choice"
-                ;;
+                ;; 
+
+            3)
+               echo "开始配置 Hysteria2"
+                echo ""
+
+                hy_password=$(/root/sbox/sing-box generate rand --hex 8)
+                read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port_input
+                hy_listen_port=${hy_listen_port_input:-8443}
+                read -p "输入自签证书域名 (default: bing.com): " hy_server_name_input
+                hy_server_name=${hy_server_name_input:-bing.com}
+
+                mkdir -p /root/self-cert/
+                openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+                openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+                echo "自签证书生成完成"
+                echo ""
+
+                config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
+                    --arg hy_password "$hy_password" \
+                    '.inbounds += [{
+                        "type": "hysteria2",
+                        "tag": "hy2-in",
+                        "listen": "::",
+                        "listen_port": ($hy_listen_port | tonumber),
+                        "users": [{
+                            "password": $hy_password
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "alpn": ["h3"],
+                            "certificate_path": "/root/self-cert/cert.pem",
+                            "key_path": "/root/self-cert/private.key"
+                        }
+                    }]')
+                ;;               
         esac
     done
 
