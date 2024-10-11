@@ -272,8 +272,6 @@ install_singbox() {
     done
     # 获取服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
-     # 调用 show_client_configuration 函数
-    show_client_configuration
 # 初始化一个空的 JSON 对象
 json_config='{
     "log": {
@@ -367,6 +365,8 @@ fi
 # 保存生成的 JSON 配置文件
 echo "$json_config" > /root/sbox/sbconfig_server.json
 echo "配置文件生成完成，保存到 /root/sbox/sbconfig_server.json"
+ # 调用 show_client_configuration 函数
+    show_client_configuration
 }
 echo "sing-box-reality-hysteria2已经安装"
 echo ""
