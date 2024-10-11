@@ -130,7 +130,11 @@ show_client_configuration() {
   # 检查已安装的协议
   installed_protocols=()
   echo "正在检查已安装的协议..."
-
+echo "VLESS 当前监听端口: $current_listen_port"
+echo "VLESS 当前服务器名称: $current_server_name"
+echo "UUID: $uuid"
+echo "Public Key: $public_key"
+echo "短 ID: $short_id"
   # 检查 JSON 文件是否存在
   if [[ ! -f /root/sbox/sbconfig_server.json ]]; then
     echo "配置文件不存在：/root/sbox/sbconfig_server.json"
