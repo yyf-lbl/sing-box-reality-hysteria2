@@ -205,9 +205,12 @@ uninstall_singbox() {
 }
 install_base
 install_singbox() {
-  
-vless(){
- key_pair=$(/root/sbox/sing-box generate reality-keypair)
+
+    echo "开始配置 Reality"
+    echo ""
+
+    # 自动生成基本参数
+    key_pair=$(/root/sbox/sing-box generate reality-keypair)
     if [ $? -ne 0 ]; then
         echo "生成 Reality 密钥对失败。"
         exit 1
@@ -219,7 +222,7 @@ vless(){
 
     # 将公钥以 base64 编码保存到文件
     echo "$public_key" | base64 > /root/sbox/public.key.b64
-   read -p "请输入 VLESS 端口，默认为 15555: " vless_port
+
     # 生成必要的值
     uuid=$(/root/sbox/sing-box generate uuid)
     short_id=$(/root/sbox/sing-box generate rand --hex 8)
@@ -235,10 +238,33 @@ vless(){
     read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
     server_name=${server_name:-itunes.apple.com}
     echo ""
-}
-vmess(){
-  read -p "请输入 VMess 端口，默认为 15556: " vmess_port
-      echo "开始配置 VMess"
+
+    # 开始配置 Hysteria2
+    echo "开始配置 Hysteria2"
+    echo ""
+
+    # 生成 Hysteria 需要的值
+    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
+
+    # 获取 Hysteria 监听端口
+    read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
+    hy_listen_port=${hy_listen_port:-8443}
+    echo ""
+
+    # 获取自签名证书的域名
+    read -p "输入自签证书域名 (default: bing.com): " hy_server_name
+    hy_server_name=${hy_server_name:-bing.com}
+
+    # 生成自签名证书
+    mkdir -p /root/self-cert/
+    openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
+    echo ""
+    echo "自签证书生成完成"
+    echo ""
+
+    # 开始配置 VMess
+    echo "开始配置 VMess"
     echo ""
 
     # 生成 VMess 需要的值
@@ -269,153 +295,102 @@ vmess(){
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
     rm -rf argo.log
 
-    read -p "请输入 Hysteria2 端口，默认为 15557: " hysteria_port
-    echo "开始配置 Hysteria2"
-    echo ""
-}
-hysteria(){
-   # 生成 Hysteria 需要的值
-    hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-
-    # 获取 Hysteria 监听端口
-    read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port
-    hy_listen_port=${hy_listen_port:-8443}
-    echo ""
-
-    # 获取自签名证书的域名
-    read -p "输入自签证书域名 (default: bing.com): " hy_server_name
-    hy_server_name=${hy_server_name:-bing.com}
-
-    # 生成自签名证书
-    mkdir -p /root/self-cert/
-    openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-    echo ""
-    echo "自签证书生成完成"
-    echo ""
-}
-    echo "开始安装 Sing-Box..."
-    # 提示用户选择协议
-    declare -a protocols
-    echo "请选择要安装的协议（用空格分隔，默认安装所有协议）:"
-    echo "1) VLESS"
-    echo "2) VMess"
-    echo "3) Hysteria2"
-    read -p "请输入选择（如 1 2 3，默认为 1 2 3）: " user_choice
-    user_choice=${user_choice:-"1 2 3"}
-
-    # 根据用户选择生成协议列表
-    for choice in $user_choice; do
-        case $choice in
-            1)
-               vless
-                ;;
-            2)
-                vmess
-                ;;
-            3)
-              hysteria
-                ;;
-            *)
-                echo "无效的选择: $choice"
-                ;;
-        esac
-    done
-
-  # 获取服务器 IP 地址
+    # 获取服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
 
-    # 生成配置文件
-    jq -n --arg vless_port "$vless_port" \
+    # 使用 jq 创建 reality.json
+    jq -n --arg listen_port "$listen_port" \
           --arg vmess_port "$vmess_port" \
-          --arg hysteria_port "$hysteria_port" \
-          --arg uuid "$uuid" \
+          --arg vmess_uuid "$vmess_uuid" \
           --arg ws_path "$ws_path" \
           --arg server_name "$server_name" \
-          '{
-              "log": {
-                  "disabled": false,
-                  "level": "info",
-                  "timestamp": true
-              },
-              "inbounds": [
-                  # 根据选择添加 VLESS
-                  if ($protocols | index("vless")) then
-                      {
-                          "type": "vless",
-                          "tag": "vless-in",
-                          "listen": "::",
-                          "listen_port": ($vless_port | tonumber),
-                          "users": [
-                              {
-                                  "uuid": $uuid,
-                                  "flow": "xtls-rprx-vision"
-                              }
-                          ],
-                          "tls": {
-                              "enabled": true,
-                              "server_name": $server_name
-                          }
-                      }
-                  else
-                      {}
-                  end,
-                  # 根据选择添加 VMess
-                  if ($protocols | index("vmess")) then
-                      {
-                          "type": "vmess",
-                          "tag": "vmess-in",
-                          "listen": "::",
-                          "listen_port": ($vmess_port | tonumber),
-                          "users": [
-                              {
-                                  "uuid": $uuid,
-                                  "alterId": 0
-                              }
-                          ],
-                          "transport": {
-                              "type": "ws",
-                              "path": $ws_path
-                          }
-                      }
-                  else
-                      {}
-                  end,
-                  # 根据选择添加 Hysteria2
-                  if ($protocols | index("hysteria")) then
-                      {
-                          "type": "hysteria2",
-                          "tag": "hysteria-in",
-                          "listen": "::",
-                          "listen_port": ($hysteria_port | tonumber),
-                          "users": [
-                              {
-                                  "password": "your_hysteria_password" # 提示用户输入 Hysteria2 密码
-                              }
-                          ],
-                          "tls": {
-                              "enabled": true
-                          }
-                      }
-                  else
-                      {}
-                  end
-              ],
-              "outbounds": [
+          --arg private_key "$private_key" \
+          --arg short_id "$short_id" \
+          --arg uuid "$uuid" \
+          --arg hy_listen_port "$hy_listen_port" \
+          --arg hy_password "$hy_password" \
+          --arg server_ip "$server_ip" '{
+      "log": {
+          "disabled": false,
+          "level": "info",
+          "timestamp": true
+      },
+      "inbounds": [
+          {
+              "type": "vless",
+              "tag": "vless-in",
+              "listen": "::",
+              "listen_port": ($listen_port | tonumber),
+              "users": [
                   {
-                      "type": "direct",
-                      "tag": "direct"
-                  },
-                  {
-                      "type": "block",
-                      "tag": "block"
+                      "uuid": $uuid,
+                      "flow": "xtls-rprx-vision"
                   }
-              ]
-          }' > /root/sbox/sbconfig_server.json
+              ],
+              "tls": {
+                  "enabled": true,
+                  "server_name": $server_name,
+                  "reality": {
+                      "enabled": true,
+                      "handshake": {
+                          "server": $server_name,
+                          "server_port": 443
+                      },
+                      "private_key": $private_key,
+                      "short_id": [$short_id]
+                  }
+              }
+          },
+          {
+              "type": "hysteria2",
+              "tag": "hy2-in",
+              "listen": "::",
+              "listen_port": ($hy_listen_port | tonumber),
+              "users": [
+                  {
+                      "password": $hy_password
+                  }
+              ],
+              "tls": {
+                  "enabled": true,
+                  "alpn": [
+                      "h3"
+                  ],
+                  "certificate_path": "/root/self-cert/cert.pem",
+                  "key_path": "/root/self-cert/private.key"
+              }
+          },
+          {
+              "type": "vmess",
+              "tag": "vmess-in",
+              "listen": "::",
+              "listen_port": ($vmess_port | tonumber),
+              "users": [
+                  {
+                      "uuid": $vmess_uuid,
+                      "alterId": 0
+                  }
+              ],
+              "transport": {
+                  "type": "ws",
+                  "path": $ws_path
+              }
+          }
+      ],
+      "outbounds": [
+          {
+              "type": "direct",
+              "tag": "direct"
+          },
+          {
+              "type": "block",
+              "tag": "block"
+          }
+      ]
+  }' > /root/sbox/sbconfig_server.json
 
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
-
 
 echo "sing-box-reality-hysteria2已经安装"
 echo ""
