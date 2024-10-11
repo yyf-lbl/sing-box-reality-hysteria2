@@ -256,8 +256,10 @@ install_singbox() {
                 short_id=$(/root/sbox/sing-box generate rand --hex 8)
                 read -p "请输入 Reality 端口 (default: 443): " listen_port
                 listen_port=${listen_port:-443}
+                echo "输入的 Reality 端口: $listen_port"
                 read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name
                 server_name=${server_name:-itunes.apple.com}
+                echo "输入的服务器名称: $server_name"
                 echo "Reality 配置完成"
                 ;;
             2)
