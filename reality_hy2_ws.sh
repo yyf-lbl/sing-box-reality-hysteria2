@@ -327,12 +327,32 @@ install_singbox() {
                 echo "开始配置 VMess"
                 echo ""
 
-                vmess_uuid=$(/root/sbox/sing-box generate uuid)
-                read -p "请输入 VMess 端口 (default: 15555): " vmess_port_input
-                vmess_port=${vmess_port_input:-15555}
-                read -p "ws 路径 (默认随机生成): " ws_path_input
-                ws_path=${ws_path_input:-$(/root/sbox/sing-box generate rand --hex 6)}
-                echo ""
+                echo "开始配置vmess"
+echo ""
+# Generate hysteria necessary values
+vmess_uuid=$(/root/sbox/sing-box generate uuid)
+read -p "请输入vmess端口，默认为15555: " vmess_port
+vmess_port=${vmess_port:-15555}
+echo ""
+read -p "ws路径 (默认随机生成): " ws_path
+ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+
+pid=$(pgrep -f cloudflared)
+if [ -n "$pid" ]; then
+  # 终止进程
+  kill "$pid"
+fi
+
+#生成地址
+/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
+sleep 2
+clear
+echo 等待cloudflare argo生成地址
+sleep 5
+#连接到域名
+argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
+rm -rf argo.log
 
                 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
