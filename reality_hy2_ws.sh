@@ -365,8 +365,6 @@ fi
 # 保存生成的 JSON 配置文件
 echo "$json_config" > /root/sbox/sbconfig_server.json
 echo "配置文件生成完成，保存到 /root/sbox/sbconfig_server.json"
- # 调用 show_client_configuration 函数
-    show_client_configuration
 }
 echo "sing-box-reality-hysteria2已经安装"
 echo ""
@@ -387,6 +385,8 @@ case $choice in
          download_singbox
         download_cloudflared
         install_singbox
+        # 调用 show_client_configuration 函数
+    show_client_configuration
         ;;
     2)
         show_notice "重新安装中..."
