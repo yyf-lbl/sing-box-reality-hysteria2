@@ -200,24 +200,47 @@ show_client_configuration() {
     fi
 }
 uninstall_singbox() {
-            echo "Uninstalling..."
-          # Stop and disable sing-box service
-          systemctl stop sing-box
-          systemctl disable sing-box > /dev/null 2>&1
-
-          # Remove files
-          rm /etc/systemd/system/sing-box.service
-          rm /root/sbox/sbconfig_server.json
-          rm /root/sbox/sing-box
-          rm /root/sbox/cloudflared-linux
-          rm /root/sbox/argo.txt.b64
-          rm /root/sbox/public.key.b64
-          rm /root/self-cert/private.key
-          rm /root/self-cert/cert.pem
-          rm -rf /root/self-cert/
-          rm -rf /root/sbox/
-          echo "DONE!"
+    echo "正在卸载..."
+    sleep 3
+    # Stop and disable sing-box service
+    systemctl stop sing-box
+    systemctl disable sing-box > /dev/null 2>&1
+    # Define files and directories to remove
+    files_to_remove=(
+        "/etc/systemd/system/sing-box.service"
+        "/root/sbox/sbconfig_server.json"
+        "/root/sbox/sing-box"
+        "/root/sbox/cloudflared-linux"
+        "/root/sbox/argo.txt.b64"
+        "/root/sbox/public.key.b64"
+        "/root/self-cert/private.key"
+        "/root/self-cert/cert.pem"
+    )
+    directories_to_remove=(
+        "/root/self-cert/"
+        "/root/sbox/"
+    )
+  # Remove files
+    for file in "${files_to_remove[@]}"; do
+        if [ -e "$file" ]; then
+            rm "$file"
+            echo "Removed: $file"
+        else
+            echo "File not found, skipping: $file"
+        fi
+    done
+    # Remove directories
+    for dir in "${directories_to_remove[@]}"; do
+        if [ -d "$dir" ]; then
+            rm -rf "$dir"
+            echo "Removed directory: $dir"
+        else
+            echo "Directory not found, skipping: $dir"
+        fi
+    done
+    echo "卸载成功!"
 }
+
 install_base
 install_singbox() {
   while true; do
