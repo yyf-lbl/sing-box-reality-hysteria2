@@ -24,17 +24,27 @@ show_notice() {
     printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
 
     # 处理中文字符长度
-    local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数，而不是字节数
+    local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数
     local total_padding=$((width - message_length - 4))  # 4 是两侧 "||" 占用的字符数
     local left_padding=$((total_padding / 2))
     local right_padding=$((total_padding - left_padding))
 
-    # 打印消息行并居中，应用黄色斜体加粗样式
-    printf "${red_color}||%${left_padding}s${yellow_bold_italic}%s%${right_padding}s||${reset_color}\n" "" "$message" ""
+    # 确保填充宽度正确（包括中文字符）
+    if (( total_padding < 0 )); then
+        # 消息太长的情况下，直接输出消息
+        printf "${red_color}||%s||${reset_color}\n" "$message"
+    else
+        # 打印消息行并居中，应用黄色斜体加粗样式
+        printf "${red_color}||%${left_padding}s${yellow_bold_italic}%s%${right_padding}s||${reset_color}\n" "" "$message" ""
+    fi
 
     printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
     printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
 }
+
+# 使用示例
+show_notice "开始修改reality端口和域名"
+
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
