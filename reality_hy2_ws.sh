@@ -401,7 +401,7 @@ rm -rf argo.log
 }
 
 # 用户交互界面
-
+while true; do
 echo -e "\e[1;3;33m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo ""
@@ -521,10 +521,11 @@ fi
         exit 0
         ;;
     *)
-        echo -e "\033[31m\033[1;3m无效选项。正在退出。\033[0m"
+        echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
         exit 1
         ;;
-esac
+ esac
+done
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
