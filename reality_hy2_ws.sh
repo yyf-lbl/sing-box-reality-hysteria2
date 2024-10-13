@@ -83,7 +83,7 @@ regenarte_cloudflared_argo(){
 # download singbox and cloudflared
 download_singbox(){
   arch=$(uname -m)
-  echo "Architecture: $arch"
+  echo -e "\e[1;3;32m本机系统架构: $arch（ amd64，64-bit 架构）\e[0m"
   # Map architecture names
   case ${arch} in
       x86_64)
@@ -98,7 +98,7 @@ download_singbox(){
   esac
   latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
   latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
-  echo "Latest version: $latest_version"
+  echo -e "\e[1;3;32m当前最新版本: $latest_version\e[0m"
   package_name="sing-box-${latest_version}-linux-${arch}"
   url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
   curl -sLo "/root/${package_name}.tar.gz" "$url"
@@ -482,10 +482,10 @@ case $choice in
         exit 0
         ;;
     6)
-        show_notice "更新 Sing-box..."
+        show_notice "正在更新 Sing-box内核..."
         download_singbox
         if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-            echo "配置检查成功，启动sing-box服务..."
+            echo -e "\e[1;3;32m配置检查成功，启动sing-box服务...\e[0m"
             systemctl daemon-reload
             systemctl enable sing-box > /dev/null 2>&1
             systemctl start sing-box
