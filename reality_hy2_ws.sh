@@ -111,24 +111,49 @@ sleep 3
   chmod +x /root/sbox/sing-box
 }
 # download singbox and cloudflared
-download_cloudflared(){
-  arch=$(uname -m)
-  case ${arch} in
-      x86_64)
-          cf_arch="amd64"
-          ;;
-      aarch64)
-          cf_arch="arm64"
-          ;;
-      armv7l)
-          cf_arch="arm"
-          ;;
-  esac
-  cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
-  curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
-  chmod +x /root/sbox/cloudflared-linux
-  echo ""
+download_singbox() {
+    echo -e "\e[1;3;33m正在下载sing-box内核...\e[0m"
+    sleep 3
+    arch=$(uname -m)
+    echo -e "\e[1;3;32m本机系统架构: $arch（ amd64，64-bit 架构）\e[0m"
+
+    # Map architecture names
+    case ${arch} in
+        x86_64)
+            arch="amd64"
+            ;;
+        aarch64)
+            arch="arm64"
+            ;;
+        armv7l)
+            arch="armv7"
+            ;;
+    esac
+
+    latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
+    latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
+    echo -e "\e[1;3;32m当前最新版本: $latest_version\e[0m"
+
+    package_name="sing-box-${latest_version}-linux-${arch}"
+    download_path="/root/${package_name}.tar.gz"
+
+    # Check if the package already exists
+    if [ -f "/root/sbox/sing-box" ]; then
+        echo -e "\e[1;3;32m文件已经存在，跳过下载。\e[0m"
+        return  # 文件存在，跳过下载
+    fi
+
+    url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
+    curl -sLo "$download_path" "$url"
+
+    # 解压和移动文件
+    tar -xzf "$download_path" -C /root
+    mv "/root/${package_name}/sing-box" /root/sbox
+    rm -r "$download_path" "/root/${package_name}"
+    chown root:root /root/sbox/sing-box
+    chmod +x /root/sbox/sing-box
 }
+
 show_client_configuration() {
     # 检查配置文件是否存在
     if [[ ! -f /root/sbox/sbconfig_server.json ]]; then
