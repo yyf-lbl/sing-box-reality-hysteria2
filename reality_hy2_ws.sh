@@ -451,7 +451,7 @@ case $choice in
         install_singbox
         ;;
     3)
-        show_notice "开始修改reality端口和域名"
+        show_notice "开始修改vless端口和域名"
         current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
         read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
         listen_port=${listen_port:-$current_listen_port}
