@@ -427,11 +427,8 @@ rm -rf argo.log
     echo "${protocols[@]}"
 }
 modify_protocol_configs() {
-echo "开始修改配置..."
     installed_protocols=($(check_installed_protocols))
-echo "已安装的协议: ${installed_protocols[@]}"
     for protocol in "${installed_protocols[@]}"; do
-    echo "将调用修改函数: $protocol"
         case $protocol in
             "vless")
                 modify_vless_config
@@ -465,7 +462,7 @@ modify_vless_config() {
 }
 
 modify_hysteria_config() {
-    show_notice "开始修改Hysteria2配置信息"
+    show_notice "开始修改Hy2 配置信息"
     hy_current_listen_port=$(jq -r '.inbounds[] | select(.protocol=="hysteria").listen_port' /root/sbox/sbconfig_server.json)
     read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
