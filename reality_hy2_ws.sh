@@ -400,26 +400,32 @@ rm -rf argo.log
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
-     check_installed_protocols() {
-    # 检查协议安装状态
+# 检查安装了什么协议
+   check_installed_protocols() {
     local protocols=()
     
-    # 假设通过某个方式来检查是否安装了这些协议，例如查找配置文件
-    if jq -e '.inbounds[] | select(.protocol == "vless")' /root/sbox/sbconfig_server.json > /dev/null; then
-        protocols+=("vless")
-    fi
+    echo "正在检查协议安装状态..."
     
-    if jq -e '.inbounds[] | select(.protocol == "hysteria")' /root/sbox/sbconfig_server.json > /dev/null; then
-        protocols+=("hysteria")
-    fi
-    
-    if jq -e '.inbounds[] | select(.protocol == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
+    if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
         protocols+=("vmess")
+    else
+        echo "未检测到 VMess 协议"
+    fi
+    
+    if jq -e '.inbounds[] | select(.type == "hysteria2")' /root/sbox/sbconfig_server.json > /dev/null; then
+        protocols+=("hysteria")
+    else
+        echo "未检测到 Hysteria 协议"
+    fi
+
+    if jq -e '.inbounds[] | select(.type == "vless")' /root/sbox/sbconfig_server.json > /dev/null; then
+        protocols+=("vless")
+    else
+        echo "未检测到 VLESS 协议"
     fi
 
     echo "${protocols[@]}"
 }
-
 modify_protocol_configs() {
 echo "开始修改配置..."
     installed_protocols=($(check_installed_protocols))
