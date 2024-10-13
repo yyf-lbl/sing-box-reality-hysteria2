@@ -417,6 +417,7 @@ clear
 print_with_delay "===欢迎使用sing-box服务===" 0.1
 echo ""
 echo -e "\e[1;3;33m===脚本支持: VLESS VMESS HY2 协议===\e[0m"  # 蓝色斜体加粗
+echo -e "\e[1;3;31m***********************\e[0m"
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo ""
 echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
