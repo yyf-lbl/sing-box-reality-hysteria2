@@ -450,6 +450,7 @@ case $choice in
          download_singbox
         download_cloudflared
         install_singbox
+        read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
         ;;
     2)
         clear
@@ -466,6 +467,7 @@ case $choice in
         rm -rf /root/sbox/  
         # 重新安装的步骤
         install_singbox
+        read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
         ;;
     3)
        clear
@@ -492,17 +494,17 @@ case $choice in
         echo "配置修改完成，重新启动sing-box服务..."
         systemctl restart sing-box
         show_client_configuration
-        exit 0
+       read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
         ;;
     4)  
        clear
         show_client_configuration
-        exit 0
+     read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
         ;;	
     5)
         clear
         uninstall_singbox
-        exit 0
+     read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
         ;;
     6)
        clear
@@ -516,14 +518,14 @@ case $choice in
             systemctl restart sing-box
         fi
         echo ""
-        exit 1
+       read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
         ;;
     7)
         clear
         regenarte_cloudflared_argo
         echo "重新启动完成，查看新的vmess客户端信息"
         show_client_configuration
-        exit 1
+        read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
         ;;
     8) 
     clear
