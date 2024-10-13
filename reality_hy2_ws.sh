@@ -23,7 +23,7 @@ show_notice() {
     printf "${yellow_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
     # 处理中文字符长度
     local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数
-    local total_padding=$((width - message_length - 2))  # 4 是两侧 "||" 占用的字符数
+    local total_padding=$((width - message_length - 4))  # 4 是两侧 "||" 占用的字符数
     local left_padding=$((total_padding / 2))
     local right_padding=$((total_padding - left_padding))
     # 确保填充宽度正确（包括中文字符）
@@ -448,7 +448,7 @@ case $choice in
         install_singbox
         ;;
     3)
-        show_notice "开始修改reality端口和域名"
+        show_notice "修改vless端口和域名"
         current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
         read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
         listen_port=${listen_port:-$current_listen_port}
