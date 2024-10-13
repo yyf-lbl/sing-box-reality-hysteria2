@@ -143,7 +143,7 @@ show_client_configuration() {
         hy_password=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .users[0].password' /root/sbox/sbconfig_server.json)
 
         hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
-         echo "Hysteria2 客户端通用链接："
+         echo -e "\e[1;3;31mHysteria2 客户端通用链接：\e[0m"
          echo -e "\e[1;3;33m$hy2_server_link\e[0m"
          echo ""
     fi
@@ -167,7 +167,7 @@ show_client_configuration() {
     fi
 }
 uninstall_singbox() {
-    echo "正在卸载sing-box服务..."
+    echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
     sleep 3
     # 尝试停止并禁用singbox服务，如果未发现错误，则抑制错误
     systemctl stop sing-box 2>/dev/null
@@ -205,17 +205,18 @@ uninstall_singbox() {
             fi
         fi
     done
-    echo "sing-box已成功卸载!"
-    echo "所有sing-box配置文件已完全移除"
+   echo -e "\e[1;3;32msing-box已成功卸载!\e[0m"
+echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
+
 }
 install_base
 install_singbox() { 
   while true; do
-    echo "请选择要安装的协议（输入数字，多个选择用空格分隔）:"
-    echo "1) Reality"
-    echo "2) VMess"
-    echo "3) Hysteria2"
-    read -p "你的选择: " choices
+   echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
+echo -e "\e[1;3;33m1) Reality\e[0m"
+echo -e "\e[1;3;33m2) VMess\e[0m"
+echo -e "\e[1;3;33m3) Hysteria2\e[0m"
+   echo -e "\e[1;3;33m你的选择: \e[0m" && read choices
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
     # 检查输入的选择是否有效
@@ -380,18 +381,18 @@ rm -rf argo.log
 }
 
 # 用户交互界面
-echo "脚本支持:VLESS VMESS HY2 协议"
-echo "请选择选项:"
-echo "1. 安装sing-box服务"
-echo "2. 重新安装"
-echo "3. 修改配置"
-echo "4. 显示客户端配置"
-echo "5. 卸载"
-echo "6. 更新sing-box内核"
-echo "7. 手动重启cloudflared"
-echo "8. 手动重启sing-box服务"
-echo "0. 退出脚本"
-read -p "输入您的选择 (0-10): " choice
+echo -e "\e[1;3;34m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
+echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
+echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
+echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
+echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
+echo -e "\e[1;3;31m5. 卸载\e[0m"  # 红色斜体加粗
+echo -e "\e[1;3;32m6. 更新sing-box内核\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
+echo -e "\e[1;3;32m8. 手动重启sing-box服务\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
+echo -e "\e[1;3;33m输入您的选择 (0-10): \e[0m" && read choice  # 黄色斜体加粗
 case $choice in
     1)
         echo "开始安装sing-box服务..."
