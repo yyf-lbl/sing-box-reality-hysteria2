@@ -15,27 +15,31 @@ show_notice() {
     local message="$1"
     local width=70  # 定义长方形的宽度
     local border_char="="  # 边框字符
-    local red_color="\033[31m"  # 红色
+    local yellow_color="\033[33m"  # 黄色
     local yellow_bold_italic="\033[33;1;3m"  # 黄色斜体加粗
     local reset_color="\033[0m"  # 重置颜色
-    # 打印红色边框
-    printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印顶部边框
-    printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
+
+    # 打印黄色边框
+    printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印顶部边框
+    printf "${yellow_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
+
     # 处理中文字符长度
     local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数
     local total_padding=$((width - message_length - 4))  # 4 是两侧 "||" 占用的字符数
     local left_padding=$((total_padding / 2))
     local right_padding=$((total_padding - left_padding))
+
     # 确保填充宽度正确（包括中文字符）
     if (( total_padding < 0 )); then
         # 消息太长的情况下，直接输出消息
-        printf "${red_color}||%s||${reset_color}\n" "$message"
+        printf "${yellow_color}||%s||${reset_color}\n" "$message"
     else
         # 打印消息行并居中，应用黄色斜体加粗样式
-          printf "${red_color}||%${left_padding}s${yellow_bold}%s%${right_padding}s${red_color}||${reset_color}\n" "" "$message" ""
+        printf "${yellow_color}||%${left_padding}s${yellow_bold_italic}%s%${right_padding}s${yellow_color}||${reset_color}\n" "" "$message" ""
     fi
-    printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
-    printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
+
+    printf "${yellow_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
+    printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
 }
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
