@@ -32,7 +32,7 @@ show_notice() {
         printf "${red_color}||%s||${reset_color}\n" "$message"
     else
         # 打印消息行并居中，应用黄色斜体加粗样式
-         printf "${red_color}||%${left_padding}s${yellow_bold_italic}%s%${right_padding}s${red_color}||${reset_color}\n" "" "$message" ""
+          printf "${red_color}||%${left_padding}s${yellow_bold}%s%${right_padding}s${red_color}||${reset_color}\n" "" "$message" ""
     fi
     printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
     printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
