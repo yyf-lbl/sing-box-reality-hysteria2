@@ -423,8 +423,9 @@ rm -rf argo.log
 modify_protocol_configs() {
 echo "开始修改配置..."
     installed_protocols=($(check_installed_protocols))
-
+echo "已安装的协议: ${installed_protocols[@]}"
     for protocol in "${installed_protocols[@]}"; do
+    echo "将调用修改函数: $protocol"
         case $protocol in
             "vless")
                 modify_vless_config
