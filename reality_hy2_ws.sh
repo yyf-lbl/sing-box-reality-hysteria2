@@ -546,7 +546,7 @@ fi
         ;;
  esac
   # 添加提示信息
-    read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m'
+    read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m\n'
 done
 # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
