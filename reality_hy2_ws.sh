@@ -382,7 +382,7 @@ rm -rf argo.log
 
 # 用户交互界面
  clear
-echo -e "\e[1;3;34m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
+echo -e "\e[1;3;33m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
 echo ""
@@ -402,7 +402,9 @@ echo -e "\e[1;3;32m8. 手动重启sing-box服务\e[0m"  # 绿色斜体加粗
 echo ""
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo ""
-echo -e "\e[1;3;33m输入您的选择 (0-10): \e[0m" && read choice  # 黄色斜体加粗
+echo -e "\e[1;3;33m输入您的选择 (0-10): \e[0m" 
+read choice
+  # 黄色斜体加粗
 case $choice in
     1)
         echo "开始安装sing-box服务..."
