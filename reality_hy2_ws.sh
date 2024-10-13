@@ -485,7 +485,7 @@ case $choice in
         exit 0
         ;;
     6)
-        show_notice "正在更新 Sing-box内核..."
+        show_notice "正在更新 Sing-box内核......"
         download_singbox
         if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
             echo -e "\e[1;3;32m配置检查成功，启动sing-box服务...\e[0m"
