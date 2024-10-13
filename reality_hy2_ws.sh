@@ -253,7 +253,7 @@ install_singbox() {
         # 有效输入，跳出循环
         break
     else
-        echo "输入无效，请选择 1, 2 或 3。"
+        echo -e "\e[1;3;31m输入无效!请选择1,2或3\e[0m"
     fi
 done
     # 初始化配置变量
