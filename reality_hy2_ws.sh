@@ -41,7 +41,7 @@ show_notice() {
 }
 # Introduction animation
 clear
-print_with_delay "欢迎使用sing-box服务" 0.05
+print_with_delay "欢迎使用sing-box服务" 0.1
 echo ""
 # install base
 install_base(){
