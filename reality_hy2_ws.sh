@@ -40,6 +40,7 @@ show_notice() {
     printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
 }
 # Introduction animation
+clear
 print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
 # install base
@@ -399,58 +400,7 @@ rm -rf argo.log
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
-
-# 用户交互界面
- clear
-echo -e "\e[1;3;33m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
-echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
-echo ""
-echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
-echo "==============="
-echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
-echo "==============="
-echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
-echo "==============="
-echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
-echo "==============="
-echo -e "\e[1;3;31m5. 卸载\e[0m"  # 红色斜体加粗
-echo "==============="
-echo -e "\e[1;3;32m6. 更新sing-box内核\e[0m"  # 绿色斜体加粗
-echo "==============="
-echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
-echo "==============="
-echo -e "\e[1;3;32m8. 手动重启sing-box服务\e[0m"  # 绿色斜体加粗
-echo "==============="
-echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
-echo "==============="
-echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
-read -e choice
-  # 黄色斜体加粗
-case $choice in
-    1)
-        echo -e "\e[1;3;32m开始安装sing-box服务...\e[0m"
-          mkdir -p "/root/sbox/"
-         download_singbox
-        download_cloudflared
-        install_singbox
-        ;;
-    2)
-        show_notice "重新安装中..."
-        systemctl stop sing-box
-        systemctl disable sing-box > /dev/null 2>&1
-        rm /etc/systemd/system/sing-box.service
-        rm /root/sbox/sbconfig_server.json
-        rm /root/sbox/sing-box
-        rm /root/sbox/cloudflared-linux
-        rm /root/sbox/argo.txt.b64
-        rm /root/sbox/public.key.b64
-        rm -rf /root/self-cert/
-        rm -rf /root/sbox/  
-        # 重新安装的步骤
-        install_singbox
-        ;;
-    3)
-       check_installed_protocols() {
+     check_installed_protocols() {
     # 检查协议安装状态
     local protocols=()
     
@@ -533,14 +483,61 @@ modify_vmess_config() {
     mv /root/sb_modified.json /root/sbox/sbconfig_server.json
     echo "VMess 配置修改完成"
 }
-
-# 主要执行逻辑
-modify_protocol_configs
-
-# 重新启动服务
-echo "配置修改完成，重新启动sing-box服务..."
-systemctl restart sing-box
-show_client_configuration
+# 用户交互界面
+echo -e "\e[1;3;33m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
+echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
+echo ""
+echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
+echo "==============="
+echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
+echo "==============="
+echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
+echo "==============="
+echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
+echo "==============="
+echo -e "\e[1;3;31m5. 卸载\e[0m"  # 红色斜体加粗
+echo "==============="
+echo -e "\e[1;3;32m6. 更新sing-box内核\e[0m"  # 绿色斜体加粗
+echo "==============="
+echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
+echo "==============="
+echo -e "\e[1;3;32m8. 手动重启sing-box服务\e[0m"  # 绿色斜体加粗
+echo "==============="
+echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
+echo "==============="
+echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
+read -e choice
+  # 黄色斜体加粗
+case $choice in
+    1)
+        echo -e "\e[1;3;32m开始安装sing-box服务...\e[0m"
+          mkdir -p "/root/sbox/"
+         download_singbox
+        download_cloudflared
+        install_singbox
+        ;;
+    2)
+        show_notice "重新安装中..."
+        systemctl stop sing-box
+        systemctl disable sing-box > /dev/null 2>&1
+        rm /etc/systemd/system/sing-box.service
+        rm /root/sbox/sbconfig_server.json
+        rm /root/sbox/sing-box
+        rm /root/sbox/cloudflared-linux
+        rm /root/sbox/argo.txt.b64
+        rm /root/sbox/public.key.b64
+        rm -rf /root/self-cert/
+        rm -rf /root/sbox/  
+        # 重新安装的步骤
+        install_singbox
+        ;;
+    3)  
+       # 主要执行逻辑
+       modify_protocol_configs
+       # 重新启动服务
+       echo "配置修改完成，重新启动sing-box服务..."
+       systemctl restart sing-box
+       show_client_configuration
 
         exit 0
         ;;
