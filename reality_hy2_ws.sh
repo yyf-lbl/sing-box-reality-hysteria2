@@ -506,14 +506,18 @@ case $choice in
         ;;
     8)  
        # 检查配置并启动服务
- if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     systemctl daemon-reload
     systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
     systemctl restart sing-box
+
+    # 打印成功信息，绿色加粗斜体
+    echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
 else
     echo "Error in configuration. Aborting"
 fi
+
         ;;
 
     0)
