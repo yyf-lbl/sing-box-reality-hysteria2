@@ -13,13 +13,28 @@ print_with_delay() {
 #notice
 show_notice() {
     local message="$1"
+    local width=70  # 定义长方形的宽度
+    local padding_char=" "  # 填充字符为空格
+    local border_char="="  # 边框字符
 
-    echo "======================================================================="
+    # 计算文本的前后填充长度
+    local message_length=${#message}
+    local total_padding=$((width - message_length))
+    local left_padding=$((total_padding / 2))
+    local right_padding=$((total_padding - left_padding))
+
+    # 打印边框和消息
+    echo "$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char"
     echo "||                                                                   ||"
-    echo "||                           ${message}                              ||"
+    echo -n "||"
+    printf "%*s" $left_padding ""  # 左侧填充
+    echo -n "$message"
+    printf "%*s" $right_padding ""  # 右侧填充
+    echo "||"
     echo "||                                                                   ||"
-    echo "======================================================================="
+    echo "$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char"
 }
+
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
