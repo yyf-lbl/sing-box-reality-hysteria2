@@ -15,9 +15,9 @@ show_notice() {
     local message="$1"
 
     echo "########################################################################"
-    echo "                                                                        "
-    echo "                                ${message}                              "
-    echo "                                                                        "
+    echo "#                                                                       "
+    echo "#                                ${message}                             "
+    echo "#                                                                       "
     echo "########################################################################"
 }
 # Introduction animation
