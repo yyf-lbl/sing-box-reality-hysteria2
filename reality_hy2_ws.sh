@@ -545,8 +545,10 @@ fi
         echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
         ;;
  esac
-  # 添加提示信息
-    read -n 1 -s -r -p $'\e[1;3;33m按任意键返回...\e[0m\n'
+  # 使用 printf 来输出提示信息
+printf "\e[1;3;33m按任意键返回...\e[0m"
+# 不换行，使光标保持在提示信息后面
+read -n 1 -s -r
     clear
 done
 # Create sing-box.service
