@@ -421,6 +421,7 @@ rm -rf argo.log
 }
 
 modify_protocol_configs() {
+echo "开始修改配置..."
     installed_protocols=($(check_installed_protocols))
 
     for protocol in "${installed_protocols[@]}"; do
