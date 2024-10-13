@@ -73,7 +73,6 @@ regenarte_cloudflared_argo(){
   #生成地址
   /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
   sleep 2
-  clear
   echo 等待cloudflare argo生成地址
   sleep 5
   #连接到域名
@@ -237,7 +236,7 @@ install_singbox() {
    echo -e "\e[1;3;33m1) Reality\e[0m"
    echo -e "\e[1;3;33m2) VMess\e[0m"
    echo -e "\e[1;3;33m3) Hysteria2\e[0m"
-   echo -ne "\e[1;3;33m你的选择: \e[0m" && read choices
+   echo -ne "\e[1;3;33m请输入你的选择: \e[0m" && read choices
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
     # 检查输入的选择是否有效
@@ -264,7 +263,7 @@ done
         case $choice in
             1)
                 echo "开始配置 Reality"
-                echo ""
+                sleep 3
                 # 生成 Reality 密钥对
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
                 if [ $? -ne 0 ]; then
@@ -314,19 +313,17 @@ done
                 ;;
 
             2)
-                echo "开始配置 VMess"
-                echo ""
 
                 echo "开始配置vmess"
-echo ""
-# Generate hysteria necessary values
-vmess_uuid=$(/root/sbox/sing-box generate uuid)
-read -p "请输入vmess端口，默认为15555: " vmess_port
-vmess_port=${vmess_port:-15555}
-echo ""
-read -p "ws路径 (默认随机生成): " ws_path
-ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-pid=$(pgrep -f cloudflared)
+              sleep 3
+           # Generate hysteria necessary values
+         vmess_uuid=$(/root/sbox/sing-box generate uuid)
+          read -p "请输入vmess端口，默认为15555: " vmess_port
+          vmess_port=${vmess_port:-15555}
+         echo ""
+         read -p "ws路径 (默认随机生成): " ws_path
+         ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+          pid=$(pgrep -f cloudflared)
 if [ -n "$pid" ]; then
   # 终止进程
   kill "$pid"
