@@ -16,21 +16,21 @@ show_notice() {
     local width=70  # 定义长方形的宽度
     local padding_char=" "  # 填充字符为空格
     local border_char="="  # 边框字符
-
-    # 计算文本的前后填充长度
-    local message_length=${#message}
-    local total_padding=$((width - message_length - 4))  # 4 是因为 "||" 占用了 4 个字符
-    local left_padding=$((total_padding / 2))
-    local right_padding=$((total_padding - left_padding))
-
-    # 打印边框和消息
+    # 打印边框
     printf "%${width}s\n" | tr " " "$border_char"  # 打印顶部边框
     echo "||$(printf "%$((width - 4))s")||"  # 打印空行
-    echo "||$(printf "%${left_padding}s")$message$(printf "%${right_padding}s")||"  # 打印消息行
+    # 拆分消息为多行，每行长度不超过指定宽度
+    while IFS= read -r line; do
+        local message_length=${#line}
+        local total_padding=$((width - message_length - 4))  # 4 是因为 "||" 占用了 4 个字符
+        local left_padding=$((total_padding / 2))
+        local right_padding=$((total_padding - left_padding))
+
+        echo "||$(printf "%${left_padding}s")$line$(printf "%${right_padding}s")||"
+    done <<< "$(echo "$message" | fold -s -w $((width - 4)))"  # 拆分消息
     echo "||$(printf "%$((width - 4))s")||"  # 打印空行
     printf "%${width}s\n" | tr " " "$border_char"  # 打印底部边框
 }
-
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
