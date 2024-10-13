@@ -16,6 +16,7 @@ show_notice() {
     local width=70  # 定义长方形的宽度
     local border_char="="  # 边框字符
     local red_color="\033[31m"  # 红色
+    local yellow_bold_italic="\033[33;1;3m"  # 黄色斜体加粗
     local reset_color="\033[0m"  # 重置颜色
 
     # 打印红色边框
@@ -33,7 +34,11 @@ show_notice() {
 
     printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
     printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
+
+    # 打印重置后的文字，使用黄色斜体加粗
+    echo -e "${yellow_bold_italic}信息已重置${reset_color}"
 }
+
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
