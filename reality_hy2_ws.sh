@@ -22,7 +22,6 @@ show_notice() {
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
-echo ""
 # install base
 install_base(){
   # Check if jq is installed, and install it if not
@@ -133,7 +132,7 @@ show_client_configuration() {
         short_id=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
 
         server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
-        echo "Reality 客户端通用链接："
+        echo -e "\e[1;3;31mVless-tcp-Reality 客户端通用链接：\e[0m"
        echo -e "\e[1;3;33m$server_link\e[0m"
         echo ""
     fi
@@ -144,26 +143,26 @@ show_client_configuration() {
         hy_password=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .users[0].password' /root/sbox/sbconfig_server.json)
 
         hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
-        echo "Hysteria2 客户端通用链接："
-        echo "$hy2_server_link"
-        echo ""
+         echo "Hysteria2 客户端通用链接："
+         echo -e "\e[1;3;33m$hy2_server_link\e[0m"
+         echo ""
     fi
     # 生成 VMess 客户端链接
     if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
         vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
         ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
         argo=$(base64 --decode /root/sbox/argo.txt.b64)
-        echo "VMess ws 通用链接参数："
-        echo "以下为vmess链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验"
-        echo -e "以下端口 443 可改为 2053 2083 2087 2096 8443"
+        echo -e "\e[1;3;31mVmess 客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
+        echo ""
+       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         echo ""
         vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
         echo ""
-        echo -e "以下端口 80 可改为 8080 8880 2052 2082 2086 2095" 
+        echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
         echo ""
         vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
-        echo "$vmess_link_no_tls"
+          echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
         echo ""
     fi
 }
