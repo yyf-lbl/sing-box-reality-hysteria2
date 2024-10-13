@@ -14,20 +14,21 @@ print_with_delay() {
 show_notice() {
     local message="$1"
     local width=70  # 定义长方形的宽度
-    local padding_char=" "  # 填充字符为空格
     local border_char="="  # 边框字符
+
     # 打印边框
     printf "%${width}s\n" | tr " " "$border_char"  # 打印顶部边框
     echo "||$(printf "%$((width - 4))s")||"  # 打印空行
-    # 拆分消息为多行，每行长度不超过指定宽度
-    while IFS= read -r line; do
-        local message_length=${#line}
-        local total_padding=$((width - message_length - 4))  # 4 是因为 "||" 占用了 4 个字符
-        local left_padding=$((total_padding / 2))
-        local right_padding=$((total_padding - left_padding))
 
-        echo "||$(printf "%${left_padding}s")$line$(printf "%${right_padding}s")||"
-    done <<< "$(echo "$message" | fold -s -w $((width - 4)))"  # 拆分消息
+    # 处理中文字符长度
+    local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数，而不是字节数
+    local total_padding=$((width - message_length - 4))  # 4 是两侧 "||" 占用的字符数
+    local left_padding=$((total_padding / 2))
+    local right_padding=$((total_padding - left_padding))
+
+    # 打印消息行并居中
+    printf "||%${left_padding}s%s%${right_padding}s||\n" "" "$message" ""
+
     echo "||$(printf "%$((width - 4))s")||"  # 打印空行
     printf "%${width}s\n" | tr " " "$border_char"  # 打印底部边框
 }
