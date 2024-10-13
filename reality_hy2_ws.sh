@@ -395,12 +395,12 @@ echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo -e "\e[1;3;32m8. 手动重启sing-box服务\e[0m"  # 绿色斜体加粗
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo ""
-echo -e "\e[1;3;33m输入您的选择 (0-10): \e[0m" 
-read choice
+echo -ne "\e[1;3;33m输入您的选择 (0-10): \e[0m " 
+read -e choice
   # 黄色斜体加粗
 case $choice in
     1)
-        echo "开始安装sing-box服务..."
+        echo -e "\e[1;3;32m开始安装sing-box服务...\e[0m"
           mkdir -p "/root/sbox/"
          download_singbox
         download_cloudflared
@@ -514,19 +514,19 @@ WantedBy=multi-user.target
 EOF
       # 检查配置并启动服务
    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-      echo "配置检查成功，正在启动 sing-box 服务..."
+      echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
       systemctl daemon-reload
       systemctl enable sing-box > /dev/null 2>&1
       systemctl start sing-box
     if systemctl is-active --quiet sing-box; then
-        echo "sing-box 服务已成功启动！"
+        echo -e "\e[1;3;32msing-box 服务已成功启动！\e[0m"
     else
-        echo "sing-box 服务启动失败！"
+       echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
     fi
     systemctl restart sing-box
     show_client_configuration
 else
-    echo "配置错误，sing-box 服务未启动！"
+    echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
 fi
 
 
