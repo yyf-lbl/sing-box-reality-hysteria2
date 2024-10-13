@@ -237,7 +237,8 @@ install_singbox() {
 echo -e "\e[1;3;33m1) Reality\e[0m"
 echo -e "\e[1;3;33m2) VMess\e[0m"
 echo -e "\e[1;3;33m3) Hysteria2\e[0m"
-   echo -e "\e[1;3;33m你的选择: \e[0m" && read choices
+   echo -ne "\e[1;3;33m请输入你的选择: \e[0m" 
+   read -e choice
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
     # 检查输入的选择是否有效
