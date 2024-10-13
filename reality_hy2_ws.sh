@@ -517,11 +517,11 @@ if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
 else
     echo "Error in configuration. Aborting"
 fi
-
+clear
         ;;
 
     0)
-        echo "已退出脚本"
+        echo -e "\e[1;3;31m已退出脚本\e[0m"
         exit 0
         ;;
     *)
