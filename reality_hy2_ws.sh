@@ -32,7 +32,7 @@ show_notice() {
         printf "${yellow_color}||%s||${reset_color}\n" "$message"
     else
       # 手动调整右侧填充
-        right_padding=$((right_padding - 7)) 
+        right_padding=$((right_padding - 8)) 
         # 打印消息行并居中，应用黄色斜体加粗样式
        printf "${yellow_color}||%${left_padding}s${yellow_bold_italic}%s%${right_padding}s${reset_color}${yellow_color}||\n" "" "$message" ""
     fi
@@ -459,7 +459,7 @@ case $choice in
         read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
         server_name=${server_name:-$current_server_name}
 
-        show_notice "开始修改-hy2配置信息"
+        show_notice "开始修改hy2 配置信息"
         hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
         read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
         hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
