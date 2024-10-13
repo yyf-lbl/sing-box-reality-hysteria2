@@ -403,7 +403,7 @@ rm -rf argo.log
 }
 
 # 用户交互界面
- clear
+
 echo -e "\e[1;3;33m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo ""
