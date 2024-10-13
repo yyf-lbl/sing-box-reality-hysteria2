@@ -406,23 +406,24 @@ echo -e "\e[1;3;33m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo ""
 echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
-echo "==============="
+echo -e "\e[1;3;32m===============\e[0m"
 echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
-echo "==============="
+echo -e "\e[1;3;33m===============\e[0m"
 echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
-echo "==============="
+echo -e "\e[1;3;36m===============\e[0m"
 echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
-echo "==============="
+echo -e "\e[1;3;34===============\e[0m" 
 echo -e "\e[1;3;31m5. 卸载\e[0m"  # 红色斜体加粗
-echo "==============="
+echo -e "\e[1;3;31m===============\e[0m"
 echo -e "\e[1;3;32m6. 更新sing-box内核\e[0m"  # 绿色斜体加粗
-echo "==============="
+echo -e "\e[1;3;32m===============\e[0m" 
 echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
-echo "==============="
+echo -e "\e[1;3;36m===============\e[0m"
 echo -e "\e[1;3;32m8. 手动重启sing-box服务\e[0m"  # 绿色斜体加粗
-echo "==============="
+echo -e "\e[1;3;32m===============\e[0m"
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
-echo "==============="
+echo -e "\e[1;3;31m===============\e[0m"
+echo ""
 echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
 read -e choice
   # 黄色斜体加粗
@@ -460,7 +461,7 @@ case $choice in
         read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
         server_name=${server_name:-$current_server_name}
 
-        show_notice "开始修改hysteria2端口"
+        show_notice "开始修改hysteria2配置"
         hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
         read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
         hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
