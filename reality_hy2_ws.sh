@@ -1,13 +1,14 @@
 #!/bin/bash
 # Function to print characters with delay
 print_with_delay() {
-    text="$1"
-    delay="$2"
-    for ((i = 0; i < ${#text}; i++)); do
-        echo -n "${text:$i:1}"
-        sleep $delay
+    local message="$1"
+    local delay="$2"
+    
+    for (( i=0; i<${#message}; i++ )); do
+        echo -ne "\e[1;3;32m${message:i:1}\e[0m"  # 打印每个字符，带有颜色和样式
+        sleep "$delay"
     done
-    echo
+    echo  # 换行
 }
 #notice
 show_notice() {
