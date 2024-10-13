@@ -19,20 +19,16 @@ show_notice() {
 
     # 计算文本的前后填充长度
     local message_length=${#message}
-    local total_padding=$((width - message_length))
+    local total_padding=$((width - message_length - 4))  # 4 是因为 "||" 占用了 4 个字符
     local left_padding=$((total_padding / 2))
     local right_padding=$((total_padding - left_padding))
 
     # 打印边框和消息
-    echo "$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char"
-    echo "||                                                                   ||"
-    echo -n "||"
-    printf "%*s" $left_padding ""  # 左侧填充
-    echo -n "$message"
-    printf "%*s" $right_padding ""  # 右侧填充
-    echo "||"
-    echo "||                                                                   ||"
-    echo "$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char$border_char"
+    printf "%${width}s\n" | tr " " "$border_char"  # 打印顶部边框
+    echo "||$(printf "%$((width - 4))s")||"  # 打印空行
+    echo "||$(printf "%${left_padding}s")$message$(printf "%${right_padding}s")||"  # 打印消息行
+    echo "||$(printf "%$((width - 4))s")||"  # 打印空行
+    printf "%${width}s\n" | tr " " "$border_char"  # 打印底部边框
 }
 
 # Introduction animation
