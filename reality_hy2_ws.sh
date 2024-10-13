@@ -13,7 +13,7 @@ print_with_delay() {
 #notice
 show_notice() {
     local message="$1"
-    local width=70  # 定义长方形的宽度
+    local width=50  # 定义长方形的宽度
     local border_char="="  # 边框字符
     local yellow_color="\033[33m"  # 黄色
     local yellow_bold_italic="\033[33;1;3m"  # 黄色斜体加粗
