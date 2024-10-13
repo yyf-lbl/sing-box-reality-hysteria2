@@ -15,10 +15,12 @@ show_notice() {
     local message="$1"
     local width=70  # 定义长方形的宽度
     local border_char="="  # 边框字符
+    local red_color="\033[31m"  # 红色
+    local reset_color="\033[0m"  # 重置颜色
 
-    # 打印边框
-    printf "%${width}s\n" | tr " " "$border_char"  # 打印顶部边框
-    echo "||$(printf "%$((width - 4))s")||"  # 打印空行
+    # 打印红色边框
+    printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印顶部边框
+    printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
 
     # 处理中文字符长度
     local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数，而不是字节数
@@ -27,10 +29,10 @@ show_notice() {
     local right_padding=$((total_padding - left_padding))
 
     # 打印消息行并居中
-    printf "||%${left_padding}s%s%${right_padding}s||\n" "" "$message" ""
+    printf "${red_color}||%${left_padding}s%s%${right_padding}s||${reset_color}\n" "" "$message" ""
 
-    echo "||$(printf "%$((width - 4))s")||"  # 打印空行
-    printf "%${width}s\n" | tr " " "$border_char"  # 打印底部边框
+    printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
+    printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
 }
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
