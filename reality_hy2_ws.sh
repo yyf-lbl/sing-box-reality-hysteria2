@@ -450,7 +450,7 @@ case $choice in
         install_singbox
         ;;
     3)
-        show_notice "开始修改vless端口和域名"
+        show_notice "开始修改vless配置信息"
         current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
         read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
         listen_port=${listen_port:-$current_listen_port}
@@ -459,7 +459,7 @@ case $choice in
         read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
         server_name=${server_name:-$current_server_name}
 
-        show_notice "开始修改hysteria2端口"
+        show_notice "开始修改-hy2配置信息"
         hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
         read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
         hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
