@@ -234,11 +234,10 @@ install_base
 install_singbox() { 
   while true; do
    echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
-echo -e "\e[1;3;33m1) vless-Reality\e[0m"
+echo -e "\e[1;3;33m1) Reality\e[0m"
 echo -e "\e[1;3;33m2) VMess\e[0m"
 echo -e "\e[1;3;33m3) Hysteria2\e[0m"
-   echo -ne "\e[1;3;33m请输入你的选择: \e[0m" 
-   read -e choice
+   echo -e "\e[1;3;33m你的选择: \e[0m" && read choices
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
     # 检查输入的选择是否有效
@@ -403,6 +402,7 @@ rm -rf argo.log
 }
 
 # 用户交互界面
+ clear
 echo -e "\e[1;3;33m脚本支持: VLESS VMESS HY2 协议\e[0m"  # 蓝色斜体加粗
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo ""
@@ -450,11 +450,30 @@ case $choice in
         # 重新安装的步骤
         install_singbox
         ;;
-    3)  
-    
-       systemctl restart sing-box
-       show_client_configuration
+    3)
+        show_notice "开始修改reality端口和域名"
+        current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
+        listen_port=${listen_port:-$current_listen_port}
+        
+        current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
+        server_name=${server_name:-$current_server_name}
 
+        show_notice "开始修改hysteria2端口"
+        hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
+        hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+
+        jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" \
+            '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' \
+            /root/sbox/sbconfig_server.json > /root/sb_modified.json
+
+        mv /root/sb_modified.json /root/sbox/sbconfig_server.json
+
+        echo "配置修改完成，重新启动sing-box服务..."
+        systemctl restart sing-box
+        show_client_configuration
         exit 0
         ;;
     4)  
@@ -538,5 +557,4 @@ EOF
 else
     echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
 fi
-
 
