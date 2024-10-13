@@ -29,16 +29,12 @@ show_notice() {
     local left_padding=$((total_padding / 2))
     local right_padding=$((total_padding - left_padding))
 
-    # 打印消息行并居中
-    printf "${red_color}||%${left_padding}s%s%${right_padding}s||${reset_color}\n" "" "$message" ""
+    # 打印消息行并居中，应用黄色斜体加粗样式
+    printf "${red_color}||%${left_padding}s${yellow_bold_italic}%s%${right_padding}s||${reset_color}\n" "" "$message" ""
 
     printf "${red_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
     printf "${red_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
-
-    # 打印重置后的文字，使用黄色斜体加粗
-    echo -e "${yellow_bold_italic}信息已重置${reset_color}"
 }
-
 # Introduction animation
 print_with_delay "欢迎使用sing-box服务" 0.05
 echo ""
