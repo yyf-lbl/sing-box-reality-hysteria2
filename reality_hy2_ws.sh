@@ -31,6 +31,8 @@ show_notice() {
         # 消息太长的情况下，直接输出消息
         printf "${yellow_color}||%s||${reset_color}\n" "$message"
     else
+      # 手动调整右侧填充
+        right_padding=$((right_padding - 5)) 
         # 打印消息行并居中，应用黄色斜体加粗样式
        printf "${yellow_color}||%${left_padding}s${yellow_bold_italic}%s%${right_padding}s${reset_color}${yellow_color}||\n" "" "$message" ""
     fi
