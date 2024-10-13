@@ -234,11 +234,10 @@ install_base
 install_singbox() { 
   while true; do
    echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
-echo -e "\e[1;3;33m1) Reality\e[0m"
-echo -e "\e[1;3;33m2) VMess\e[0m"
-echo -e "\e[1;3;33m3) Hysteria2\e[0m"
-   echo -ne "\e[1;3;33m请输入你的选择: \e[0m" 
-   read -e choice
+   echo -e "\e[1;3;33m1) Reality\e[0m"
+   echo -e "\e[1;3;33m2) VMess\e[0m"
+   echo -e "\e[1;3;33m3) Hysteria2\e[0m"
+   echo -ne "\e[1;3;33m你的选择: \e[0m" && read choices
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
     # 检查输入的选择是否有效
