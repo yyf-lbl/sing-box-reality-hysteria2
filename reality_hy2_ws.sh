@@ -445,16 +445,16 @@ modify_protocol_configs() {
 
 modify_vless_config() {
     show_notice "开始修改VLESS配置信息"
-    current_listen_port=$(jq -r '.inbounds[] | select(.protocol=="vless").listen_port' /root/sbox/sbconfig_server.json)
+    current_listen_port=$(jq -r '.inbounds[] | select(.type=="vless").listen_port' /root/sbox/sbconfig_server.json)
     read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
     listen_port=${listen_port:-$current_listen_port}
 
-    current_server_name=$(jq -r '.inbounds[] | select(.protocol=="vless").tls.server_name' /root/sbox/sbconfig_server.json)
+    current_server_name=$(jq -r '.inbounds[] | select(.type=="vless").tls.server_name' /root/sbox/sbconfig_server.json)
     read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
     server_name=${server_name:-$current_server_name}
 
     jq --arg listen_port "$listen_port" --arg server_name "$server_name" \
-        '.inbounds[] | select(.protocol=="vless") |= (.listen_port = ($listen_port | tonumber), .tls.server_name = $server_name)' \
+        '.inbounds[] | select(.type=="vless") |= (.listen_port = ($listen_port | tonumber), .tls.server_name = $server_name)' \
         /root/sbox/sbconfig_server.json > /root/sb_modified.json
 
     mv /root/sb_modified.json /root/sbox/sbconfig_server.json
@@ -463,12 +463,12 @@ modify_vless_config() {
 
 modify_hysteria_config() {
     show_notice "开始修改Hy2 配置信息"
-    hy_current_listen_port=$(jq -r '.inbounds[] | select(.protocol=="hysteria").listen_port' /root/sbox/sbconfig_server.json)
+    hy_current_listen_port=$(jq -r '.inbounds[] | select(.type=="hysteria").listen_port' /root/sbox/sbconfig_server.json)
     read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
 
     jq --arg hy_listen_port "$hy_listen_port" \
-        '.inbounds[] | select(.protocol=="hysteria") |= (.listen_port = ($hy_listen_port | tonumber))' \
+        '.inbounds[] | select(.type=="hysteria") |= (.listen_port = ($hy_listen_port | tonumber))' \
         /root/sbox/sbconfig_server.json > /root/sb_modified.json
 
     mv /root/sb_modified.json /root/sbox/sbconfig_server.json
@@ -477,12 +477,12 @@ modify_hysteria_config() {
 
 modify_vmess_config() {
     show_notice "开始修改VMess配置信息"
-    vmess_current_port=$(jq -r '.inbounds[] | select(.protocol=="vmess").listen_port' /root/sbox/sbconfig_server.json)
+    vmess_current_port=$(jq -r '.inbounds[] | select(.type=="vmess").listen_port' /root/sbox/sbconfig_server.json)
     read -p "请输入想要修改的端口号 (当前端口为 $vmess_current_port): " vmess_port
     vmess_port=${vmess_port:-$vmess_current_port}
 
     jq --arg vmess_port "$vmess_port" \
-        '.inbounds[] | select(.protocol=="vmess") |= (.listen_port = ($vmess_port | tonumber))' \
+        '.inbounds[] | select(.type=="vmess") |= (.listen_port = ($vmess_port | tonumber))' \
         /root/sbox/sbconfig_server.json > /root/sb_modified.json
 
     mv /root/sb_modified.json /root/sbox/sbconfig_server.json
