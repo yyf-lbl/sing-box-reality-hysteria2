@@ -443,7 +443,7 @@ read -e choice
   # 黄色斜体加粗
 case $choice in
     1)
-        clear
+
         echo -e "\e[1;3;32m开始安装sing-box服务，请稍后...\e[0m"
         echo " "
           mkdir -p "/root/sbox/"
@@ -452,7 +452,7 @@ case $choice in
         install_singbox
         ;;
     2)
-        clear
+
         show_notice "重新安装中..."
         systemctl stop sing-box
         systemctl disable sing-box > /dev/null 2>&1
@@ -468,7 +468,7 @@ case $choice in
         install_singbox
         ;;
     3)
-       clear
+
         show_notice "开始修改vless配置"
         current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
         read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
@@ -494,15 +494,15 @@ case $choice in
         show_client_configuration
         ;;
     4)  
-       clear
+
         show_client_configuration
         ;;	
     5)
-        clear
+ 
         uninstall_singbox
         ;;
     6)
-       clear
+
         show_notice "正在更新 Sing-box内核..."
         download_singbox
         if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
@@ -515,14 +515,14 @@ case $choice in
         echo ""
         ;;
     7)
-        clear
+
         regenarte_cloudflared_argo
         echo "重新启动完成，查看新的vmess客户端信息"
         show_client_configuration
     
         ;;
     8) 
-    clear
+
        # 检查配置并启动服务
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     systemctl daemon-reload
@@ -541,7 +541,7 @@ fi
         exit 0
         ;;
     *)
-        clear
+   
         echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
         ;;
  esac
