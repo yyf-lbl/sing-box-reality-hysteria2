@@ -492,16 +492,16 @@ detect_protocols() {
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
 
-    current_listen_port=$(jq -r '.inbounds[] | select(.protocol == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
+    current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
     read -p "请输入想要修改的 VLESS 端口号 (当前端口为 $current_listen_port): " listen_port
     listen_port=${listen_port:-$current_listen_port}
 
-    current_server_name=$(jq -r '.inbounds[] | select(.protocol == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
+    current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
     read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
     server_name=${server_name:-$current_server_name}
 
     jq --arg listen_port "$listen_port" --arg server_name "$server_name" \
-        '.inbounds[] | select(.protocol == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name | .tls.reality.handshake.server = $server_name' \
+        '.inbounds[] | select(.type == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name | .tls.reality.handshake.server = $server_name' \
         /root/sbox/sbconfig_server.json > /root/sb_modified_vless.json
 
     mv /root/sb_modified_vless.json /root/sbox/sbconfig_server.json
@@ -509,17 +509,16 @@ modify_vless() {
 }
 
 modify_hysteria2() {
-    show_notice "开始修改 Hysteria2 配置"
-
-    hy_current_listen_port=$(jq -r '.inbounds[] | select(.protocol == "hysteria") | .listen_port' /root/sbox/sbconfig_server.json)
-    read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
-    hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
-
-    jq --arg hy_listen_port "$hy_listen_port" \
-        '.inbounds[] | select(.protocol == "hysteria") | .listen_port = ($hy_listen_port | tonumber)' \
-        /root/sbox/sbconfig_server.json > /root/sb_modified_hysteria.json
-
-    mv /root/sb_modified_hysteria.json /root/sbox/sbconfig_server.json
+   show_notice "开始修改 Hysteria2 配置"
+# 获取 Hysteria2 协议的 listen_port
+hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
+# 提示用户输入新端口号，如果不输入则使用当前端口
+read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
+hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+# 修改 Hysteria2 端口
+jq --arg hy_listen_port "$hy_listen_port" '.inbounds[] | select(.type == "hysteria2") | .listen_port = ($hy_listen_port | tonumber)' /root/sbox/sbconfig_server.json > /root/sb_modified.json
+# 覆盖原配置文件
+mv /root/sb_modified.json /root/sbox/sbconfig_server.json
     echo "Hysteria2 配置修改完成"
 }
 
