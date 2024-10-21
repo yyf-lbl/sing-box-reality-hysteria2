@@ -451,6 +451,23 @@ case $choice in
          download_singbox
         download_cloudflared
         install_singbox
+        # Create sing-box.service
+cat > /etc/systemd/system/sing-box.service <<EOF
+[Unit]
+After=network.target nss-lookup.target
+[Service]
+User=root
+WorkingDirectory=/root
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+ExecReload=/bin/kill -HUP \$MAINPID
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=infinity
+[Install]
+WantedBy=multi-user.target
+EOF
         show_client_configuration
         ;;
     2)
@@ -553,23 +570,7 @@ printf "\e[1;3;33m按任意键返回...\e[0m"
 read -n 1 -s -r
     clear
 done
-# Create sing-box.service
-cat > /etc/systemd/system/sing-box.service <<EOF
-[Unit]
-After=network.target nss-lookup.target
-[Service]
-User=root
-WorkingDirectory=/root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
-ExecReload=/bin/kill -HUP \$MAINPID
-Restart=on-failure
-RestartSec=10
-LimitNOFILE=infinity
-[Install]
-WantedBy=multi-user.target
-EOF
+
       # 检查配置并启动服务
    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
       echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
