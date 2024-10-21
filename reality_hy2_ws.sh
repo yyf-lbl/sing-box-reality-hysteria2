@@ -451,6 +451,7 @@ case $choice in
          download_singbox
         download_cloudflared
         install_singbox
+        show_client_configuration
         ;;
     2)
 
