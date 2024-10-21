@@ -451,6 +451,7 @@ case $choice in
          download_singbox
         download_cloudflared
         install_singbox
+        sleep 2
         # Create sing-box.service
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
@@ -484,8 +485,6 @@ EOF
 else
     echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
 fi
-sleep 2
-        show_client_configuration
         ;;
     2)
 
