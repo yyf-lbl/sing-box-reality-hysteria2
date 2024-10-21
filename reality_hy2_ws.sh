@@ -424,22 +424,20 @@ echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
+echo -e "\e[1;3;34m3. 显示客户端配置\e[0m"  # 蓝色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
+echo -e "\e[1;3;31m4. 卸载SingBox\e[0m"  # 红色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;31m5. 卸载SingBox\e[0m"  # 红色斜体加粗
+echo -e "\e[1;3;32m5. 更新SingBox内核\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m6. 更新SingBox内核\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;36m6. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;32m7. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
+echo -ne "\e[1;3;33m输入您的选择 (0-7): \e[0m " 
 read -e choice
   # 黄色斜体加粗
 case $choice in
@@ -469,105 +467,16 @@ case $choice in
         # 重新安装的步骤
         install_singbox
         ;;
-    3)
-detect_protocols() {
-    echo "正在检测已安装的协议..."
 
-    # 使用 jq 来检测每个 inbounds 条目的 type 字段
-    protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
-
-    echo "检测到的协议:"
-    echo "$protocols"
-
-    echo ""
-    echo "请选择要修改的协议："
-    echo "1) VLESS"
-    echo "2) Hysteria2"
-    echo "3) 全部修改"
-    read -p "请输入选项 (1/2/3): " modify_choice
-}
-
-
-modify_vless_config() {
-    echo "开始修改 VLESS 配置"
-    vless_current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
-    read -p "请输入想要修改的 VLESS 端口号 (当前端口为 $vless_current_listen_port): " vless_listen_port
-    vless_listen_port=${vless_listen_port:-$vless_current_listen_port}
-
-    current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
-    read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
-    server_name=${server_name:-$current_server_name}
-
-    jq --arg listen_port "$vless_listen_port" --arg server_name "$server_name" \
-        '.inbounds[] | select(.type == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name' \
-        /root/sbox/sbconfig_server.json > /root/sb_modified.json
-
-    mv /root/sb_modified.json /root/sbox/sbconfig_server.json
-    echo "VLESS 配置修改完成"
-}
-
-modify_hysteria_config() {
-    echo "开始修改 Hysteria2 配置"
-    hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
-    read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
-    hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
-
-    jq --arg hy_listen_port "$hy_listen_port" \
-        '.inbounds[] | select(.type == "hysteria2") | .listen_port = ($hy_listen_port | tonumber)' \
-        /root/sbox/sbconfig_server.json > /root/sb_modified.json
-
-    mv /root/sb_modified.json /root/sbox/sbconfig_server.json
-    echo "Hysteria2 配置修改完成"
-}
-
-# 调用协议检测函数
-detect_protocols
-
-# 根据用户选择进行修改
-case $modify_choice in
-    1)
-        # 修改 VLESS
-        modify_vless_config
-        ;;
-    2)
-        # 修改 Hysteria2
-        modify_hysteria_config
-        ;;
-    3)
-        # 修改全部协议
-        modify_vless
-        modify_hysteria2
-        ;;
-    *)
-        echo "无效选项，退出"
-        exit 1
-        ;;
-esac
-
-# 重启服务并验证
-echo "配置修改完成，重新启动 sing-box 服务..."
-systemctl restart sing-box
-
-if [ $? -eq 0 ]; then
-    echo "sing-box 服务重启成功"
-else
-    echo "sing-box 服务重启失败，请检查日志"
-    # 恢复备份
-    mv /root/sbox/sbconfig_server_backup.json /root/sbox/sbconfig_server.json
-fi
-
-show_client_configuration
-
-        ;;
-    4)  
+    3)  
 
         show_client_configuration
         ;;	
-    5)
+    4)
  
         uninstall_singbox
         ;;
-    6)
+    5)
 
         show_notice "正在更新 Sing-box内核..."
         download_singbox
@@ -580,14 +489,14 @@ show_client_configuration
         fi
         echo ""
         ;;
-    7)
+    6)
 
         regenarte_cloudflared_argo
         echo "重新启动完成，查看新的vmess客户端信息"
         show_client_configuration
     
         ;;
-    8) 
+    7) 
 
        # 检查配置并启动服务
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
