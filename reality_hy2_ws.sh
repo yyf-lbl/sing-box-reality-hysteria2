@@ -424,20 +424,22 @@ echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;34m3. 显示客户端配置\e[0m"  # 蓝色斜体加粗
+echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;31m4. 卸载SingBox\e[0m"  # 红色斜体加粗
+echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m5. 更新SingBox内核\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;31m5. 卸载SingBox\e[0m"  # 红色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;36m6. 手动重启cloudflared\e[0m"  # 青色斜体加粗
+echo -e "\e[1;3;32m6. 更新SingBox内核\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m7. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-echo -ne "\e[1;3;33m输入您的选择 (0-7): \e[0m " 
+echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
 read -e choice
   # 黄色斜体加粗
 case $choice in
@@ -449,7 +451,6 @@ case $choice in
          download_singbox
         download_cloudflared
         install_singbox
-        show_client_configuration
         ;;
     2)
 
@@ -467,16 +468,41 @@ case $choice in
         # 重新安装的步骤
         install_singbox
         ;;
+    3)
 
-    3)  
+        show_notice "开始修改vless配置"
+        current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
+        listen_port=${listen_port:-$current_listen_port}
+        
+        current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
+        server_name=${server_name:-$current_server_name}
+
+        show_notice "开始修改hysteria2配置"
+        hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
+        read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
+        hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+
+        jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" \
+            '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' \
+            /root/sbox/sbconfig_server.json > /root/sb_modified.json
+
+        mv /root/sb_modified.json /root/sbox/sbconfig_server.json
+
+        echo "配置修改完成，重新启动sing-box服务..."
+        systemctl restart sing-box
+        show_client_configuration
+        ;;
+    4)  
 
         show_client_configuration
         ;;	
-    4)
+    5)
  
         uninstall_singbox
         ;;
-    5)
+    6)
 
         show_notice "正在更新 Sing-box内核..."
         download_singbox
@@ -489,14 +515,14 @@ case $choice in
         fi
         echo ""
         ;;
-    6)
+    7)
 
         regenarte_cloudflared_argo
         echo "重新启动完成，查看新的vmess客户端信息"
         show_client_configuration
     
         ;;
-    7) 
+    8) 
 
        # 检查配置并启动服务
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
