@@ -473,7 +473,9 @@ case $choice in
      # 检测协议并提供修改选项
 detect_protocols() {
     echo "正在检测已安装的协议..."
-    protocols=$(jq -r '.inbounds[] | .protocol' /root/sbox/sbconfig_server.json)
+
+    # 使用 jq 来检测每个 inbounds 条目的 type 字段
+    protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
     echo "检测到的协议:"
     echo "$protocols"
@@ -485,6 +487,7 @@ detect_protocols() {
     echo "3) 全部修改"
     read -p "请输入选项 (1/2/3): " modify_choice
 }
+
 
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
