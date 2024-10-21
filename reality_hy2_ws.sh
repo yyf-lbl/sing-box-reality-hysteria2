@@ -527,11 +527,11 @@ detect_protocols
 case $modify_choice in
     1)
         # 修改 VLESS
-        modify_vless
+        modify_vless_config
         ;;
     2)
         # 修改 Hysteria2
-        modify_hysteria2
+        modify_hysteria_config
         ;;
     3)
         # 修改全部协议
