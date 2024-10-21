@@ -476,32 +476,8 @@ detect_protocols() {
     # 使用 jq 来检测每个 inbounds 条目的 type 字段
     protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
-    # 初始化变量，用来记录检测到的协议
-    has_vless=false
-    has_hysteria=false
-
-    # 遍历检测到的协议类型
-    while read -r protocol; do
-        if [[ "$protocol" == "vless" ]]; then
-            has_vless=true
-        elif [[ "$protocol" == "hysteria2" ]]; then
-            has_hysteria=true
-        fi
-    done <<< "$protocols"
-
-    # 输出检测到的协议
-    if $has_vless; then
-        echo "检测到 VLESS 协议"
-    fi
-
-    if $has_hysteria; then
-        echo "检测到 Hysteria2 协议"
-    fi
-
-    if ! $has_vless && ! $has_hysteria; then
-        echo "没有检测到任何已安装的协议！"
-        return 1
-    fi
+    echo "检测到的协议:"
+    echo "$protocols"
 
     echo ""
     echo "请选择要修改的协议："
@@ -509,18 +485,8 @@ detect_protocols() {
     echo "2) Hysteria2"
     echo "3) 全部修改"
     read -p "请输入选项 (1/2/3): " modify_choice
-
-    if [[ "$modify_choice" == "1" ]] && $has_vless; then
-        modify_vless_config
-    elif [[ "$modify_choice" == "2" ]] && $has_hysteria; then
-        modify_hysteria_config
-    elif [[ "$modify_choice" == "3" ]] && ($has_vless || $has_hysteria); then
-        modify_vless_config
-        modify_hysteria_config
-    else
-        echo "选择无效或协议未安装"
-    fi
 }
+
 
 modify_vless_config() {
     echo "开始修改 VLESS 配置"
