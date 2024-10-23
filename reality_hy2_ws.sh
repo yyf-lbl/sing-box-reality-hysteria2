@@ -197,6 +197,17 @@ show_client_configuration() {
           echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
         echo ""
     fi
+    
+    # 生成 TUIC 客户端链接
+    if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
+        tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
+        tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
+
+        tuic_link="tuic://$tuic_password@$server_ip:$tuic_listen_port"
+        echo -e "\e[1;3;31mTUIC 客户端通用链接：\e[0m"
+        echo -e "\e[1;3;33m$tuic_link\e[0m"
+        echo ""
+    fi
 }
 uninstall_singbox() {
     echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
