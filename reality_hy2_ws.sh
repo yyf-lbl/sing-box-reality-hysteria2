@@ -401,29 +401,32 @@ rm -rf argo.log
                         }
                     }]')
                 ;; 
-             4)
-                echo "开始配置 TUIC"
-                echo ""
-                 tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
-                read -p "请输入 TUIC 监听端口 (default: 8080): " tuic_listen_port_input
-               tuic_listen_port=${tuic_listen_port_input:-8080}
-               read -p "输入 TUIC 自签证书域名 (default: example.com): " tuic_server_name_input
-               tuic_server_name=${tuic_server_name_input:-example.com}
-    
-              mkdir -p /root/self-cert/
-               openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
-               openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
-             echo "自签证书生成完成"
-           echo ""
+           4)
+    echo "开始配置 TUIC"
+    echo ""
+    tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
+    tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
+    read -p "请输入 TUIC 监听端口 (default: 8080): " tuic_listen_port_input
+    tuic_listen_port=${tuic_listen_port_input:-8080}
+    read -p "输入 TUIC 自签证书域名 (default: example.com): " tuic_server_name_input
+    tuic_server_name=${tuic_server_name_input:-example.com}
+
+    mkdir -p /root/self-cert/
+    openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+    openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
+    echo "自签证书生成完成"
+    echo ""
 
     config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
+        --arg tuic_uuid "$tuic_uuid" \
         '.inbounds += [{
             "type": "tuic",
             "tag": "tuic-in",
             "listen": "::",
             "listen_port": ($tuic_listen_port | tonumber),
             "users": [{
+                "uuid": $tuic_uuid,
                 "password": $tuic_password
             }],
             "tls": {
@@ -434,7 +437,7 @@ rm -rf argo.log
             }
         }]')
     ;;
-   
+
               *)
                 echo "无效选择: $choice"
                 ;;    
