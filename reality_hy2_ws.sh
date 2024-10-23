@@ -409,6 +409,28 @@ rm -rf argo.log
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
+reinstall_sing_box() {
+    show_notice "重新安装中 ..."
+
+    # 停止和禁用 sing-box 服务
+    systemctl stop sing-box
+    systemctl disable sing-box > /dev/null 2>&1
+
+    # 删除服务文件和配置文件，先检查是否存在
+    [ -f /etc/systemd/system/sing-box.service ] && rm /etc/systemd/system/sing-box.service
+    [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig_server.json
+    [ -f /root/sbox/sing-box ] && rm /root/sbox/sing-box
+    [ -f /root/sbox/cloudflared-linux ] && rm /root/sbox/cloudflared-linux
+    [ -f /root/sbox/argo.txt.b64 ] && rm /root/sbox/argo.txt.b64
+    [ -f /root/sbox/public.key.b64 ] && rm /root/sbox/public.key.b64
+
+    # 删除证书和 sbox 目录
+    rm -rf /root/self-cert/
+    rm -rf /root/sbox/
+
+    # 重新安装的步骤
+    install_singbox
+}
 
 # 用户交互界面
 while true; do
@@ -487,20 +509,7 @@ else
 fi
         ;;
     2)
-
-        show_notice "重新安装中...."
-        systemctl stop sing-box
-        systemctl disable sing-box > /dev/null 2>&1
-        rm /etc/systemd/system/sing-box.service
-        rm /root/sbox/sbconfig_server.json
-        rm /root/sbox/sing-box
-        rm /root/sbox/cloudflared-linux
-        rm /root/sbox/argo.txt.b64
-        rm /root/sbox/public.key.b64
-        rm -rf /root/self-cert/
-        rm -rf /root/sbox/  
-        # 重新安装的步骤
-        install_singbox
+       reinstall_sing_box
         ;;
     3)
       # 检测协议并提供修改选项
