@@ -245,9 +245,10 @@ install_base
 install_singbox() { 
   while true; do
    echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
-   echo -e "\e[1;3;33m1) Reality\e[0m"
+   echo -e "\e[1;3;33m1) vless-Reality\e[0m"
    echo -e "\e[1;3;33m2) VMess\e[0m"
    echo -e "\e[1;3;33m3) Hysteria2\e[0m"
+   echo -e "\e[1;3;33m3) Tuic\e[0m"
    echo -ne "\e[1;3;33m请输入你的选择: \e[0m" && read choices
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
@@ -399,7 +400,41 @@ rm -rf argo.log
                             "key_path": "/root/self-cert/private.key"
                         }
                     }]')
-                ;;  
+                ;; 
+             4)
+                echo "开始配置 TUIC"
+                echo ""
+                 tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
+                read -p "请输入 TUIC 监听端口 (default: 8080): " tuic_listen_port_input
+               tuic_listen_port=${tuic_listen_port_input:-8080}
+               read -p "输入 TUIC 自签证书域名 (default: example.com): " tuic_server_name_input
+               tuic_server_name=${tuic_server_name_input:-example.com}
+    
+              mkdir -p /root/self-cert/
+               openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
+               openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
+             echo "自签证书生成完成"
+           echo ""
+
+    config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
+        --arg tuic_password "$tuic_password" \
+        '.inbounds += [{
+            "type": "tuic",
+            "tag": "tuic-in",
+            "listen": "::",
+            "listen_port": ($tuic_listen_port | tonumber),
+            "users": [{
+                "password": $tuic_password
+            }],
+            "tls": {
+                "enabled": true,
+                "alpn": ["h3"],
+                "certificate_path": "/root/self-cert/cert.pem",
+                "key_path": "/root/self-cert/private.key"
+            }
+        }]')
+    ;;
+   
               *)
                 echo "无效选择: $choice"
                 ;;    
