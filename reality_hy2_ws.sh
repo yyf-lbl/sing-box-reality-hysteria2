@@ -198,16 +198,25 @@ show_client_configuration() {
         echo ""
     fi
     
-    # 生成 TUIC 客户端链接
-    if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
-        tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
-        tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
+   # 生成 TUIC 客户端链接
+if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
+    tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
+    tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
+    tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
+    
+    # 这里可以设置 SNI 和其他参数
+    sni="www.bing.com"
+    congestion_control="bbr"
+    udp_relay_mode="native"
+    alpn="h3"
+    
+    tuic_link="tuic://${tuic_uuid}:${tuic_password}@${server_ip}:${tuic_listen_port}?sni=${sni}&congestion_control=${congestion_control}&udp_relay_mode=${udp_relay_mode}&alpn=${alpn}&allow_insecure=1#${isp}"
+    
+    echo -e "\e[1;3;31mTUIC 客户端通用链接：\e[0m"
+    echo -e "\e[1;3;33m$tuic_link\e[0m"
+    echo ""
+fi
 
-        tuic_link="tuic://$tuic_password@$server_ip:$tuic_listen_port"
-        echo -e "\e[1;3;31mTUIC 客户端通用链接：\e[0m"
-        echo -e "\e[1;3;33m$tuic_link\e[0m"
-        echo ""
-    fi
 }
 uninstall_singbox() {
     echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
@@ -419,8 +428,8 @@ rm -rf argo.log
     tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
     read -p "请输入 TUIC 监听端口 (default: 8080): " tuic_listen_port_input
     tuic_listen_port=${tuic_listen_port_input:-8080}
-    read -p "输入 TUIC 自签证书域名 (default: example.com): " tuic_server_name_input
-    tuic_server_name=${tuic_server_name_input:-example.com}
+    read -p "输入 TUIC 自签证书域名 (default: bing.com): " tuic_server_name_input
+    tuic_server_name=${tuic_server_name_input:-bing.com}
 
     mkdir -p /root/self-cert/
     openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
