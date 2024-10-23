@@ -506,7 +506,7 @@ fi
       # 检测协议并提供修改选项
 detect_protocols() {
     echo "正在检测已安装的协议..."
-    protocols=$(jq -r '.inbounds[] | .protocol' /root/sbox/sbconfig_server.json)
+    protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
     echo "检测到的协议:"
     echo "$protocols"
