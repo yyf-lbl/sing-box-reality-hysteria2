@@ -535,15 +535,26 @@ modify_vless() {
 }
 modify_hysteria2() {
     show_notice "开始修改 Hysteria2 配置"
-    hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria") | .listen_port' /root/sbox/sbconfig_server.json)
+    hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
+
+    if [ -z "$hy_current_listen_port" ]; then
+        echo "未能获取当前 Hysteria2 端口，请检查配置文件。"
+        return 1
+    fi
+
     read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+
     jq --arg hy_listen_port "$hy_listen_port" \
-        '.inbounds[] | select(.type == "hysteria") | .listen_port = ($hy_listen_port | tonumber)' \
+        '.inbounds[] | select(.type == "hysteria2") | .listen_port = ($hy_listen_port | tonumber)' \
         /root/sbox/sbconfig_server.json > /root/sb_modified_hysteria.json
+
+    # 使用 `sponge` 避免覆盖的问题，确保可以同时读取和写入
     mv /root/sb_modified_hysteria.json /root/sbox/sbconfig_server.json
+
     echo "Hysteria2 配置修改完成"
 }
+
 # 主逻辑
 detect_protocols
 # 根据用户选择进行修改
