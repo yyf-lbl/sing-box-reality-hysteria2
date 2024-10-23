@@ -264,13 +264,14 @@ install_singbox() {
         # 有效输入，跳出循环
         break
     else
-        echo -e "\e[1;3;31m输入无效!请选择1,2或3\e[0m"
+        echo -e "\e[1;3;31m输入无效!请选择1-4\e[0m"
     fi
 done
     # 初始化配置变量
     listen_port=443
     vmess_port=15555
     hy_listen_port=8443
+    tuic_listen_port=8080
     config="{\"log\": {\"disabled\": false, \"level\": \"info\", \"timestamp\": true}, \"inbounds\": [], \"outbounds\": [{\"type\": \"direct\", \"tag\": \"direct\"}, {\"type\": \"block\", \"tag\": \"block\"}]}"
     for choice in $choices; do
         case $choice in
@@ -326,7 +327,6 @@ done
                 ;;
 
             2)
-
                 echo "开始配置vmess"
               sleep 3
            # Generate hysteria necessary values
