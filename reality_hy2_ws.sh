@@ -410,7 +410,7 @@ rm -rf argo.log
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
 reinstall_sing_box() {
-    show_notice "重新安装中 ..."
+    show_notice "重新安装中..."
 
     # 停止和禁用 sing-box 服务
     systemctl stop sing-box
@@ -427,9 +427,11 @@ reinstall_sing_box() {
     # 删除证书和 sbox 目录
     rm -rf /root/self-cert/
     rm -rf /root/sbox/
-
     # 重新安装的步骤
-    install_singbox
+        mkdir -p "/root/sbox/"
+        download_singbox
+        download_cloudflared
+        install_singbox
 }
 
 # 用户交互界面
