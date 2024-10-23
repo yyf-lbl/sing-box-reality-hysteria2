@@ -503,30 +503,77 @@ fi
         install_singbox
         ;;
     3)
+      # 检测协议并提供修改选项
+detect_protocols() {
+    echo "正在检测已安装的协议..."
+    protocols=$(jq -r '.inbounds[] | .protocol' /root/sbox/sbconfig_server.json)
 
-        show_notice "开始修改vless配置"
-        current_listen_port=$(jq -r '.inbounds[0].listen_port' /root/sbox/sbconfig_server.json)
-        read -p "请输入想要修改的端口号 (当前端口为 $current_listen_port): " listen_port
-        listen_port=${listen_port:-$current_listen_port}
-        
-        current_server_name=$(jq -r '.inbounds[0].tls.server_name' /root/sbox/sbconfig_server.json)
-        read -p "请输入想要使用的h2域名 (当前域名为 $current_server_name): " server_name
-        server_name=${server_name:-$current_server_name}
+    echo "检测到的协议:"
+    echo "$protocols"
 
-        show_notice "开始修改hysteria2配置"
-        hy_current_listen_port=$(jq -r '.inbounds[1].listen_port' /root/sbox/sbconfig_server.json)
-        read -p "请输入想要修改的端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
-        hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+    echo ""
+    echo "请选择要修改的协议："
+    echo "1) VLESS"
+    echo "2) Hysteria2"
+    echo "3) 全部修改"
+    read -p "请输入选项 (1/2/3): " modify_choice
+}
 
-        jq --arg listen_port "$listen_port" --arg server_name "$server_name" --arg hy_listen_port "$hy_listen_port" \
-            '.inbounds[1].listen_port = ($hy_listen_port | tonumber) | .inbounds[0].listen_port = ($listen_port | tonumber) | .inbounds[0].tls.server_name = $server_name | .inbounds[0].tls.reality.handshake.server = $server_name' \
-            /root/sbox/sbconfig_server.json > /root/sb_modified.json
-
-        mv /root/sb_modified.json /root/sbox/sbconfig_server.json
-
-        echo "配置修改完成，重新启动sing-box服务..."
-        systemctl restart sing-box
-        show_client_configuration
+modify_vless() {
+    show_notice "开始修改 VLESS 配置"
+    current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
+    read -p "请输入想要修改的 VLESS 端口号 (当前端口为 $current_listen_port): " listen_port
+    listen_port=${listen_port:-$current_listen_port}
+    current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
+    read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
+    server_name=${server_name:-$current_server_name}
+    jq --arg listen_port "$listen_port" --arg server_name "$server_name" \
+        '.inbounds[] | select(.type == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name | .tls.reality.handshake.server = $server_name' \
+        /root/sbox/sbconfig_server.json > /root/sb_modified_vless.json
+    mv /root/sb_modified_vless.json /root/sbox/sbconfig_server.json
+    echo "VLESS 配置修改完成"
+}
+modify_hysteria2() {
+    show_notice "开始修改 Hysteria2 配置"
+    hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria") | .listen_port' /root/sbox/sbconfig_server.json)
+    read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
+    hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+    jq --arg hy_listen_port "$hy_listen_port" \
+        '.inbounds[] | select(.type == "hysteria") | .listen_port = ($hy_listen_port | tonumber)' \
+        /root/sbox/sbconfig_server.json > /root/sb_modified_hysteria.json
+    mv /root/sb_modified_hysteria.json /root/sbox/sbconfig_server.json
+    echo "Hysteria2 配置修改完成"
+}
+# 主逻辑
+detect_protocols
+# 根据用户选择进行修改
+case $modify_choice in
+    1)
+        modify_vless
+        ;;
+    2)
+        modify_hysteria2
+        ;;
+    3)
+        modify_vless
+        modify_hysteria2
+        ;;
+    *)
+        echo "无效选项，退出"
+        exit 1
+        ;;
+esac
+# 重启服务并验证
+echo "配置修改完成，重新启动 sing-box 服务..."
+systemctl restart sing-box
+if [ $? -eq 0 ]; then
+    echo "sing-box 服务重启成功"
+else
+    echo "sing-box 服务重启失败，请检查日志"
+    # 恢复备份
+    mv /root/sbox/sbconfig_server_backup.json /root/sbox/sbconfig_server.json
+fi
+show_client_configuration
         ;;
     4)  
 
