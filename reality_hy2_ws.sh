@@ -488,7 +488,7 @@ fi
         ;;
     2)
 
-        show_notice "重新安装中..."
+        show_notice "重新安装中...."
         systemctl stop sing-box
         systemctl disable sing-box > /dev/null 2>&1
         rm /etc/systemd/system/sing-box.service
