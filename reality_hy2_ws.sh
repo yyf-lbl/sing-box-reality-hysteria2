@@ -408,6 +408,39 @@ rm -rf argo.log
     # 生成最终配置文件
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
+            # 创建服务启动文件
+cat > /etc/systemd/system/sing-box.service <<EOF
+[Unit]
+After=network.target nss-lookup.target
+[Service]
+User=root
+WorkingDirectory=/root
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
+ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+ExecReload=/bin/kill -HUP \$MAINPID
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=infinity
+[Install]
+WantedBy=multi-user.target
+EOF
+     # 检查配置并启动服务
+   if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+      echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
+      systemctl daemon-reload
+      systemctl enable sing-box > /dev/null 2>&1
+      systemctl start sing-box
+    if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功启动！\e[0m"
+    else
+       echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
+    fi
+    systemctl restart sing-box
+    show_client_configuration
+else
+    echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
+fi
 }
 reinstall_sing_box() {
     show_notice "重新安装中..."
@@ -476,39 +509,6 @@ case $choice in
         download_cloudflared
         install_singbox
         sleep 2
-        # Create sing-box.service
-cat > /etc/systemd/system/sing-box.service <<EOF
-[Unit]
-After=network.target nss-lookup.target
-[Service]
-User=root
-WorkingDirectory=/root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
-ExecReload=/bin/kill -HUP \$MAINPID
-Restart=on-failure
-RestartSec=10
-LimitNOFILE=infinity
-[Install]
-WantedBy=multi-user.target
-EOF
-     # 检查配置并启动服务
-   if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-      echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
-      systemctl daemon-reload
-      systemctl enable sing-box > /dev/null 2>&1
-      systemctl start sing-box
-    if systemctl is-active --quiet sing-box; then
-        echo -e "\e[1;3;32msing-box 服务已成功启动！\e[0m"
-    else
-       echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
-    fi
-    systemctl restart sing-box
-    show_client_configuration
-else
-    echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
-fi
         ;;
     2)
        reinstall_sing_box
