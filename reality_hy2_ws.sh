@@ -255,7 +255,7 @@ install_singbox() {
     # 检查输入的选择是否有效
     valid=true
     for choice in "${selected_protocols[@]}"; do
-        if ! [[ "$choice" =~ ^[1-3]$ ]]; then
+        if ! [[ "$choice" =~ ^[1-4]$ ]]; then
             valid=false
             break
         fi
