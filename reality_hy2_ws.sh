@@ -518,21 +518,40 @@ detect_protocols() {
     echo "3) 全部修改"
     read -p "请输入选项 (1/2/3): " modify_choice
 }
-
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
+
+    # 获取当前端口
     current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
+    
+    if [ -z "$current_listen_port" ]; then
+        echo "未能获取当前 VLESS 端口，请检查配置文件。"
+        return 1
+    fi
+
     read -p "请输入想要修改的 VLESS 端口号 (当前端口为 $current_listen_port): " listen_port
     listen_port=${listen_port:-$current_listen_port}
+
+    # 获取当前服务器名
     current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
+
+    if [ -z "$current_server_name" ]; then
+        echo "未能获取当前 VLESS h2 域名，请检查配置文件。"
+        return 1
+    fi
+
     read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
     server_name=${server_name:-$current_server_name}
+
+    # 修改配置文件
     jq --arg listen_port "$listen_port" --arg server_name "$server_name" \
         '.inbounds[] | select(.type == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name | .tls.reality.handshake.server = $server_name' \
         /root/sbox/sbconfig_server.json > /root/sb_modified_vless.json
+
     mv /root/sb_modified_vless.json /root/sbox/sbconfig_server.json
     echo "VLESS 配置修改完成"
 }
+
 modify_hysteria2() {
     show_notice "开始修改 Hysteria2 配置"
     hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
