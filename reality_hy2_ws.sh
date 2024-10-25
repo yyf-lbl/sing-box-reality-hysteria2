@@ -206,7 +206,7 @@ fi
     echo ""
 
     # 生成带 TLS 的链接
-   vmess_link_tls='vmess://'$(echo "{\"add\":\"$argo_domain\",\"aid\":\"0\",\"host\":\"$argo_domain\",\"id\":\"$vmess_uuid\",\"net\":\"ws\",\"path\":\"$ws_path\",\"port\":\"443\",\"ps\":\"sing-box-vmess-tls\",\"tls\":\"tls\",\"type\":\"none\",\"v\":\"2\"}" | base64 -w 0)
+  vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
     echo ""
 
@@ -214,7 +214,7 @@ fi
     echo ""
 
     # 生成不带 TLS 的链接
-    vmess_link_no_tls='vmess://'$(echo "{\"add\":\"$argo_domain\",\"aid\":\"0\",\"host\":\"$argo_domain\",\"id\":\"$vmess_uuid\",\"net\":\"ws\",\"path\":\"$ws_path\",\"port\":\"80\",\"ps\":\"sing-box-vmess\",\"tls\":\"\",\"type\":\"none\",\"v\":\"2\"}" | base64 -w 0)
+    vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     echo ""
 fi
@@ -428,6 +428,11 @@ else
 fi
 rm -rf argo.log
                 # 配置文件生成
+                echo "vmess_port: $vmess_port"
+echo "vmess_uuid: $vmess_uuid"
+echo "ws_path: $ws_path"
+echo "argo_domain: $argo_domain"
+
 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
