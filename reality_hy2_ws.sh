@@ -180,7 +180,6 @@ show_client_configuration() {
          echo -e "\e[1;3;33m$hy2_server_link\e[0m"
          echo ""
     fi
-    # 生成 VMess 客户端链接
  # 生成 VMess 客户端链接
 if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
     vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
@@ -421,6 +420,8 @@ else
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
 rm -rf argo.log
+# 检查 argo_domain 是否存在，如果不存在则保持为空字符串
+    argo_domain=${argo_domain:-""}
                 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
@@ -436,6 +437,7 @@ rm -rf argo.log
                         "transport": {
                             "type": "ws",
                             "path": $ws_path
+                            "host": ($argo_domain | select(length > 0))  # 仅当 argo_domain 非空时添加
                         }
                     }]')
                 ;;
@@ -486,7 +488,6 @@ rm -rf argo.log
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
     echo "自签证书生成完成"
     echo ""
-
     config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
         --arg tuic_uuid "$tuic_uuid" \
