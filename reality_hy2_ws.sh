@@ -422,9 +422,12 @@ fi
 rm -rf argo.log
 # 检查 argo_domain 是否存在，如果不存在则保持为空字符串
     argo_domain=${argo_domain:-""}
-                config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
+                # 配置文件生成
+config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
+                    --arg argo_domain "$argo_domain" \
+                    --arg argo_token "$argo_token" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
@@ -436,8 +439,9 @@ rm -rf argo.log
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path
-                             "host": ($argo_domain | select(. != ""))
+                            "path": $ws_path,
+                            "host": ($argo_domain | select(. != "")),
+                            "argo_token": $argo_token
                         }
                     }]')
                 ;;
