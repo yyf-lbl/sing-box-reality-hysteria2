@@ -188,7 +188,7 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
     # 自动判断使用固定 Argo 隧道还是临时隧道
     if jq -e '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json > /dev/null; then
         # 使用固定 Argo 隧道
-        argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json)
+        argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.host' /root/sbox/sbconfig_server.json)
     else
         # 使用临时隧道，获取临时域名
         argo_domain=$(base64 --decode /root/sbox/argo.txt.b64)
@@ -421,23 +421,28 @@ else
 fi
 rm -rf argo.log
                 # 配置文件生成
- config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
-                    --arg vmess_uuid "$vmess_uuid" \
-                    --arg ws_path "$ws_path" \
-                    '.inbounds += [{
-                        "type": "vmess",
-                        "tag": "vmess-in",
-                        "listen": "::",
-                        "listen_port": ($vmess_port | tonumber),
-                        "users": [{
-                            "uuid": $vmess_uuid,
-                            "alterId": 0
-                        }],
-                        "transport": {
-                            "type": "ws",
-                            "path": $ws_path
-                        }
-                    }]')
+ # 假设 argo_domain 和 argo_auth 在用户输入时已成功获取
+config=$(echo "$config" | jq --arg argo_domain "$argo_domain" \
+                             --arg argo_auth "$argo_auth" \
+                             --arg vmess_port "$vmess_port" \
+                             --arg vmess_uuid "$vmess_uuid" \
+                             --arg ws_path "$ws_path" \
+                             '.inbounds += [{
+                                "type": "vmess",
+                                "tag": "vmess-in",
+                                "listen": "::",
+                                "listen_port": ($vmess_port | tonumber),
+                                "users": [{
+                                    "uuid": $vmess_uuid,
+                                    "alterId": 0
+                                }],
+                                "transport": {
+                                    "type": "ws",
+                                    "path": $ws_path,
+                                    "host": $argo_domain  
+                                }
+                             }]')
+
                 ;;
 
             3)
