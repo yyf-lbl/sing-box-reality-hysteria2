@@ -392,11 +392,12 @@ if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
     read -p "请输入你的argo密钥(token或json): " argo_auth
 
     # 处理 Argo 的配置
+ # 处理 Argo 的配置
     if [[ $argo_auth =~ TunnelSecret ]]; then
-        echo $argo_auth > ${work_dir}/tunnel.json
-        cat > ${work_dir}/tunnel.yml << EOF
+        echo $argo_auth > /root/sbox/tunnel.json
+        cat > /root/sbox/tunnel.yml << EOF
 tunnel: $(cut -d\" -f12 <<< "$argo_auth")
-credentials-file: ${work_dir}/tunnel.json
+credentials-file: /root/sbox/tunnel.json
 protocol: http2
 
 ingress:
