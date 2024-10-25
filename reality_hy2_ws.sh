@@ -437,7 +437,7 @@ rm -rf argo.log
                         "transport": {
                             "type": "ws",
                             "path": $ws_path
-                            "host": ($argo_domain | select(length > 0))  # 仅当 argo_domain 非空时添加
+                             "host": ($argo_domain | select(. != ""))
                         }
                     }]')
                 ;;
