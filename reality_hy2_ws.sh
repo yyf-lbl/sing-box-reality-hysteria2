@@ -180,45 +180,24 @@ show_client_configuration() {
          echo -e "\e[1;3;33m$hy2_server_link\e[0m"
          echo ""
     fi
- # 生成 VMess 客户端链接
-if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
-    vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
-    ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
-
-    # 自动判断使用固定 Argo 隧道还是临时隧道
-    if jq -e '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json > /dev/null; then
-       # 提取 argo_domain
-argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.headers.host' /root/sbox/sbconfig_server.json)
-
-# 检查 argo_domain 是否为空
-if [[ -z "$argo_domain" ]]; then
-    echo "错误: argo_domain 值为空，请检查配置文件。"
-    exit 1
-fi
-
-    else
-        # 使用临时隧道，获取临时域名
-        argo_domain=$(base64 --decode /root/sbox/argo.txt.b64)
+    # 生成 VMess 客户端链接
+    if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
+        vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
+        ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
+        argo=$(base64 --decode /root/sbox/argo.txt.b64)
+        echo -e "\e[1;3;31mVmess 客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
+       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
+        echo ""
+        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+        echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
+        echo ""
+        echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
+        echo ""
+        vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+          echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
+        echo ""
     fi
-
-    echo -e "\e[1;3;31mVmess 客户端通用链接，替换 speed.cloudflare.com 为自己的优选 IP 可获得极致体验\e[0m"
-    echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
-    echo ""
-
-    # 生成带 TLS 的链接
-vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
-    echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
-    echo ""
-
-    echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
-    echo ""
-
-    # 生成不带 TLS 的链接
-   vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
-    echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
-    echo ""
-fi
-  
+    
    # 生成 TUIC 客户端链接
 if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
     tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
@@ -368,79 +347,33 @@ done
                 ;;
 
             2)
-               echo "开始配置 vmess"
-sleep 3
-
-# 生成 vmess UUID
-vmess_uuid=$(/root/sbox/sing-box generate uuid)
-
-# 询问 vmess 端口
-read -p "请输入 vmess 端口，默认为 15555: " vmess_port
-vmess_port=${vmess_port:-15555}
-echo ""
-
-# 询问 ws 路径
-read -p "ws 路径 (默认随机生成): " ws_path
-ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-
-# 询问使用的 Argo 类型
-read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
-use_fixed=${use_fixed:-Y}
-
-if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
-    # 用户选择使用固定隧道
-    read -p "请输入你的 argo 域名: " argo_domain
-    read -p "请输入你的 argo 密钥 (token 或 json): " argo_auth
-
-    # 处理 Argo 的配置
-    if [[ $argo_auth =~ TunnelSecret ]]; then
-        echo $argo_auth > /root/sbox/tunnel.json
-        cat > /root/sbox/tunnel.yml << EOF
-tunnel: $(cut -d\" -f12 <<< "$argo_auth")
-credentials-file: /root/sbox/tunnel.json
-protocol: http2
-
-ingress:
-  - hostname: $argo_domain
-    service: http://localhost:$vmess_port
-    originRequest:
-      noTLSVerify: true
-  - service: http_status:404
-EOF
-    else
-        echo "错误: 无效的密钥。"
-        exit 1
-    fi
-else
-    # 用户选择使用临时隧道
-    pid=$(pgrep -f cloudflared)
-    if [ -n "$pid" ]; then
-        # 终止进程
-        kill "$pid"
-    fi 
-    # 生成临时隧道
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
-    sleep 2
-    echo "等待 Cloudflare Argo 生成地址"
-    sleep 5   
-    # 获取连接到域名
-    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+                echo "开始配置vmess"
+              sleep 3
+           # Generate hysteria necessary values
+         vmess_uuid=$(/root/sbox/sing-box generate uuid)
+          read -p "请输入vmess端口，默认为15555: " vmess_port
+          vmess_port=${vmess_port:-15555}
+         echo ""
+         read -p "ws路径 (默认随机生成): " ws_path
+         ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+          pid=$(pgrep -f cloudflared)
+if [ -n "$pid" ]; then
+  # 终止进程
+  kill "$pid"
 fi
-
-# 清理日志
-rm -rf /root/sbox/argo.log
-
-# 配置文件生成
-echo "vmess_port: $vmess_port"
-echo "vmess_uuid: $vmess_uuid"
-echo "ws_path: $ws_path"
-echo "argo_domain: $argo_domain"
-
-config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
+#生成地址
+/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
+sleep 2
+clear
+echo 等待cloudflare argo生成地址
+sleep 5
+#连接到域名
+argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
+rm -rf argo.log
+                config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
-                    --arg argo_domain "$argo_domain" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
@@ -452,20 +385,11 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path,
-                            "headers": {
-                                "host": $argo_domain
-                            }
+                            "path": $ws_path
                         }
                     }]')
-
-# 生成链接输出
-vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
-
-# 输出生成的链接
-echo "生成的 vmess 链接: $vmess_link_tls"
-
                 ;;
+
             3)
                echo "开始配置 Hysteria2"
                 echo ""
@@ -512,6 +436,7 @@ echo "生成的 vmess 链接: $vmess_link_tls"
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
     echo "自签证书生成完成"
     echo ""
+
     config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
         --arg tuic_uuid "$tuic_uuid" \
@@ -541,7 +466,7 @@ echo "生成的 vmess 链接: $vmess_link_tls"
     # 生成最终配置文件
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
-# 创建服务启动文件
+            # 创建服务启动文件
 cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
 After=network.target nss-lookup.target
@@ -558,30 +483,18 @@ LimitNOFILE=infinity
 [Install]
 WantedBy=multi-user.target
 EOF
-
-# 检查配置并启动服务
-if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-    echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
-
+     # 检查配置并启动服务
+   if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+      echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
+      systemctl daemon-reload
+      systemctl enable sing-box > /dev/null 2>&1
+      systemctl start sing-box
     if systemctl is-active --quiet sing-box; then
         echo -e "\e[1;3;32msing-box 服务已成功启动！\e[0m"
-
-        # 启动固定 Argo 隧道
-        if [[ -f "/root/sbox/tunnel.yml" ]]; then
-            nohup cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo.log 2>&1 &
-            echo -e "\e[1;3;32m固定 Argo 隧道已启动！\e[0m"
-        else
-            echo -e "\e[1;3;31m错误：找不到 tunnel.yml 配置文件，无法启动固定隧道！\e[0m"
-        fi
     else
-        echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
+       echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
     fi
-
-    # 此处的重启可能不必要，因为已在启动后进行了检查
-    # systemctl restart sing-box
+    systemctl restart sing-box
     show_client_configuration
 else
     echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
