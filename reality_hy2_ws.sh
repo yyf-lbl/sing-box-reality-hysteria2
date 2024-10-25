@@ -421,28 +421,27 @@ else
 fi
 rm -rf argo.log
                 # 配置文件生成
- # 假设 argo_domain 和 argo_auth 在用户输入时已成功获取
-config=$(echo "$config" | jq --arg argo_domain "$argo_domain" \
-                             --arg argo_auth "$argo_auth" \
-                             --arg vmess_port "$vmess_port" \
-                             --arg vmess_uuid "$vmess_uuid" \
-                             --arg ws_path "$ws_path" \
-                             '.inbounds += [{
-                                "type": "vmess",
-                                "tag": "vmess-in",
-                                "listen": "::",
-                                "listen_port": ($vmess_port | tonumber),
-                                "users": [{
-                                    "uuid": $vmess_uuid,
-                                    "alterId": 0
-                                }],
-                                "transport": {
-                                    "type": "ws",
-                                    "path": $ws_path,
-                                    "host": $argo_domain  
-                                }
-                             }]')
-
+config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
+                    --arg vmess_uuid "$vmess_uuid" \
+                    --arg ws_path "$ws_path" \
+                    --arg argo_domain "$argo_domain" \
+                    '.inbounds += [{
+                        "type": "vmess",
+                        "tag": "vmess-in",
+                        "listen": "::",
+                        "listen_port": ($vmess_port | tonumber),
+                        "users": [{
+                            "uuid": $vmess_uuid,
+                            "alterId": 0
+                        }],
+                        "transport": {
+                            "type": "ws",
+                            "path": $ws_path,
+                            "headers": {
+                                "Host": $argo_domain
+                            }
+                        }
+                    }]')
                 ;;
 
             3)
