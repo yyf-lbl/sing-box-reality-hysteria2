@@ -181,6 +181,7 @@ show_client_configuration() {
          echo ""
     fi
     # 生成 VMess 客户端链接
+ # 生成 VMess 客户端链接
 if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
     vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
     ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
@@ -191,8 +192,7 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
         argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json)
     else
         # 使用临时隧道，获取临时域名
-        argo=$(base64 --decode /root/sbox/argo.txt.b64)
-        argo_domain=$argo
+        argo_domain=$(base64 --decode /root/sbox/argo.txt.b64)
     fi
 
     echo -e "\e[1;3;31mVmess 客户端通用链接，替换 speed.cloudflare.com 为自己的优选 IP 可获得极致体验\e[0m"
@@ -212,8 +212,7 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
     echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     echo ""
 fi
-
-    
+  
    # 生成 TUIC 客户端链接
 if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
     tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
