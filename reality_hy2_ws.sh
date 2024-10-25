@@ -188,7 +188,7 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
     # 自动判断使用固定 Argo 隧道还是临时隧道
     if jq -e '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json > /dev/null; then
         # 使用固定 Argo 隧道
-        argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.host' /root/sbox/sbconfig_server.json)
+        argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.headers.host' /root/sbox/sbconfig_server.json)
     else
         # 使用临时隧道，获取临时域名
         argo_domain=$(base64 --decode /root/sbox/argo.txt.b64)
@@ -199,7 +199,7 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
     echo ""
 
     # 生成带 TLS 的链接
-    vmess_link_tls='vmess://'$(echo '{"add":"$argo_domain","aid":"0","host":"$argo_domain","id":"$vmess_uuid","net":"ws","path":"$ws_path","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+   vmess_link_tls='vmess://'$(echo "{\"add\":\"$argo_domain\",\"aid\":\"0\",\"host\":\"$argo_domain\",\"id\":\"$vmess_uuid\",\"net\":\"ws\",\"path\":\"$ws_path\",\"port\":\"443\",\"ps\":\"sing-box-vmess-tls\",\"tls\":\"tls\",\"type\":\"none\",\"v\":\"2\"}" | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
     echo ""
 
@@ -207,7 +207,7 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
     echo ""
 
     # 生成不带 TLS 的链接
-    vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+    vmess_link_no_tls='vmess://'$(echo "{\"add\":\"$argo_domain\",\"aid\":\"0\",\"host\":\"$argo_domain\",\"id\":\"$vmess_uuid\",\"net\":\"ws\",\"path\":\"$ws_path\",\"port\":\"80\",\"ps\":\"sing-box-vmess\",\"tls\":\"\",\"type\":\"none\",\"v\":\"2\"}" | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     echo ""
 fi
