@@ -181,22 +181,38 @@ show_client_configuration() {
          echo ""
     fi
     # 生成 VMess 客户端链接
-    if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
-        vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
-        ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
+if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
+    vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
+    ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
+
+    # 自动判断使用固定 Argo 隧道还是临时隧道
+    if jq -e '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json > /dev/null; then
+        # 使用固定 Argo 隧道
+        argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json)
+    else
+        # 使用临时隧道，获取临时域名
         argo=$(base64 --decode /root/sbox/argo.txt.b64)
-        echo -e "\e[1;3;31mVmess 客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
-       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
-        echo ""
-        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
-        echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
-        echo ""
-        echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
-        echo ""
-        vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
-          echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
-        echo ""
+        argo_domain=$argo
     fi
+
+    echo -e "\e[1;3;31mVmess 客户端通用链接，替换 speed.cloudflare.com 为自己的优选 IP 可获得极致体验\e[0m"
+    echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
+    echo ""
+
+    # 生成带 TLS 的链接
+    vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+    echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
+    echo ""
+
+    echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
+    echo ""
+
+    # 生成不带 TLS 的链接
+    vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+    echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
+    echo ""
+fi
+
     
    # 生成 TUIC 客户端链接
 if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
