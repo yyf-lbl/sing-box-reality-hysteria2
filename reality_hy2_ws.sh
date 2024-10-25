@@ -453,6 +453,9 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             }
                         }
                     }]')
+                    # 生成链接输出
+vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
                 ;;
             3)
                echo "开始配置 Hysteria2"
