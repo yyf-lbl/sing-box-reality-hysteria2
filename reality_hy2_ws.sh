@@ -438,7 +438,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             "type": "ws",
                             "path": $ws_path,
                             "headers": {
-                                "Host": $argo_domain
+                                "host": $argo_domain
                             }
                         }
                     }]')
