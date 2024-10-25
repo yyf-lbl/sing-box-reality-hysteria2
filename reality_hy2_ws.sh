@@ -199,7 +199,7 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
     echo ""
 
     # 生成带 TLS 的链接
-    vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+    vmess_link_tls='vmess://'$(echo '{"add":"$argo_domain","aid":"0","host":"$argo_domain","id":"$vmess_uuid","net":"ws","path":"$ws_path","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
     echo ""
 
