@@ -435,13 +435,12 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         "listen_port": ($vmess_port | tonumber),
                         "users": [{
                             "uuid": $vmess_uuid,
-                            "alterId": 0
+                            "alterId": 0,
+                            "host": ($argo_domain | select(. != ""))
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path,
-                            "host": ($argo_domain | select(. != "")),
-                            "argo_token": $argo_token
+                            "path": $ws_path
                         }
                     }]')
                 ;;
