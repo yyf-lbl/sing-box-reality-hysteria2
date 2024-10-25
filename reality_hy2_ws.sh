@@ -187,8 +187,15 @@ if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.jso
 
     # 自动判断使用固定 Argo 隧道还是临时隧道
     if jq -e '.inbounds[] | select(.type == "vmess") | .transport.argo_domain' /root/sbox/sbconfig_server.json > /dev/null; then
-        # 使用固定 Argo 隧道
-        argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.headers.host' /root/sbox/sbconfig_server.json)
+       # 提取 argo_domain
+argo_domain=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.headers.host' /root/sbox/sbconfig_server.json)
+
+# 检查 argo_domain 是否为空
+if [[ -z "$argo_domain" ]]; then
+    echo "错误: argo_domain 值为空，请检查配置文件。"
+    exit 1
+fi
+
     else
         # 使用临时隧道，获取临时域名
         argo_domain=$(base64 --decode /root/sbox/argo.txt.b64)
