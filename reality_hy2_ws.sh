@@ -349,27 +349,62 @@ done
             2)
                 echo "开始配置vmess"
               sleep 3
-           # Generate hysteria necessary values
-         vmess_uuid=$(/root/sbox/sing-box generate uuid)
-          read -p "请输入vmess端口，默认为15555: " vmess_port
-          vmess_port=${vmess_port:-15555}
-         echo ""
-         read -p "ws路径 (默认随机生成): " ws_path
-         ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-          pid=$(pgrep -f cloudflared)
-if [ -n "$pid" ]; then
-  # 终止进程
-  kill "$pid"
+    # 生成 vmess UUID
+vmess_uuid=$(/root/sbox/sing-box generate uuid)
+
+# 询问 vmess 端口
+read -p "请输入vmess端口，默认为15555: " vmess_port
+vmess_port=${vmess_port:-15555}
+echo ""
+
+# 询问 ws 路径
+read -p "ws路径 (默认随机生成): " ws_path
+ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+
+# 询问使用的 Argo 类型
+read -p "Y使用固定Argo隧道或N使用临时隧道？(Y/N，Enter默认Y): " use_fixed
+use_fixed=${use_fixed:-Y}
+
+if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
+    # 用户选择使用固定隧道
+    read -p "请输入你的argo域名: " argo_domain
+    read -p "请输入你的argo密钥(token或json): " argo_auth
+
+    # 处理 Argo 的配置
+    if [[ $argo_auth =~ TunnelSecret ]]; then
+        echo $argo_auth > ${work_dir}/tunnel.json
+        cat > ${work_dir}/tunnel.yml << EOF
+tunnel: $(cut -d\" -f12 <<< "$argo_auth")
+credentials-file: ${work_dir}/tunnel.json
+protocol: http2
+
+ingress:
+  - hostname: $argo_domain
+    service: http://localhost:$vmess_port
+    originRequest:
+      noTLSVerify: true
+  - service: http_status:404
+EOF
+    else
+        echo "错误: 无效的密钥。"
+        exit 1
+    fi
+else
+    # 用户选择使用临时隧道
+    pid=$(pgrep -f cloudflared)
+    if [ -n "$pid" ]; then
+        # 终止进程
+        kill "$pid"
+    fi 
+    # 生成临时隧道
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 & 
+    sleep 2
+    echo "等待 Cloudflare Argo 生成地址"
+    sleep 5   
+    # 获取连接到域名
+    argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
-#生成地址
-/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
-sleep 2
-clear
-echo 等待cloudflare argo生成地址
-sleep 5
-#连接到域名
-argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-echo "$argo" | base64 > /root/sbox/argo.txt.b64
 rm -rf argo.log
                 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
