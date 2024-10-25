@@ -368,31 +368,31 @@ done
                 ;;
 
             2)
-                echo "开始配置vmess"
-              sleep 3
-    # 生成 vmess UUID
+               echo "开始配置 vmess"
+sleep 3
+
+# 生成 vmess UUID
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
 
 # 询问 vmess 端口
-read -p "请输入vmess端口，默认为15555: " vmess_port
+read -p "请输入 vmess 端口，默认为 15555: " vmess_port
 vmess_port=${vmess_port:-15555}
 echo ""
 
 # 询问 ws 路径
-read -p "ws路径 (默认随机生成): " ws_path
+read -p "ws 路径 (默认随机生成): " ws_path
 ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
 
 # 询问使用的 Argo 类型
-read -p "Y使用固定Argo隧道或N使用临时隧道？(Y/N，Enter默认Y): " use_fixed
+read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
 use_fixed=${use_fixed:-Y}
 
 if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
     # 用户选择使用固定隧道
-    read -p "请输入你的argo域名: " argo_domain
-    read -p "请输入你的argo密钥(token或json): " argo_auth
+    read -p "请输入你的 argo 域名: " argo_domain
+    read -p "请输入你的 argo 密钥 (token 或 json): " argo_auth
 
     # 处理 Argo 的配置
- # 处理 Argo 的配置
     if [[ $argo_auth =~ TunnelSecret ]]; then
         echo $argo_auth > /root/sbox/tunnel.json
         cat > /root/sbox/tunnel.yml << EOF
@@ -419,20 +419,24 @@ else
         kill "$pid"
     fi 
     # 生成临时隧道
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 & 
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
     sleep 2
     echo "等待 Cloudflare Argo 生成地址"
     sleep 5   
     # 获取连接到域名
-    argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
-rm -rf argo.log
-                # 配置文件生成
-                echo "vmess_port: $vmess_port"
+
+# 清理日志
+rm -rf /root/sbox/argo.log
+
+# 配置文件生成
+echo "vmess_port: $vmess_port"
 echo "vmess_uuid: $vmess_uuid"
 echo "ws_path: $ws_path"
 echo "argo_domain: $argo_domain"
+
 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
@@ -454,9 +458,13 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             }
                         }
                     }]')
-                    # 生成链接输出
+
+# 生成链接输出
 vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
-echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
+
+# 输出生成的链接
+echo "生成的 vmess 链接: $vmess_link_tls"
+
                 ;;
             3)
                echo "开始配置 Hysteria2"
