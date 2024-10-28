@@ -233,6 +233,7 @@ uninstall_singbox() {
     # 定义要删除的文件和目录
     files_to_remove=(
         "/etc/systemd/system/sing-box.service"
+        "/etc/systemd/system/argo.service"
         "/root/sbox/sbconfig_server.json"
         "/root/sbox/sing-box"
         "/root/sbox/cloudflared-linux"
