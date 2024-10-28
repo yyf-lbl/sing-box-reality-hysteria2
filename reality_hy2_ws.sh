@@ -405,7 +405,7 @@ After=network.target
 Type=simple
 NoNewPrivileges=yes
 TimeoutStartSec=0
-ExecStart=/root/sbox/argo -c "/root/sbox/argo tunnel --url http://localhost:8001 --no-autoupdate --edge-ip-version auto --protocol http2 > /etc/sbox/argo.log 2>&1"
+ExecStart=/root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml --url http://localhost:8001 --no-autoupdate --edge-ip-version auto --protocol http2
 Restart=on-failure
 RestartSec=5s
 
