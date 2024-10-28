@@ -409,7 +409,6 @@ TimeoutStartSec=0
 ExecStart=/root/sbox/argo tunnel --config /root/sbox/tunnel.yml --url http://localhost:8001 --no-autoupdate --edge-ip-version auto --protocol http2
 Restart=on-failure
 RestartSec=5s
-
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -418,7 +417,9 @@ EOF
     vmess_link_tls='vmess://'$(echo -n '{"v": "2", "ps": "vmess-tls", "add": "'"$argo_domain"'", "port": "443", "id": "'"$vmess_uuid"'", "aid": "0", "scy": "none", "net": "ws", "type": "none", "host": "'"$argo_domain"'", "path": "/vmess?ed=2048", "tls": "tls", "sni": "'"$argo_domain"'", "alpn": "", "fp": "randomized", "allowInsecure": false}' | base64 -w 0)
     
     # 输出生成的链接
-    echo "生成的 vmess 链接: $vmess_link_tls"
+    echo "生成的 vmess 链接: $vmess_link_tls" 
+    systemctl start argo
+    systemctl enable argo
 else
     # 用户选择使用临时隧道
     pid=$(pgrep -f cloudflared)
