@@ -125,25 +125,19 @@ download_singbox() {
     # Check if the package already exists
     if [ -f "/root/sbox/sing-box" ]; then
         echo -e "\e[1;3;32m文件已经存在，跳过下载。\e[0m"
-    else
-        # Download sing-box
-        url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-        curl -sLo "$download_path" "$url"
-
-        # 解压和移动文件
-        tar -xzf "$download_path" -C /root
-        mv "/root/${package_name}/sing-box" /root/sbox
-        rm -r "$download_path" "/root/${package_name}"
-        chown root:root /root/sbox/sing-box
-        chmod +x /root/sbox/sing-box
+        return  # 文件存在，跳过下载
     fi
 
-    # 下载 amd64-bot bot 文件到 /root/sbox/
-    echo -e "\e[1;3;33m正在下载 argo 文件...\e[0m"
-    curl -sLo "/root/sbox/argo" "https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/amd64-bot12"
-    chmod +x /root/sbox/argo
-}
+    url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
+    curl -sLo "$download_path" "$url"
 
+    # 解压和移动文件
+    tar -xzf "$download_path" -C /root
+    mv "/root/${package_name}/sing-box" /root/sbox
+    rm -r "$download_path" "/root/${package_name}"
+    chown root:root /root/sbox/sing-box
+    chmod +x /root/sbox/sing-box
+}
 
 show_client_configuration() {
     # 检查配置文件是否存在
@@ -233,7 +227,6 @@ uninstall_singbox() {
     # 定义要删除的文件和目录
     files_to_remove=(
         "/etc/systemd/system/sing-box.service"
-        "/etc/systemd/system/argo.service"
         "/root/sbox/sbconfig_server.json"
         "/root/sbox/sing-box"
         "/root/sbox/cloudflared-linux"
@@ -241,7 +234,6 @@ uninstall_singbox() {
         "/root/sbox/public.key.b64"
         "/root/self-cert/private.key"
         "/root/self-cert/cert.pem"
-        "/root/sbox"
     )
     directories_to_remove=(
         "/root/self-cert/"
@@ -355,105 +347,33 @@ done
                 ;;
 
             2)
-           echo "开始配置 vmess"
-sleep 3
-
-# 生成 vmess UUID
-vmess_uuid=$(/root/sbox/sing-box generate uuid)
-
-# 询问 vmess 端口
-read -p "请输入 vmess 端口，默认为 15555: " vmess_port
-vmess_port=${vmess_port:-15555}
-echo ""
-
-# 询问 ws 路径
-read -p "ws 路径 (默认随机生成): " ws_path
-ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-
-# 询问使用的 Argo 类型
-read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
-use_fixed=${use_fixed:-Y}
-
-if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
-    # 用户选择使用固定隧道
-    read -p "请输入你的 argo 域名: " argo_domain
-    read -p "请输入你的 argo 密钥 (token 或 json): " argo_auth
-
-    # 处理 Argo 的配置
-    if [[ $argo_auth =~ TunnelSecret ]]; then
-        echo $argo_auth > /root/sbox/tunnel.json
-        cat > /root/sbox/tunnel.yml << EOF
-tunnel: $(cut -d\" -f12 <<< "$argo_auth")
-credentials-file: /root/sbox/tunnel.json
-protocol: http2
-
-ingress:
-  - hostname: $argo_domain
-    service: http://localhost:$vmess_port
-    originRequest:
-      noTLSVerify: true
-  - service: http_status:404
-EOF
-    else
-        echo "错误: 无效的密钥。"
-        exit 1
-    fi
-    cat > /etc/systemd/system/argo.service << EOF
-[Unit]
-Description=Cloudflare Tunnel
-After=network.target
-
-[Service]
-Type=simple
-NoNewPrivileges=yes
-TimeoutStartSec=0
-ExecStart=/root/sbox/argo tunnel --config /root/sbox/tunnel.yml --url http://localhost:8001 --no-autoupdate --edge-ip-version auto --protocol http2
-Restart=on-failure
-RestartSec=5s
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    # 生成链接输出
-    vmess_link_tls='vmess://'$(echo -n '{"v": "2", "ps": "vmess-tls", "add": "'"$argo_domain"'", "port": "443", "id": "'"$vmess_uuid"'", "aid": "0", "scy": "none", "net": "ws", "type": "none", "host": "'"$argo_domain"'", "path": "/vmess?ed=2048", "tls": "tls", "sni": "'"$argo_domain"'", "alpn": "", "fp": "randomized", "allowInsecure": false}' | base64 -w 0)
-    
-    # 输出生成的链接
-    echo "生成的 vmess 链接: $vmess_link_tls" 
-    systemctl start argo
-    systemctl enable argo
-else
-    # 用户选择使用临时隧道
-    pid=$(pgrep -f cloudflared)
-    if [ -n "$pid" ]; then
-        # 终止进程
-        kill "$pid"
-    fi 
-    # 生成临时隧道
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
-    sleep 2
-    echo "等待 Cloudflare Argo 生成地址"
-    sleep 5   
-    # 获取连接到域名
-    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+                echo "开始配置vmess"
+              sleep 3
+           # Generate hysteria necessary values
+         vmess_uuid=$(/root/sbox/sing-box generate uuid)
+          read -p "请输入vmess端口，默认为15555: " vmess_port
+          vmess_port=${vmess_port:-15555}
+         echo ""
+         read -p "ws路径 (默认随机生成): " ws_path
+         ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+          pid=$(pgrep -f cloudflared)
+if [ -n "$pid" ]; then
+  # 终止进程
+  kill "$pid"
 fi
-
-# 清理日志
-rm -rf /root/sbox/argo.log
-
-# 配置文件生成
-echo "vmess_port: $vmess_port"
-echo "vmess_uuid: $vmess_uuid"
-echo "ws_path: $ws_path"
-echo "argo_domain: $argo_domain"
-
-# 初始化 config 变量为空 JSON 对象，如果需要
-config="${config:-{}}"
-
-config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
+#生成地址
+/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
+sleep 2
+clear
+echo 等待cloudflare argo生成地址
+sleep 5
+#连接到域名
+argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
+rm -rf argo.log
+                config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
-                    --arg argo_domain "$argo_domain" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
@@ -465,13 +385,9 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path,
-                            "headers": {
-                                "host": $argo_domain
-                            }
+                            "path": $ws_path
                         }
                     }]')
-
                 ;;
 
             3)
