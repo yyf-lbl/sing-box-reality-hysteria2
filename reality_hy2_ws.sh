@@ -412,6 +412,10 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 EOF
+# 生成链接输出
+vmess_link_tls="{ \"v\": \"2\", \"ps\": \"vmess-tls\", \"add\": \"${argo_domain}\", \"port\": \"443\", \"id\": \"${uuid}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argo_domain}\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"${argo_domain}\", \"alpn\": \"\", \"fp\": \"randomized\", \"allowlnsecure\": \"flase\"}"
+# 输出生成的链接
+echo "生成的 vmess 链接: $vmess_link_tls"
 else
     # 用户选择使用临时隧道
     pid=$(pgrep -f cloudflared)
@@ -459,12 +463,6 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             }
                         }
                     }]')
-
-# 生成链接输出
-vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
-
-# 输出生成的链接
-echo "生成的 vmess 链接: $vmess_link_tls"
 
                 ;;
 
