@@ -125,19 +125,25 @@ download_singbox() {
     # Check if the package already exists
     if [ -f "/root/sbox/sing-box" ]; then
         echo -e "\e[1;3;32m文件已经存在，跳过下载。\e[0m"
-        return  # 文件存在，跳过下载
+    else
+        # Download sing-box
+        url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
+        curl -sLo "$download_path" "$url"
+
+        # 解压和移动文件
+        tar -xzf "$download_path" -C /root
+        mv "/root/${package_name}/sing-box" /root/sbox
+        rm -r "$download_path" "/root/${package_name}"
+        chown root:root /root/sbox/sing-box
+        chmod +x /root/sbox/sing-box
     fi
 
-    url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-    curl -sLo "$download_path" "$url"
-
-    # 解压和移动文件
-    tar -xzf "$download_path" -C /root
-    mv "/root/${package_name}/sing-box" /root/sbox
-    rm -r "$download_path" "/root/${package_name}"
-    chown root:root /root/sbox/sing-box
-    chmod +x /root/sbox/sing-box
+    # 下载 amd64-bot bot 文件到 /root/sbox/
+    echo -e "\e[1;3;33m正在下载 amd64-bot bot 文件...\e[0m"
+    curl -sLo "/root/sbox/argo" "https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/amd64-bot"
+    chmod +x /root/sbox/argo
 }
+
 
 show_client_configuration() {
     # 检查配置文件是否存在
