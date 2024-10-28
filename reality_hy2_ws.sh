@@ -353,7 +353,7 @@ done
                 ;;
 
             2)
-              echo "开始配置 vmess"
+           echo "开始配置 vmess"
 sleep 3
 
 # 生成 vmess UUID
@@ -396,7 +396,7 @@ EOF
         echo "错误: 无效的密钥。"
         exit 1
     fi
-        cat > /etc/systemd/system/argo.service << EOF
+    cat > /etc/systemd/system/argo.service << EOF
 [Unit]
 Description=Cloudflare Tunnel
 After=network.target
@@ -412,10 +412,12 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 EOF
-# 生成链接输出
-vmess_link_tls="{ \"v\": \"2\", \"ps\": \"vmess-tls\", \"add\": \"${argo_domain}\", \"port\": \"443\", \"id\": \"${uuid}\", \"aid\": \"0\", \"scy\": \"none\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"${argo_domain}\", \"path\": \"/vmess?ed=2048\", \"tls\": \"tls\", \"sni\": \"${argo_domain}\", \"alpn\": \"\", \"fp\": \"randomized\", \"allowlnsecure\": \"flase\"}"
-# 输出生成的链接
-echo "生成的 vmess 链接: $vmess_link_tls"
+
+    # 生成链接输出
+    vmess_link_tls='vmess://'$(echo -n '{"v": "2", "ps": "vmess-tls", "add": "'"$argo_domain"'", "port": "443", "id": "'"$vmess_uuid"'", "aid": "0", "scy": "none", "net": "ws", "type": "none", "host": "'"$argo_domain"'", "path": "/vmess?ed=2048", "tls": "tls", "sni": "'"$argo_domain"'", "alpn": "", "fp": "randomized", "allowInsecure": false}' | base64 -w 0)
+    
+    # 输出生成的链接
+    echo "生成的 vmess 链接: $vmess_link_tls"
 else
     # 用户选择使用临时隧道
     pid=$(pgrep -f cloudflared)
@@ -441,6 +443,9 @@ echo "vmess_port: $vmess_port"
 echo "vmess_uuid: $vmess_uuid"
 echo "ws_path: $ws_path"
 echo "argo_domain: $argo_domain"
+
+# 初始化 config 变量为空 JSON 对象，如果需要
+config="${config:-{}}"
 
 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
