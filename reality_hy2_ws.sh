@@ -241,6 +241,7 @@ uninstall_singbox() {
         "/root/sbox/public.key.b64"
         "/root/self-cert/private.key"
         "/root/self-cert/cert.pem"
+        "/root/sbox"
     )
     directories_to_remove=(
         "/root/self-cert/"
