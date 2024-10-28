@@ -396,6 +396,22 @@ EOF
         echo "错误: 无效的密钥。"
         exit 1
     fi
+        cat > /etc/systemd/system/argo.service << EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+Type=simple
+NoNewPrivileges=yes
+TimeoutStartSec=0
+ExecStart=/root/sbox/argo -c "/root/sbox/argo tunnel --url http://localhost:8001 --no-autoupdate --edge-ip-version auto --protocol http2 > /etc/sbox/argo.log 2>&1"
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
 else
     # 用户选择使用临时隧道
     pid=$(pgrep -f cloudflared)
