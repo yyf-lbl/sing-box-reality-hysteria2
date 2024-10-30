@@ -68,6 +68,7 @@ regenarte_cloudflared_argo(){
 
   # 获取 VMess 端口
   vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+  echo "获取的 VMess 端口: $vmess_port"
 
   # 提示用户选择隧道类型
   while true; do
@@ -84,15 +85,18 @@ regenarte_cloudflared_argo(){
       /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
 
       # 生成配置文件
-      cat <<EOF > /root/.cloudflared/config.yml
-tunnel: $tunnel_name
-credentials-file: /root/.cloudflared/$(basename "$tunnel_name").json
+cat <<EOF > /root/sbox/config.yml
+tunnel: $(basename "$tunnel_name")
+credentials-file: /root/sbox/$(basename "$tunnel_name").json
 
 ingress:
   - hostname: mydomain.com        # 替换为您的域名
     service: http://localhost:$vmess_port  # 替换为您的服务端口
   - service: http_status:404
 EOF
+
+      echo "生成的配置文件内容:"
+      cat /root/sbox/config.yml
 
       # 生成地址
       /root/sbox/cloudflared-linux tunnel run "$tunnel_name" --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
@@ -398,7 +402,7 @@ done
          echo ""
          read -p "ws路径 (默认随机生成): " ws_path
          ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-        pid=$(pgrep -f cloudflared)
+      pid=$(pgrep -f cloudflared)
   if [ -n "$pid" ]; then
     # 终止进程
     kill "$pid"
@@ -406,6 +410,7 @@ done
 
   # 获取 VMess 端口
   vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+  echo "获取的 VMess 端口: $vmess_port"
 
   # 提示用户选择隧道类型
   while true; do
@@ -422,8 +427,8 @@ done
       /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
 
       # 生成配置文件
-      cat <<EOF > /root/sbox/config.yml
-tunnel: $tunnel_name
+cat <<EOF > /root/sbox/config.yml
+tunnel: $(basename "$tunnel_name")
 credentials-file: /root/sbox/$(basename "$tunnel_name").json
 
 ingress:
@@ -431,6 +436,9 @@ ingress:
     service: http://localhost:$vmess_port  # 替换为您的服务端口
   - service: http_status:404
 EOF
+
+      echo "生成的配置文件内容:"
+      cat /root/sbox/config.yml
 
       # 生成地址
       /root/sbox/cloudflared-linux tunnel run "$tunnel_name" --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
@@ -446,10 +454,12 @@ EOF
 
   sleep 2
   echo 等待 cloudflare argo 生成地址
-  sleep 2
+  sleep 5
+
   # 连接到域名
   argo=$(grep trycloudflare.com argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
   echo "$argo" | base64 > /root/sbox/argo.txt.b64
+
   # 清理日志
   rm -rf argo.log
                 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
