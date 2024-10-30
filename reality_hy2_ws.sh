@@ -412,11 +412,19 @@ done
          echo ""
          read -p "ws路径 (默认随机生成): " ws_path
          ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-      pid=$(pgrep -f cloudflared)
+    # 隧道配置     
+ pid=$(pgrep -f cloudflared)
   if [ -n "$pid" ]; then
     # 终止进程
     kill "$pid"
   fi
+
+  # 获取 VMess 端口
+  vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+
+  # 提示用户输入隧道名称和域名
+  read -p "请输入隧道名称: " tunnel_name
+  read -p "请输入域名: " hostname
 
   # 提示用户选择隧道类型
   while true; do
@@ -428,27 +436,19 @@ done
       /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
       break
     elif [ "$choice" == "y" ]; then
-      # 登录到 cloudflared
+      # 登录 Cloudflare
       /root/sbox/cloudflared-linux tunnel login
-      if [ $? -ne 0 ]; then
-        echo "登录失败，请检查您的配置或网络连接。"
-        return 1
-      fi
-
+      
       # 创建固定隧道
-      tunnel_name="my_fixed_tunnel"  # 替换为您想要的隧道名称
       /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
-
-      # 移动 cert.pem 到 /root/sbox
-      mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
 
       # 生成配置文件
       cat <<EOF > /root/sbox/config.yml
-tunnel: $(basename "$tunnel_name")
+tunnel: $tunnel_name
 credentials-file: /root/sbox/cert.pem  # 更新为新的路径
 
 ingress:
-  - hostname: mydomain.com        # 替换为您的域名
+  - hostname: $hostname        # 替换为您的域名
     service: http://localhost:$vmess_port  # 替换为您的服务端口
   - service: http_status:404
 EOF
