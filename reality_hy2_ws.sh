@@ -418,9 +418,7 @@ done
     # 终止进程
     kill "$pid"
   fi
-  # 提示用户输入隧道名称和域名
-  read -p "请输入隧道名称: " tunnel_name
-  read -p "请输入域名: " hostname
+
   # 提示用户选择隧道类型
   while true; do
     read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
@@ -431,7 +429,10 @@ done
       break
     elif [ "$choice" == "y" ]; then
       # 登录 Cloudflare
-      /root/sbox/cloudflared-linux tunnel login   
+      /root/sbox/cloudflared-linux tunnel login 
+        # 提示用户输入隧道名称和域名
+  read -p "请输入隧道名称: " tunnel_name
+  read -p "请输入域名: " hostname
       # 创建固定隧道
       /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
       # 生成配置文件
