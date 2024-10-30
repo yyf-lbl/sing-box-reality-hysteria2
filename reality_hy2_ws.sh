@@ -65,17 +65,59 @@ regenarte_cloudflared_argo(){
     # 终止进程
     kill "$pid"
   fi
+
+  # 获取 VMess 端口
   vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
-  #生成地址
-  /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
+
+  # 提示用户选择隧道类型
+  while true; do
+    read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
+
+    if [ -z "$choice" ]; then
+      echo "未输入，自动选择临时隧道。"
+      # 生成临时隧道
+      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+      break
+    elif [ "$choice" == "y" ]; then
+      # 创建固定隧道
+      tunnel_name="my_fixed_tunnel"  # 替换为您想要的隧道名称
+      /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
+
+      # 生成配置文件
+      cat <<EOF > /root/.cloudflared/config.yml
+tunnel: $tunnel_name
+credentials-file: /root/.cloudflared/$(basename "$tunnel_name").json
+
+ingress:
+  - hostname: mydomain.com        # 替换为您的域名
+    service: http://localhost:$vmess_port  # 替换为您的服务端口
+  - service: http_status:404
+EOF
+
+      # 生成地址
+      /root/sbox/cloudflared-linux tunnel run "$tunnel_name" --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+      break
+    elif [ "$choice" == "n" ]; then
+      # 生成临时隧道
+      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+      break
+    else
+      echo "无效的选择，请输入 y 或 n。"
+    fi
+  done
+
   sleep 2
-  echo 等待cloudflare argo生成地址
+  echo 等待 cloudflare argo 生成地址
   sleep 5
-  #连接到域名
-  argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+
+  # 连接到域名
+  argo=$(grep trycloudflare.com argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
   echo "$argo" | base64 > /root/sbox/argo.txt.b64
+
+  # 清理日志
   rm -rf argo.log
-  }
+}
+
 # download singbox and cloudflared
 download_cloudflared(){
   arch=$(uname -m)
@@ -356,21 +398,60 @@ done
          echo ""
          read -p "ws路径 (默认随机生成): " ws_path
          ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-          pid=$(pgrep -f cloudflared)
-if [ -n "$pid" ]; then
-  # 终止进程
-  kill "$pid"
-fi
-#生成地址
-/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
-sleep 2
-clear
-echo 等待cloudflare argo生成地址
-sleep 5
-#连接到域名
-argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-echo "$argo" | base64 > /root/sbox/argo.txt.b64
-rm -rf argo.log
+        pid=$(pgrep -f cloudflared)
+  if [ -n "$pid" ]; then
+    # 终止进程
+    kill "$pid"
+  fi
+
+  # 获取 VMess 端口
+  vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+
+  # 提示用户选择隧道类型
+  while true; do
+    read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
+
+    if [ -z "$choice" ]; then
+      echo "未输入，自动选择临时隧道。"
+      # 生成临时隧道
+      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+      break
+    elif [ "$choice" == "y" ]; then
+      # 创建固定隧道
+      tunnel_name="my_fixed_tunnel"  # 替换为您想要的隧道名称
+      /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
+
+      # 生成配置文件
+      cat <<EOF > /root/sbox/config.yml
+tunnel: $tunnel_name
+credentials-file: /root/sbox/$(basename "$tunnel_name").json
+
+ingress:
+  - hostname: mydomain.com        # 替换为您的域名
+    service: http://localhost:$vmess_port  # 替换为您的服务端口
+  - service: http_status:404
+EOF
+
+      # 生成地址
+      /root/sbox/cloudflared-linux tunnel run "$tunnel_name" --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+      break
+    elif [ "$choice" == "n" ]; then
+      # 生成临时隧道
+      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+      break
+    else
+      echo "无效的选择，请输入 y 或 n。"
+    fi
+  done
+
+  sleep 2
+  echo 等待 cloudflare argo 生成地址
+  sleep 2
+  # 连接到域名
+  argo=$(grep trycloudflare.com argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+  echo "$argo" | base64 > /root/sbox/argo.txt.b64
+  # 清理日志
+  rm -rf argo.log
                 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
