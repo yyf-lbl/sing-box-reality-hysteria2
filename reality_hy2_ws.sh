@@ -418,9 +418,6 @@ done
     kill "$pid"
   fi
 
-  # 获取 VMess 端口
-  vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
-
   # 提示用户选择隧道类型
   while true; do
     read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
