@@ -458,15 +458,15 @@ done
       # 移动证书
       mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
 
-      # 获取凭据文件的实际路径
-      credential_file=$(ls /root/.cloudflared/*.json | grep "$tunnel_name")
-      if [ -f "$credential_file" ]; then
-        mv "$credential_file" /root/sbox/tunnel_credentials.json
-      else
-        echo "未找到凭据文件，无法移动。"
-        return 1
-      fi
+    # 创建隧道后立即获取凭据文件
+credential_file=$(ls /root/.cloudflared/*.json | grep -Eo '[^/]+$' | grep "$tunnel_name")
 
+if [ -f "$credential_file" ]; then
+  mv "$credential_file" /root/sbox/tunnel_credentials.json
+else
+  echo "未找到凭据文件，无法移动。"
+  return 1
+fi
       # 生成凭证文件的 JSON 内容
       credentials_file="/root/sbox/tunnel_credentials.json"
       echo '{
