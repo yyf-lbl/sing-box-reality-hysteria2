@@ -227,23 +227,16 @@ show_client_configuration() {
   
    # 判断是否存在固定隧道配置 生成 VMess 客户端链接
 # 检查是否存在固定隧道
-if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
+if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
     # 使用固定隧道生成链接
-    echo "vmess_port: $vmess_port"  # 调试输出
-    if jq -e --arg port "http://localhost:$vmess_port" '.ingress[] | select(.service == $port)' /root/sbox/tunnel.yml > /dev/null; then
-        fixed_tunnel_domain=$(jq -r --arg port "http://localhost:$vmess_port" '.ingress[] | select(.service == $port) | .hostname' /root/sbox/tunnel.yml)
-        echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接\e[0m"
-        
+        echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接,替换$argo_domain为cloudflare优选ip或域名,可获得极致速度体验！\e[0m"
+      
         # 生成固定隧道链接
-        vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$fixed_tunnel_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+        vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"vmess-tls","tls":"tls","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
 
-        vmess_link_no_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$fixed_tunnel_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+        vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
-    else
-        echo -e "\e[1;3;31m未找到对应的固定隧道配置。\e[0m"
-         cat /root/sbox/tunnel.yml  # 输出 tunnel.yml 的内容
-        echo "vmess_port: $vmess_port"
     fi
 else
     # 不存在固定隧道，生成临时隧道链接
@@ -252,7 +245,7 @@ else
         ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
         argo=$(base64 --decode /root/sbox/argo.txt.b64)
 
-        echo -e "\e[1;3;31m使用临时隧道生成的 Vmess 客户端通用链接\e[0m"
+        echo -e "\e[1;3;31m使用临时隧道生成的 Vmess 客户端通用链接，替换speed.cloudflare.com为cloudflare优选ip或域名,可获得极致速度体验！\e[0m"
         echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         
         vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
