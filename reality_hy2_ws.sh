@@ -188,16 +188,17 @@ show_client_configuration() {
     fi
   
    # 判断是否存在固定隧道配置 生成 VMess 客户端链接
-if jq -e '.ingress[] | select(.service == "http://localhost:$vmess_port")' /root/sbox/tunnel.yml > /dev/null; then
+# 检查是否存在固定隧道
+if jq -e '.ingress[] | select(.service == "http://localhost:'"$vmess_port"'")' /root/sbox/tunnel.yml > /dev/null; then
     # 存在固定隧道
-    fixed_tunnel_domain=$(jq -r '.ingress[] | select(.service == "http://localhost:$vmess_port") | .hostname' /root/sbox/tunnel.yml)
+    fixed_tunnel_domain=$(jq -r '.ingress[] | select(.service == "http://localhost:'"$vmess_port"'") | .hostname' /root/sbox/tunnel.yml)
     echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接\e[0m"
-    
+    echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
     # 生成固定隧道链接
-    vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+    vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
-
-    vmess_link_no_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+      echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m"
+    vmess_link_no_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
 
 else
@@ -210,15 +211,16 @@ else
         echo -e "\e[1;3;31m使用临时隧道生成的 Vmess 客户端通用链接\e[0m"
         echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         
-        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
         
         echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m"
         
-        vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+        vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     fi
 fi
+
     
    # 生成 TUIC 客户端链接
 if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
@@ -426,14 +428,14 @@ EOF
         cat /root/sbox/tunnel.yml
 
         # 启动固定隧道
-        tunnel_id=$(echo "$argo_auth" | jq -r '.TunnelID')
-/root/sbox/cloudflared-linux tunnel run --credentials-file /root/sbox/tunnel.json "$tunnel_id" > /root/sbox/argo_run.log 2>&1 &
+       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
         echo "固定隧道已启动，日志输出到 /root/sbox/argo_run.log"
        # 生成固定隧道链接
-    vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+    vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
 
-    vmess_link_no_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+  vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
+
     echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     fi
 
