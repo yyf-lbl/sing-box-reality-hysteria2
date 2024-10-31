@@ -493,8 +493,8 @@ sleep 2
 clear
 echo 等待cloudflare argo生成地址
 sleep 2
-#连接到域名
-argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+#提取域名
+argo=$(grep 'trycloudflare.com' /root/sbox/argo.log | awk -F ' ' '{print $10}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
 
