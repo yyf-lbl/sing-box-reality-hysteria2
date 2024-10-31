@@ -344,11 +344,10 @@ install_singbox() {
         break
     fi
     done
-    if $valid; then
-        # 有效输入，跳出循环
-        break
+   if [ "$valid" = false ]; then
+     echo "选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。"
     else
-        echo -e "\e[1;3;31m输入无效!请选择1-4\e[0m"
+      echo "所有选择的协议都是有效的。"
     fi
 done
     # 初始化配置变量
