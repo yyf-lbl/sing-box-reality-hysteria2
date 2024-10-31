@@ -337,17 +337,19 @@ install_singbox() {
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
     # 检查输入的选择是否有效
-    valid=true
-   for choice in "${selected_protocols[@]}"; do
-    if [[ -z "$choice" || ! "$choice" =~ ^[1-4]$ ]]; then
-        valid=false
-        break
-    fi
+   valid=true
+    for choice in "${selected_protocols[@]}"; do
+        if [[ -z "$choice" || ! "$choice" =~ ^[1-4]$ ]]; then
+            valid=false
+            break
+        fi
     done
-   if [ "$valid" = false ]; then
-     echo "选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。"
+
+    if [ "$valid" = false ]; then
+        echo -e "\e[1;3;31m选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。\e[0m"
     else
-      echo "所有选择的协议都是有效的。"
+        echo "所有选择的协议都是有效的。"
+        break  # 退出循环
     fi
 done
     # 初始化配置变量
