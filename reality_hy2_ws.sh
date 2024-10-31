@@ -227,7 +227,7 @@ show_client_configuration() {
   
    # 判断是否存在固定隧道配置 生成 VMess 客户端链接
 # 检查是否存在固定隧道
-if [ "$use_fixed" = "Y" ]; then
+if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
     # 使用固定隧道生成链接
     echo "vmess_port: $vmess_port"  # 调试输出
     if jq -e --arg port "http://localhost:$vmess_port" '.ingress[] | select(.service == $port)' /root/sbox/tunnel.yml > /dev/null; then
@@ -435,7 +435,7 @@ ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
 read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
 use_fixed=${use_fixed:-Y}
 
-if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
+if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
      pid=$(pgrep -f cloudflared-linux)
     if [ -n "$pid" ]; then
         # 终止现有进程
