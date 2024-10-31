@@ -230,6 +230,7 @@ show_client_configuration() {
 if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
     # 使用固定隧道生成链接
         echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接,替换$argo_domain为cloudflare优选ip或域名,可获得极致速度体验！\e[0m"
+      echo ""
       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         # 生成固定隧道链接
         vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"vmess-tls","tls":"tls","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
@@ -238,6 +239,7 @@ if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
  echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m"
         vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
+        echo ""
 else
     # 不存在固定隧道，生成临时隧道链接
     if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
@@ -246,6 +248,7 @@ else
         argo=$(base64 --decode /root/sbox/argo.txt.b64)
 
         echo -e "\e[1;3;31m使用临时隧道生成的 Vmess 客户端通用链接，替换speed.cloudflare.com为cloudflare优选ip或域名,可获得极致速度体验！\e[0m"
+        echo ""
         echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         
         vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
@@ -255,6 +258,7 @@ else
         
         vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
+        echo ""
     fi
 fi    
    # 生成 TUIC 客户端链接
