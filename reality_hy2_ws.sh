@@ -445,7 +445,7 @@ if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
     /root/sbox/cloudflared-linux tunnel login
 
     # 设置证书路径
-    export TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
+    TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
 
     # 用户输入 Argo 域名和密钥
     read -p "请输入你的 Argo 域名: " argo_domain
@@ -457,7 +457,7 @@ if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
         echo "$argo_auth" > /root/sbox/tunnel.json
 
         # 生成 tunnel.yml 文件
-        cat > /root/sbox/tunnel.yml << EOF
+ cat > /root/sbox/tunnel.yml << EOF
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 origincert: $TUNNEL_ORIGIN_CERT
@@ -468,7 +468,7 @@ ingress:
     service: http://localhost:$vmess_port
     originRequest:
       noTLSVerify: true
-  - service: http_status:404
+  - service: http_status: 404
 EOF
 
         echo "生成的 tunnel.yml 文件内容:"
