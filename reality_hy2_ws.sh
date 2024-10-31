@@ -404,11 +404,6 @@ else
     echo "错误: 无效的密钥。"
     exit 1
 fi
-    # 生成链接输出
-     vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
-    
-    # 输出生成的链接
-    echo "生成的 vmess 链接: $vmess_link_tls" 
   
 else
     # 用户选择使用临时隧道
@@ -429,20 +424,9 @@ fi
 
 # 清理日志
 rm -rf /root/sbox/argo.log
-
-# 配置文件生成
-echo "vmess_port: $vmess_port"
-echo "vmess_uuid: $vmess_uuid"
-echo "ws_path: $ws_path"
-echo "argo_domain: $argo_domain"
-
-# 初始化 config 变量为空 JSON 对象，如果需要
-config="${config:-{}}"
-
-config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
+ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
-                    --arg argo_domain "$argo_domain" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
@@ -454,13 +438,13 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path,
-                            "headers": {
-                                "host": $argo_domain
-                            }
+                            "path": $ws_path
                         }
                     }]')
-
+                     # 生成链接输出
+     vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+              # 输出生成的链接
+    echo "生成的 vmess 链接: $vmess_link_tls" 
                 ;;
 
             3)
