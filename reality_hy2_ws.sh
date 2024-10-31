@@ -490,12 +490,11 @@ else
     # 启动临时隧道
 /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 &
 sleep 2
-clear
 echo 等待cloudflare argo生成地址
 sleep 2
 #提取域名
 argo=$(grep -a 'Your quick Tunnel has been created!' /root/sbox/argo.log -A 2 | grep -oP 'https://\K[^ ]+')
-echo "$argo" | base64 > /root/sbox/argo.txt.b64
+echo "$argo" 
 fi
 
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
