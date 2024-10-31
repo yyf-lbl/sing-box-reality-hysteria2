@@ -338,11 +338,11 @@ install_singbox() {
     read -a selected_protocols <<< "$choices"
     # 检查输入的选择是否有效
     valid=true
-    for choice in "${selected_protocols[@]}"; do
-        if ! [[ "$choice" =~ ^[1-4]$ ]]; then
-            valid=false
-            break
-        fi
+   for choice in "${selected_protocols[@]}"; do
+    if [[ -z "$choice" || ! "$choice" =~ ^[1-4]$ ]]; then
+        valid=false
+        break
+    fi
     done
     if $valid; then
         # 有效输入，跳出循环
