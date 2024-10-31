@@ -410,14 +410,12 @@ EOF
         cat /root/sbox/tunnel.yml
 
         # 启动固定隧道
-        /root/sbox/cloudflared-linux tunnel run $(echo "$argo_auth" | jq -r '.TunnelID') > /root/sbox/argo_run.log 2>&1 &
-
+        tunnel_id=$(echo "$argo_auth" | jq -r '.TunnelID')
+/root/sbox/cloudflared-linux tunnel run --credentials-file /root/sbox/tunnel.json "$tunnel_id" > /root/sbox/argo_run.log 2>&1 &
         echo "固定隧道已启动，日志输出到 /root/sbox/argo_run.log"
-
-        # 从日志文件中提取信息
+        # 从日志文件中提取域名信息
         argo=$(grep "trycloudflare.com" /root/sbox/argo_run.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
         echo "提取的 Argo 信息: $argo"
-
         # 将信息编码并保存
         echo "$argo" | base64 > /root/sbox/argo.txt.b64
     fi
