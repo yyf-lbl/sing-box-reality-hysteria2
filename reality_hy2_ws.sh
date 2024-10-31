@@ -425,7 +425,6 @@ done
     # 终止进程
     kill "$pid"
   fi
-
   # 提示用户选择隧道类型
   while true; do
     read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
@@ -435,24 +434,45 @@ done
       /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
       break
     elif [ "$choice" == "y" ]; then
-      # 登录 Cloudflare
-      /root/sbox/cloudflared-linux tunnel login 
-        # 提示用户输入隧道名称和域名
-  read -p "请输入隧道名称: " tunnel_name
-  read -p "请输入域名: " hostname
+      # 登录到 cloudflared
+      /root/sbox/cloudflared-linux tunnel login
+      
+      # 提示用户输入隧道名称和域名
+      read -p "请输入隧道名称: " tunnel_name
+      read -p "请输入域名: " domain_name
+      
       # 创建固定隧道
       /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
+      
+      # 移动证书和 JSON 文件
+      mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
+      mv /root/.cloudflared/$(basename "$tunnel_name").json /root/sbox/
+      
+      # 生成凭证文件的 JSON 内容
+      credentials_file="/root/sbox/tunnel_credentials.json"
+      echo '{
+        "AccountTag": "'$(jq -r '.AccountTag' /root/.cloudflared/$(basename "$tunnel_name").json)'",
+        "TunnelSecret": "'$(jq -r '.TunnelSecret' /root/.cloudflared/$(basename "$tunnel_name").json)'",
+        "TunnelID": "'$(jq -r '.TunnelID' /root/.cloudflared/$(basename "$tunnel_name").json)'"
+      }' > "$credentials_file"
+
+      # 生成完整的 hostname
+      full_hostname="${tunnel_name}.${domain_name}"
+
       # 生成配置文件
       cat <<EOF > /root/sbox/config.yml
-tunnel: $tunnel_name
-credentials-file: /root/sbox/cert.pem  # 更新为新的路径
+tunnel: $(basename "$tunnel_name")
+credentials-file: $credentials_file
+
 ingress:
-  - hostname: $hostname        # 替换为您的域名
-    service: http://localhost:$vmess_port  # 替换为您的服务端口
+  - hostname: $full_hostname
+    service: http://localhost:$vmess_port
   - service: http_status:404
 EOF
+
       echo "生成的配置文件内容:"
       cat /root/sbox/config.yml
+      
       # 生成地址
       /root/sbox/cloudflared-linux tunnel run "$tunnel_name" --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
       break
