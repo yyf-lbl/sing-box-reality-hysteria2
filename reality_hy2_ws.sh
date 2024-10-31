@@ -494,7 +494,8 @@ clear
 echo 等待cloudflare argo生成地址
 sleep 2
 #提取域名
-argo=$(grep 'trycloudflare.com' /root/sbox/argo.log | awk -F ' ' '{print $10}')
+argo=$(grep -a 'trycloudflare.com' /root/sbox/argo.log | awk -F ' ' '{print $10}')
+
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
 
