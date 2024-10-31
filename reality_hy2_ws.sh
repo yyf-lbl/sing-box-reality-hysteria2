@@ -484,7 +484,7 @@ EOF
     fi
 else
     # 用户选择使用临时隧道
-    pid=$(pgrep -f cloudflared)
+    pid=$(pgrep -f cloudflared-linux)
     if [ -n "$pid" ]; then
         # 终止现有进程
         kill "$pid"
@@ -496,8 +496,8 @@ else
     sleep 2  
 
     # 获取连接到域名
-    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+     argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+  echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
 
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
