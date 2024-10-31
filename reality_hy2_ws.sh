@@ -378,7 +378,8 @@ if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
 #登录cf授权并下载证书
 /root/sbox/cloudflared-linux tunnel login
 #移动证书到指定文件夹
-mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
+export TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
+
   # 用户选择使用固定隧道
 read -p "请输入你的 argo 域名: " argo_domain
 read -p "请输入你的 argo 密钥 (token 或 json): " argo_auth
@@ -392,7 +393,7 @@ if [[ $argo_auth =~ TunnelSecret ]]; then
     cat > /root/sbox/tunnel.yml << EOF
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
-origincert: /root/sbox/cert.pem
+origincert: $TUNNEL_ORIGIN_CERT
 protocol: http2
 
 ingress:
