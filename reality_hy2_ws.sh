@@ -496,7 +496,7 @@ else
     sleep 2  
 
     # 获取连接到域名
-    argo=$(grep trycloudflare.com /root/sbox/argo.log | awk 'NR==1{print $NF}')
+    argo=$(grep 'Your quick Tunnel has been created!' /root/sbox/argo.log -A 2 | grep 'https://' | awk '{print $NF}')
   echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
 
