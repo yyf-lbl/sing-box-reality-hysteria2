@@ -229,8 +229,8 @@ show_client_configuration() {
 # 检查是否存在固定隧道
 if [ "$use_fixed" = "Y" ]; then
     # 使用固定隧道生成链接
-    if jq -e '.ingress[] | select(.service == "http://localhost:$vmess_port")' /root/sbox/tunnel.yml > /dev/null; then
-        fixed_tunnel_domain=$(jq -r '.ingress[] | select(.service == "http://localhost:$vmess_port") | .hostname' /root/sbox/tunnel.yml)
+    if jq -e --arg port "http://localhost:$vmess_port" '.ingress[] | select(.service == $port)' /root/sbox/tunnel.yml > /dev/null; then
+        fixed_tunnel_domain=$(jq -r --arg port "http://localhost:$vmess_port" '.ingress[] | select(.service == $port) | .hostname' /root/sbox/tunnel.yml)
         echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接\e[0m"
 
         # 生成固定隧道链接
@@ -260,9 +260,7 @@ else
         vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     fi
-fi
-
-    
+fi    
    # 生成 TUIC 客户端链接
 if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
     tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
