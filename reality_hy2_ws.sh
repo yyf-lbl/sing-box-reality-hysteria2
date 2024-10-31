@@ -181,14 +181,8 @@ download_singbox() {
         chown root:root /root/sbox/sing-box
         chmod +x /root/sbox/sing-box
     fi
-
-    # 下载 amd64-bot bot 文件到 /root/sbox/
-    echo -e "\e[1;3;33m正在下载 argo 文件...\e[0m"
-    curl -sLo "/root/sbox/argo" "https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/amd64-bot12"
-    chmod +x /root/sbox/argo
 }
-
-
+#生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
     if [[ ! -f /root/sbox/sbconfig_server.json ]]; then
