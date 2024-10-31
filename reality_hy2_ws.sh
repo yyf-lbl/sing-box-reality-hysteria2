@@ -65,8 +65,10 @@ regenarte_cloudflared_argo(){
     # 终止进程
     kill "$pid"
   fi
+  
   # 获取 VMess 端口
   vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+  
   # 提示用户选择隧道类型
   while true; do
     read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
@@ -86,16 +88,24 @@ regenarte_cloudflared_argo(){
       # 创建固定隧道
       /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
       
-      # 移动证书和 JSON 文件
+      # 移动证书
       mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
-      mv /root/.cloudflared/$(basename "$tunnel_name").json /root/sbox/
-      
+
+      # 获取凭据文件的实际路径
+      credential_file=$(ls /root/.cloudflared/*.json | grep "$tunnel_name")
+      if [ -f "$credential_file" ]; then
+        mv "$credential_file" /root/sbox/tunnel_credentials.json
+      else
+        echo "未找到凭据文件，无法移动。"
+        return 1
+      fi
+
       # 生成凭证文件的 JSON 内容
       credentials_file="/root/sbox/tunnel_credentials.json"
       echo '{
-        "AccountTag": "'$(jq -r '.AccountTag' /root/.cloudflared/$(basename "$tunnel_name").json)'",
-        "TunnelSecret": "'$(jq -r '.TunnelSecret' /root/.cloudflared/$(basename "$tunnel_name").json)'",
-        "TunnelID": "'$(jq -r '.TunnelID' /root/.cloudflared/$(basename "$tunnel_name").json)'"
+        "AccountTag": "'$(jq -r '.AccountTag' "$credentials_file")'",
+        "TunnelSecret": "'$(jq -r '.TunnelSecret' "$credentials_file")'",
+        "TunnelID": "'$(jq -r '.TunnelID' "$credentials_file")'"
       }' > "$credentials_file"
 
       # 生成完整的 hostname
@@ -103,7 +113,7 @@ regenarte_cloudflared_argo(){
 
       # 生成配置文件
       cat <<EOF > /root/sbox/config.yml
-tunnel: $(basename "$tunnel_name")
+tunnel: $tunnel_name
 credentials-file: $credentials_file
 
 ingress:
@@ -425,6 +435,7 @@ done
     # 终止进程
     kill "$pid"
   fi
+  
   # 提示用户选择隧道类型
   while true; do
     read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
@@ -444,16 +455,24 @@ done
       # 创建固定隧道
       /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
       
-      # 移动证书和 JSON 文件
+      # 移动证书
       mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
-      mv /root/.cloudflared/$(basename "$tunnel_name").json /root/sbox/
-      
+
+      # 获取凭据文件的实际路径
+      credential_file=$(ls /root/.cloudflared/*.json | grep "$tunnel_name")
+      if [ -f "$credential_file" ]; then
+        mv "$credential_file" /root/sbox/tunnel_credentials.json
+      else
+        echo "未找到凭据文件，无法移动。"
+        return 1
+      fi
+
       # 生成凭证文件的 JSON 内容
       credentials_file="/root/sbox/tunnel_credentials.json"
       echo '{
-        "AccountTag": "'$(jq -r '.AccountTag' /root/.cloudflared/$(basename "$tunnel_name").json)'",
-        "TunnelSecret": "'$(jq -r '.TunnelSecret' /root/.cloudflared/$(basename "$tunnel_name").json)'",
-        "TunnelID": "'$(jq -r '.TunnelID' /root/.cloudflared/$(basename "$tunnel_name").json)'"
+        "AccountTag": "'$(jq -r '.AccountTag' "$credentials_file")'",
+        "TunnelSecret": "'$(jq -r '.TunnelSecret' "$credentials_file")'",
+        "TunnelID": "'$(jq -r '.TunnelID' "$credentials_file")'"
       }' > "$credentials_file"
 
       # 生成完整的 hostname
@@ -461,7 +480,7 @@ done
 
       # 生成配置文件
       cat <<EOF > /root/sbox/config.yml
-tunnel: $(basename "$tunnel_name")
+tunnel: $tunnel_name
 credentials-file: $credentials_file
 
 ingress:
