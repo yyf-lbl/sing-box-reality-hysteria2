@@ -426,19 +426,10 @@ EOF
 
         echo "生成的 tunnel.yml 文件内容:"
         cat /root/sbox/tunnel.yml
-
         # 启动固定隧道
        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
         echo "固定隧道已启动，日志输出到 /root/sbox/argo_run.log"
-       # 生成固定隧道链接
-    vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
-    echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
-
-  vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2","allowInsecure":true}' | base64 -w 0)
-
-    echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     fi
-
 else
     # 用户选择使用临时隧道
     pid=$(pgrep -f cloudflared)
@@ -446,7 +437,6 @@ else
         # 终止现有进程
         kill "$pid"
     fi 
-
     # 启动临时隧道
     /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
     sleep 2
