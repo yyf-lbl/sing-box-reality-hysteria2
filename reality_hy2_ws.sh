@@ -227,7 +227,7 @@ show_client_configuration() {
   
    # 判断是否存在固定隧道配置 生成 VMess 客户端链接
 # 检查是否存在固定隧道
-if [ "$use_fixed_tunnel" = "Y" ]; then
+if [ "$use_fixed" = "Y" ]; then
     # 使用固定隧道生成链接
     if jq -e '.ingress[] | select(.service == "http://localhost:$vmess_port")' /root/sbox/tunnel.yml > /dev/null; then
         fixed_tunnel_domain=$(jq -r '.ingress[] | select(.service == "http://localhost:$vmess_port") | .hostname' /root/sbox/tunnel.yml)
@@ -242,7 +242,6 @@ if [ "$use_fixed_tunnel" = "Y" ]; then
     else
         echo -e "\e[1;3;31m未找到对应的固定隧道配置。\e[0m"
     fi
-
 else
     # 不存在固定隧道，生成临时隧道链接
     if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
