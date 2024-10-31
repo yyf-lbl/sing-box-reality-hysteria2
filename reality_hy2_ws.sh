@@ -194,10 +194,10 @@ if jq -e '.ingress[] | select(.service == "http://localhost:$vmess_port")' /root
     echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接\e[0m"
     
     # 生成固定隧道链接
-    vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+    vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
 
-    vmess_link_no_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+    vmess_link_no_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
     echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
 
 else
@@ -429,11 +429,12 @@ EOF
         tunnel_id=$(echo "$argo_auth" | jq -r '.TunnelID')
 /root/sbox/cloudflared-linux tunnel run --credentials-file /root/sbox/tunnel.json "$tunnel_id" > /root/sbox/argo_run.log 2>&1 &
         echo "固定隧道已启动，日志输出到 /root/sbox/argo_run.log"
-        # 从日志文件中提取域名信息
-        argo=$(grep "trycloudflare.com" /root/sbox/argo_run.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-        echo "提取的 Argo 信息: $argo"
-        # 将信息编码并保存
-        echo "$argo" | base64 > /root/sbox/argo.txt.b64
+       # 生成固定隧道链接
+    vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
+    echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
+
+    vmess_link_no_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+    echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     fi
 
 else
