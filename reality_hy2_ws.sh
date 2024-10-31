@@ -328,30 +328,39 @@ echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
 install_base
 install_singbox() { 
   while true; do
-   echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
-   echo -e "\e[1;3;33m1) vless-Reality\e[0m"
-   echo -e "\e[1;3;33m2) VMess\e[0m"
-   echo -e "\e[1;3;33m3) Hysteria2\e[0m"
-   echo -e "\e[1;3;33m4) Tuic\e[0m"
-   echo -ne "\e[1;3;33m请输入你的选择: \e[0m" && read choices
+    echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
+    echo -e "\e[1;3;33m1) vless-Reality\e[0m"
+    echo -e "\e[1;3;33m2) VMess\e[0m"
+    echo -e "\e[1;3;33m3) Hysteria2\e[0m"
+    echo -e "\e[1;3;33m4) Tuic\e[0m"
+    echo -ne "\e[1;3;33m请输入你的选择: \e[0m" && read choices
+    
+    # 检查输入是否为空
+    if [[ -z "$choices" ]]; then
+        echo "输入不能为空，请重新输入。"
+        continue
+    fi
+
     # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
+    
     # 检查输入的选择是否有效
-   valid=true
+    valid=true
     for choice in "${selected_protocols[@]}"; do
-        if [[ -z "$choice" || ! "$choice" =~ ^[1-4]$ ]]; then
+        if [[ ! "$choice" =~ ^[1-4]$ ]]; then
             valid=false
             break
         fi
     done
 
     if [ "$valid" = false ]; then
-        echo -e "\e[1;3;31m选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。\e[0m"
+        echo "选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。"
     else
         echo "所有选择的协议都是有效的。"
-        break  # 退出循环
+        break  # 有效选择后退出循环
     fi
 done
+
     # 初始化配置变量
     listen_port=443
     vmess_port=15555
