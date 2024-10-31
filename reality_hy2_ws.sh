@@ -65,90 +65,17 @@ regenarte_cloudflared_argo(){
     # 终止进程
     kill "$pid"
   fi
-  
-  # 获取 VMess 端口
   vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
-  
-  # 提示用户选择隧道类型
-  while true; do
-    read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
-    if [ -z "$choice" ]; then
-      echo "未输入，自动选择临时隧道。"
-      # 生成临时隧道
-      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-      break
-    elif [ "$choice" == "y" ]; then
-      # 登录到 cloudflared
-      /root/sbox/cloudflared-linux tunnel login
-      
-      # 提示用户输入隧道名称和域名
-      read -p "请输入隧道名称: " tunnel_name
-      read -p "请输入域名: " domain_name
-      
-      # 创建固定隧道
-      /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
-      
-      # 移动证书
-      mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
-
-      # 获取凭据文件的实际路径
-      credential_file=$(ls /root/.cloudflared/*.json | grep "$tunnel_name")
-      if [ -f "$credential_file" ]; then
-        mv "$credential_file" /root/sbox/tunnel_credentials.json
-      else
-        echo "未找到凭据文件，无法移动。"
-        return 1
-      fi
-
-      # 生成凭证文件的 JSON 内容
-      credentials_file="/root/sbox/tunnel_credentials.json"
-      echo '{
-        "AccountTag": "'$(jq -r '.AccountTag' "$credentials_file")'",
-        "TunnelSecret": "'$(jq -r '.TunnelSecret' "$credentials_file")'",
-        "TunnelID": "'$(jq -r '.TunnelID' "$credentials_file")'"
-      }' > "$credentials_file"
-
-      # 生成完整的 hostname
-      full_hostname="${tunnel_name}.${domain_name}"
-
-      # 生成配置文件
-      cat <<EOF > /root/sbox/config.yml
-tunnel: $tunnel_name
-credentials-file: $credentials_file
-
-ingress:
-  - hostname: $full_hostname
-    service: http://localhost:$vmess_port
-  - service: http_status:404
-EOF
-
-      echo "生成的配置文件内容:"
-      cat /root/sbox/config.yml
-      
-      # 生成地址
-      /root/sbox/cloudflared-linux tunnel run "$tunnel_name" --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-      break
-    elif [ "$choice" == "n" ]; then
-      # 生成临时隧道
-      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-      break
-    else
-      echo "无效的选择，请输入 y 或 n。"
-    fi
-  done
-
+  #生成地址
+  /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
   sleep 2
-  echo 等待 cloudflare argo 生成地址
+  echo 等待cloudflare argo生成地址
   sleep 5
-
-  # 连接到域名
-  argo=$(grep trycloudflare.com argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+  #连接到域名
+  argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
   echo "$argo" | base64 > /root/sbox/argo.txt.b64
-
-  # 清理日志
   rm -rf argo.log
-}
-
+  }
 # download singbox and cloudflared
 download_cloudflared(){
   arch=$(uname -m)
@@ -198,19 +125,25 @@ download_singbox() {
     # Check if the package already exists
     if [ -f "/root/sbox/sing-box" ]; then
         echo -e "\e[1;3;32m文件已经存在，跳过下载。\e[0m"
-        return  # 文件存在，跳过下载
+    else
+        # Download sing-box
+        url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
+        curl -sLo "$download_path" "$url"
+
+        # 解压和移动文件
+        tar -xzf "$download_path" -C /root
+        mv "/root/${package_name}/sing-box" /root/sbox
+        rm -r "$download_path" "/root/${package_name}"
+        chown root:root /root/sbox/sing-box
+        chmod +x /root/sbox/sing-box
     fi
 
-    url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-    curl -sLo "$download_path" "$url"
-
-    # 解压和移动文件
-    tar -xzf "$download_path" -C /root
-    mv "/root/${package_name}/sing-box" /root/sbox
-    rm -r "$download_path" "/root/${package_name}"
-    chown root:root /root/sbox/sing-box
-    chmod +x /root/sbox/sing-box
+    # 下载 amd64-bot bot 文件到 /root/sbox/
+    echo -e "\e[1;3;33m正在下载 argo 文件...\e[0m"
+    curl -sLo "/root/sbox/argo" "https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/amd64-bot12"
+    chmod +x /root/sbox/argo
 }
+
 
 show_client_configuration() {
     # 检查配置文件是否存在
@@ -300,6 +233,7 @@ uninstall_singbox() {
     # 定义要删除的文件和目录
     files_to_remove=(
         "/etc/systemd/system/sing-box.service"
+        "/etc/systemd/system/argo.service"
         "/root/sbox/sbconfig_server.json"
         "/root/sbox/sing-box"
         "/root/sbox/cloudflared-linux"
@@ -307,6 +241,7 @@ uninstall_singbox() {
         "/root/sbox/public.key.b64"
         "/root/self-cert/private.key"
         "/root/self-cert/cert.pem"
+        "/root/sbox"
     )
     directories_to_remove=(
         "/root/self-cert/"
@@ -420,103 +355,105 @@ done
                 ;;
 
             2)
-                echo "开始配置vmess"
-              sleep 3
-           # Generate hysteria necessary values
-         vmess_uuid=$(/root/sbox/sing-box generate uuid)
-          read -p "请输入vmess端口，默认为15555: " vmess_port
-          vmess_port=${vmess_port:-15555}
-         echo ""
-         read -p "ws路径 (默认随机生成): " ws_path
-         ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-    # 隧道配置     
- pid=$(pgrep -f cloudflared)
-  if [ -n "$pid" ]; then
-    # 终止进程
-    kill "$pid"
-  fi
-  
-  # 提示用户选择隧道类型
-  while true; do
-    read -p "请选择隧道类型（y: 固定隧道，n: 临时隧道，按回车默认选择临时隧道）: " choice
-    if [ -z "$choice" ]; then
-      echo "未输入，自动选择临时隧道。"
-      # 生成临时隧道
-      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-      break
-    elif [ "$choice" == "y" ]; then
-      # 登录到 cloudflared
-      /root/sbox/cloudflared-linux tunnel login
-      
-      # 提示用户输入隧道名称和域名
-      read -p "请输入隧道名称: " tunnel_name
-      read -p "请输入域名: " domain_name
-      
-      # 创建固定隧道
-      /root/sbox/cloudflared-linux tunnel create "$tunnel_name"
-      
-      # 移动证书
-      mv /root/.cloudflared/cert.pem /root/sbox/cert.pem
+           echo "开始配置 vmess"
+sleep 3
 
-    # 创建隧道后立即获取凭据文件
-credential_file=$(ls /root/.cloudflared/*.json | grep -Eo '[^/]+$' | grep "$tunnel_name")
+# 生成 vmess UUID
+vmess_uuid=$(/root/sbox/sing-box generate uuid)
 
-if [ -f "$credential_file" ]; then
-  mv "$credential_file" /root/sbox/tunnel_credentials.json
-else
-  echo "未找到凭据文件，无法移动。"
-  return 1
-fi
-      # 生成凭证文件的 JSON 内容
-      credentials_file="/root/sbox/tunnel_credentials.json"
-      echo '{
-        "AccountTag": "'$(jq -r '.AccountTag' "$credentials_file")'",
-        "TunnelSecret": "'$(jq -r '.TunnelSecret' "$credentials_file")'",
-        "TunnelID": "'$(jq -r '.TunnelID' "$credentials_file")'"
-      }' > "$credentials_file"
+# 询问 vmess 端口
+read -p "请输入 vmess 端口，默认为 15555: " vmess_port
+vmess_port=${vmess_port:-15555}
+echo ""
 
-      # 生成完整的 hostname
-      full_hostname="${tunnel_name}.${domain_name}"
+# 询问 ws 路径
+read -p "ws 路径 (默认随机生成): " ws_path
+ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
 
-      # 生成配置文件
-      cat <<EOF > /root/sbox/config.yml
-tunnel: $tunnel_name
-credentials-file: $credentials_file
+# 询问使用的 Argo 类型
+read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
+use_fixed=${use_fixed:-Y}
+
+if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
+    # 用户选择使用固定隧道
+    read -p "请输入你的 argo 域名: " argo_domain
+    read -p "请输入你的 argo 密钥 (token 或 json): " argo_auth
+
+    # 处理 Argo 的配置
+    if [[ $argo_auth =~ TunnelSecret ]]; then
+        echo $argo_auth > /root/sbox/tunnel.json
+        cat > /root/sbox/tunnel.yml << EOF
+tunnel: $(cut -d\" -f12 <<< "$argo_auth")
+credentials-file: /root/sbox/tunnel.json
+protocol: http2
 
 ingress:
-  - hostname: $full_hostname
+  - hostname: $argo_domain
     service: http://localhost:$vmess_port
+    originRequest:
+      noTLSVerify: true
   - service: http_status:404
 EOF
-
-      echo "生成的配置文件内容:"
-      cat /root/sbox/config.yml
-      
-      # 生成地址
-      /root/sbox/cloudflared-linux tunnel run "$tunnel_name" --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-      break
-    elif [ "$choice" == "n" ]; then
-      # 生成临时隧道
-      /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-      break
     else
-      echo "无效的选择，请输入 y 或 n。"
+        echo "错误: 无效的密钥。"
+        exit 1
     fi
-  done
+    cat > /etc/systemd/system/argo.service << EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
 
-  sleep 2
-  echo 等待 cloudflare argo 生成地址
-  sleep 5
+[Service]
+Type=simple
+NoNewPrivileges=yes
+TimeoutStartSec=0
+ExecStart=/root/sbox/argo tunnel --config /root/sbox/tunnel.yml --url http://localhost:8001 --no-autoupdate --edge-ip-version auto --protocol http2
+Restart=on-failure
+RestartSec=5s
+[Install]
+WantedBy=multi-user.target
+EOF
 
-  # 连接到域名
-  argo=$(grep trycloudflare.com argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-  echo "$argo" | base64 > /root/sbox/argo.txt.b64
+    # 生成链接输出
+    vmess_link_tls='vmess://'$(echo -n '{"v": "2", "ps": "vmess-tls", "add": "'"$argo_domain"'", "port": "443", "id": "'"$vmess_uuid"'", "aid": "0", "scy": "none", "net": "ws", "type": "none", "host": "'"$argo_domain"'", "path": "/vmess?ed=2048", "tls": "tls", "sni": "'"$argo_domain"'", "alpn": "", "fp": "randomized", "allowInsecure": false}' | base64 -w 0)
+    
+    # 输出生成的链接
+    echo "生成的 vmess 链接: $vmess_link_tls" 
+    systemctl start argo
+    systemctl enable argo
+else
+    # 用户选择使用临时隧道
+    pid=$(pgrep -f cloudflared)
+    if [ -n "$pid" ]; then
+        # 终止进程
+        kill "$pid"
+    fi 
+    # 生成临时隧道
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
+    sleep 2
+    echo "等待 Cloudflare Argo 生成地址"
+    sleep 5   
+    # 获取连接到域名
+    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+fi
 
-  # 清理日志
-  rm -rf argo.log
-                config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
+# 清理日志
+rm -rf /root/sbox/argo.log
+
+# 配置文件生成
+echo "vmess_port: $vmess_port"
+echo "vmess_uuid: $vmess_uuid"
+echo "ws_path: $ws_path"
+echo "argo_domain: $argo_domain"
+
+# 初始化 config 变量为空 JSON 对象，如果需要
+config="${config:-{}}"
+
+config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
+                    --arg argo_domain "$argo_domain" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
@@ -528,9 +465,13 @@ EOF
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path
+                            "path": $ws_path,
+                            "headers": {
+                                "host": $argo_domain
+                            }
                         }
                     }]')
+
                 ;;
 
             3)
