@@ -142,7 +142,7 @@ download_cloudflared(){
 # download singbox 
 download_singbox() {
     echo -e "\e[1;3;33m正在下载sing-box内核...\e[0m"
-    sleep 3
+    sleep 1
     arch=$(uname -m)
     echo -e "\e[1;3;32m本机系统架构: $arch（ amd64，64-bit 架构）\e[0m"
 
