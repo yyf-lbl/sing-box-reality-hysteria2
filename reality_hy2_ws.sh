@@ -375,15 +375,18 @@ read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默�
 use_fixed=${use_fixed:-Y}
 
 if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
-    # 用户选择使用固定隧道
-    read -p "请输入你的 argo 域名: " argo_domain
-    read -p "请输入你的 argo 密钥 (token 或 json): " argo_auth
+  # 用户选择使用固定隧道
+read -p "请输入你的 argo 域名: " argo_domain
+read -p "请输入你的 argo 密钥 (token 或 json): " argo_auth
 
-    # 处理 Argo 的配置
-    if [[ $argo_auth =~ TunnelSecret ]]; then
-        echo $argo_auth > /root/sbox/tunnel.json
-        cat > /root/sbox/tunnel.yml << EOF
-tunnel: $(cut -d\" -f12 <<< "$argo_auth")
+# 处理 Argo 的配置
+if [[ $argo_auth =~ TunnelSecret ]]; then
+    # 创建 JSON 凭据文件
+    echo "$argo_auth" > /root/sbox/tunnel.json
+
+    # 生成 tunnel.yml 文件
+    cat > /root/sbox/tunnel.yml << EOF
+tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 protocol: http2
 
@@ -394,33 +397,19 @@ ingress:
       noTLSVerify: true
   - service: http_status:404
 EOF
-    else
-        echo "错误: 无效的密钥。"
-        exit 1
-    fi
-    cat > /etc/systemd/system/argo.service << EOF
-[Unit]
-Description=Cloudflare Tunnel
-After=network.target
 
-[Service]
-Type=simple
-NoNewPrivileges=yes
-TimeoutStartSec=0
-ExecStart=/root/sbox/argo tunnel --config /root/sbox/tunnel.yml --url http://localhost:8001 --no-autoupdate --edge-ip-version auto --protocol http2
-Restart=on-failure
-RestartSec=5s
-[Install]
-WantedBy=multi-user.target
-EOF
-
+    echo "生成的 tunnel.yml 文件内容:"
+    cat /root/sbox/tunnel.yml
+else
+    echo "错误: 无效的密钥。"
+    exit 1
+fi
     # 生成链接输出
      vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
     
     # 输出生成的链接
     echo "生成的 vmess 链接: $vmess_link_tls" 
-    systemctl start argo
-    systemctl enable argo
+  
 else
     # 用户选择使用临时隧道
     pid=$(pgrep -f cloudflared)
