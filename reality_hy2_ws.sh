@@ -229,10 +229,11 @@ show_client_configuration() {
 # 检查是否存在固定隧道
 if [ "$use_fixed" = "Y" ]; then
     # 使用固定隧道生成链接
+    echo "vmess_port: $vmess_port"  # 调试输出
     if jq -e --arg port "http://localhost:$vmess_port" '.ingress[] | select(.service == $port)' /root/sbox/tunnel.yml > /dev/null; then
         fixed_tunnel_domain=$(jq -r --arg port "http://localhost:$vmess_port" '.ingress[] | select(.service == $port) | .hostname' /root/sbox/tunnel.yml)
         echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接\e[0m"
-
+        
         # 生成固定隧道链接
         vmess_link_tls='vmess://'$(echo '{"add":"'$fixed_tunnel_domain'","aid":"0","host":"'$fixed_tunnel_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
@@ -241,6 +242,8 @@ if [ "$use_fixed" = "Y" ]; then
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
     else
         echo -e "\e[1;3;31m未找到对应的固定隧道配置。\e[0m"
+         cat /root/sbox/tunnel.yml  # 输出 tunnel.yml 的内容
+        echo "vmess_port: $vmess_port"
     fi
 else
     # 不存在固定隧道，生成临时隧道链接
