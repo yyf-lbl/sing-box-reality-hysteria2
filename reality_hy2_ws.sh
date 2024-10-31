@@ -356,7 +356,7 @@ done
 
             2)
            echo "开始配置 vmess"
-sleep 3
+sleep 1
 
 # 生成 vmess UUID
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
@@ -415,7 +415,7 @@ WantedBy=multi-user.target
 EOF
 
     # 生成链接输出
-    vmess_link_tls='vmess://'$(echo -n '{"v": "2", "ps": "vmess-tls", "add": "'"$argo_domain"'", "port": "443", "id": "'"$vmess_uuid"'", "aid": "0", "scy": "none", "net": "ws", "type": "none", "host": "'"$argo_domain"'", "path": "/vmess?ed=2048", "tls": "tls", "sni": "'"$argo_domain"'", "alpn": "", "fp": "randomized", "allowInsecure": false}' | base64 -w 0)
+     vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
     
     # 输出生成的链接
     echo "生成的 vmess 链接: $vmess_link_tls" 
