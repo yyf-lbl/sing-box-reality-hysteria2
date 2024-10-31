@@ -394,6 +394,11 @@ read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默�
 use_fixed=${use_fixed:-Y}
 
 if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
+     pid=$(pgrep -f cloudflared-linux)
+    if [ -n "$pid" ]; then
+        # 终止现有进程
+        kill "$pid"
+    fi 
     # 登录 CF 授权并下载证书
     /root/sbox/cloudflared-linux tunnel login
 
