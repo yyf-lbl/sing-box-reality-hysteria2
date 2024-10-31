@@ -430,7 +430,7 @@ else
         kill "$pid"
     fi 
 
-    # 生成临时隧道
+    # 启动临时隧道
     /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
     sleep 2
     echo "等待 Cloudflare Argo 生成地址"
@@ -440,7 +440,6 @@ else
     argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
-
 # 清理日志
 rm -rf /root/sbox/argo.log
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
@@ -460,10 +459,6 @@ rm -rf /root/sbox/argo.log
                             "path": $ws_path
                         }
                     }]')
-                     # 生成链接输出
-     vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
-              # 输出生成的链接
-    echo "生成的 vmess 链接: $vmess_link_tls" 
                 ;;
 
             3)
