@@ -60,20 +60,64 @@ install_base(){
 }
 # regenrate cloudflared argo
 regenarte_cloudflared_argo(){
-  pid=$(pgrep -f cloudflared)
-  if [ -n "$pid" ]; then
-    # 终止进程
-    kill "$pid"
-  fi
-  vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
-  #生成地址
-  /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
-  sleep 2
-  echo 等待cloudflare argo生成地址
-  sleep 5
-  #连接到域名
-  argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-  echo "$argo" | base64 > /root/sbox/argo.txt.b64
+if [[ "$use_fixed" =~ ^[Yy]$ ]]; then
+     pid=$(pgrep -f cloudflared-linux)
+    if [ -n "$pid" ]; then
+        # 终止现有进程
+        kill "$pid"
+    fi 
+# 提示用户选择使用固定 Argo 隧道或临时隧道
+read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
+use_fixed=${use_fixed:-Y}
+    # 登录 CF 授权并下载证书
+    /root/sbox/cloudflared-linux tunnel login
+    # 设置证书路径
+    export TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
+    # 用户输入 Argo 域名和密钥
+    read -p "请输入你的 Argo 域名: " argo_domain
+    read -p "请输入你的 Argo 密钥 (token 或 json): " argo_auth
+    # 处理 Argo 的配置
+    if [[ $argo_auth =~ TunnelSecret ]]; then
+        # 创建 JSON 凭据文件
+        echo "$argo_auth" > /root/sbox/tunnel.json
+
+        # 生成 tunnel.yml 文件
+        cat > /root/sbox/tunnel.yml << EOF
+tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
+credentials-file: /root/sbox/tunnel.json
+origincert: $TUNNEL_ORIGIN_CERT
+protocol: http2
+
+ingress:
+  - hostname: $argo_domain
+    service: http://localhost:$vmess_port
+    originRequest:
+      noTLSVerify: true
+  - service: http_status:404
+EOF
+
+        echo "生成的 tunnel.yml 文件内容:"
+        cat /root/sbox/tunnel.yml
+        # 启动固定隧道
+       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+        echo "固定隧道已启动，日志输出到 /root/sbox/argo_run.log"
+    fi
+else
+    # 用户选择使用临时隧道
+    pid=$(pgrep -f cloudflared)
+    if [ -n "$pid" ]; then
+        # 终止现有进程
+        kill "$pid"
+    fi 
+    # 启动临时隧道
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
+    sleep 2
+    echo "等待 Cloudflare Argo 生成地址"
+    sleep 5   
+    # 获取连接到域名
+    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+fi
   rm -rf argo.log
   }
 # download singbox and cloudflared
@@ -446,7 +490,7 @@ else
     /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
     sleep 2
     echo "等待 Cloudflare Argo 生成地址"
-    sleep 5   
+    sleep 2  
 
     # 获取连接到域名
     argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
