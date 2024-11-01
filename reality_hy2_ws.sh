@@ -484,11 +484,10 @@ EOF
     fi
 else
     # 用户选择使用临时隧道
-    pid=$(pgrep -f cloudflared)
-    if [ -n "$pid" ]; then
-        # 终止现有进程
-        kill "$pid"
-    fi 
+   pid=$(pgrep -f cloudflared-linux)
+if [ -n "$pid" ]; then
+    kill "$pid" 2>/dev/null
+fi
     # 启动临时隧道
  /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
 sleep 2
