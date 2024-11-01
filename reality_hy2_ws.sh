@@ -58,31 +58,36 @@ install_base(){
       fi
   fi
 }
-# regenrate cloudflared argo
+# 重新配置隧道
 regenarte_cloudflared_argo(){
+ vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+# 提示用户选择使用固定 Argo 隧道或临时隧道
+read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
+use_fixed=${use_fixed:-Y}
+
 if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
      pid=$(pgrep -f cloudflared-linux)
     if [ -n "$pid" ]; then
         # 终止现有进程
         kill "$pid"
     fi 
-# 提示用户选择使用固定 Argo 隧道或临时隧道
-read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
-use_fixed=${use_fixed:-Y}
     # 登录 CF 授权并下载证书
     /root/sbox/cloudflared-linux tunnel login
+
     # 设置证书路径
-    export TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
+    TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
+
     # 用户输入 Argo 域名和密钥
     read -p "请输入你的 Argo 域名: " argo_domain
     read -p "请输入你的 Argo 密钥 (token 或 json): " argo_auth
+
     # 处理 Argo 的配置
     if [[ $argo_auth =~ TunnelSecret ]]; then
         # 创建 JSON 凭据文件
         echo "$argo_auth" > /root/sbox/tunnel.json
 
         # 生成 tunnel.yml 文件
-        cat > /root/sbox/tunnel.yml << EOF
+ cat > /root/sbox/tunnel.yml << EOF
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 origincert: $TUNNEL_ORIGIN_CERT
@@ -104,21 +109,20 @@ EOF
     fi
 else
     # 用户选择使用临时隧道
-    pid=$(pgrep -f cloudflared)
-    if [ -n "$pid" ]; then
-        # 终止现有进程
-        kill "$pid"
-    fi 
-    # 启动临时隧道
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
-    sleep 2
-    echo "等待 Cloudflare Argo 生成地址"
-    sleep 5   
-    # 获取连接到域名
-    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+   pid=$(pgrep -f cloudflared-linux)
+if [ -n "$pid" ]; then
+    kill "$pid" 2>/dev/null
 fi
-  rm -rf argo.log
+    # 启动临时隧道
+ /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
+sleep 2
+echo 等待cloudflare argo生成地址
+sleep 5
+#连接到域名
+argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
+ rm -rf argo.log
+fi
   }
 # download singbox and cloudflared
 download_cloudflared(){
@@ -491,12 +495,12 @@ fi
     # 启动临时隧道
  /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
 sleep 2
-clear
 echo 等待cloudflare argo生成地址
 sleep 5
 #连接到域名
 argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
+ rm -rf argo.log
 fi
 
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
