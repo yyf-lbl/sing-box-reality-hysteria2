@@ -242,11 +242,11 @@ if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
         echo ""
 else
     # 不存在固定隧道，生成临时隧道链接
-   if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
+   jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
         vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
         ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
         argo=$(base64 --decode /root/sbox/argo.txt.b64)
-        echo -e "\e[1;3;31m使用临时隧道 Vmess 客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
+        echo -e "\e[1;3;31mVmess 客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
        echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         echo ""
         vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
@@ -256,8 +256,7 @@ else
         echo ""
         vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
           echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
-        echo ""
-    fi
+        echo ""  
 fi    
    # 生成 TUIC 客户端链接
 if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
@@ -482,21 +481,20 @@ EOF
     fi
 else
     # 用户选择使用临时隧道
-    pid=$(pgrep -f cloudflared-linux)
-    if [ -n "$pid" ]; then
-        # 终止现有进程
-        kill "$pid"
-    fi 
-    # 启动临时隧道
-/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 &
+ pid=$(pgrep -f cloudflared)
+if [ -n "$pid" ]; then
+  # 终止进程
+  kill "$pid"
+fi
+#生成地址
+/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
 sleep 2
 echo 等待cloudflare argo生成地址
 sleep 2
-#提取域名
-argo=$(grep -a 'Your quick Tunnel has been created!' /root/sbox/argo.log -A 2 | grep -oP 'https://\K[^ ]+')
-echo "$argo" 
+#连接到域名
+argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
-
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
