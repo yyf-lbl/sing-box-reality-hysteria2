@@ -857,7 +857,6 @@ show_client_configuration
         ;;
     7)
         restart_tunnel
-        show_client_configuration 
         ;;
     8) 
        # 检查配置并启动服务
