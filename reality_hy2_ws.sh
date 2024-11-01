@@ -492,8 +492,7 @@ sleep 2
 echo 等待cloudflare argo生成地址
 sleep 2
 #提取域名
-strings argo.log > argo_text.log
-argo=$(grep trycloudflare.com argo.log | awk 'NR==2 {print $1}' | sed 's|https://||')
+argo=$(cat argo.log | grep -a trycloudflare.com | awk 'NR==2 {print $1}' | sed 's|https://||')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
