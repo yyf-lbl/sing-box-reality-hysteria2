@@ -486,13 +486,13 @@ if [ -n "$pid" ]; then
   # 终止进程
   kill "$pid"
 fi
-#生成地址
+#启动临时隧道
 /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
 sleep 2
 echo 等待cloudflare argo生成地址
 sleep 2
-#连接到域名
-argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+#提取域名
+argo=$(grep trycloudflare.com argo.log | awk 'NR==2 {print $1}' | sed 's|https://||')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
