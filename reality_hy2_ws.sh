@@ -295,10 +295,10 @@ uninstall_singbox() {
         "/root/sbox/public.key.b64"
         "/root/self-cert/private.key"
         "/root/self-cert/cert.pem"
-        "/root/sbox"
     )
     directories_to_remove=(
         "/root/self-cert/"
+        "/root/.cloudflared/"
         "/root/sbox/"
     )
     # 删除文件并检查是否成功
