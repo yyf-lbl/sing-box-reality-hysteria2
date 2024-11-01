@@ -476,13 +476,10 @@ if [ -n "$pid" ]; then
     # 终止现有进程
     pkill -f cloudflared-linux 2>/dev/null
 fi
-
-    # 登录 CF 授权并下载证书
- #   /root/sbox/cloudflared-linux tunnel login
-
-    # 设置证书路径
-#    TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
-
+ echo -e "\033[1;3;33m请访问以下网站生成 Argo 固定隧道所需的Json配置信息。${RESET}"
+        echo ""
+        echo -e "${red}      https://fscarmen.cloudflare.now.cc/ ${reset}"
+        echo ""
     # 确保输入有效的 Argo 域名
 while true; do
     read -p $'\e[1;3;33m请输入你的 Argo 域名: \e[0m' argo_domain
