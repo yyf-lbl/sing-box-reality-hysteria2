@@ -354,7 +354,8 @@ install_singbox() {
     if [ "$valid" = false ]; then
         echo "选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。"
     else
-        echo "所有选择的协议都是有效的。"
+        echo -e "\e[1;3;32m正在根据所选协议正在进行配置...\e[0m"
+        sleep 2
         break  # 有效选择后退出循环
     fi
 done
@@ -483,7 +484,7 @@ EOF
     fi
 else
     # 用户选择使用临时隧道
-    pid=$(pgrep -f cloudflared-linux)
+    pid=$(pgrep -f cloudflared)
     if [ -n "$pid" ]; then
         # 终止现有进程
         kill "$pid"
