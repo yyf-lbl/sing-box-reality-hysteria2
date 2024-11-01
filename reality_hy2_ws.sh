@@ -60,20 +60,64 @@ install_base(){
 }
 # regenrate cloudflared argo
 regenarte_cloudflared_argo(){
-  pid=$(pgrep -f cloudflared)
-  if [ -n "$pid" ]; then
-    # 终止进程
-    kill "$pid"
-  fi
-  vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
-  #生成地址
-  /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
-  sleep 2
-  echo 等待cloudflare argo生成地址
-  sleep 5
-  #连接到域名
-  argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-  echo "$argo" | base64 > /root/sbox/argo.txt.b64
+if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
+     pid=$(pgrep -f cloudflared-linux)
+    if [ -n "$pid" ]; then
+        # 终止现有进程
+        kill "$pid"
+    fi 
+# 提示用户选择使用固定 Argo 隧道或临时隧道
+read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
+use_fixed=${use_fixed:-Y}
+    # 登录 CF 授权并下载证书
+    /root/sbox/cloudflared-linux tunnel login
+    # 设置证书路径
+    export TUNNEL_ORIGIN_CERT=/root/.cloudflared/cert.pem
+    # 用户输入 Argo 域名和密钥
+    read -p "请输入你的 Argo 域名: " argo_domain
+    read -p "请输入你的 Argo 密钥 (token 或 json): " argo_auth
+    # 处理 Argo 的配置
+    if [[ $argo_auth =~ TunnelSecret ]]; then
+        # 创建 JSON 凭据文件
+        echo "$argo_auth" > /root/sbox/tunnel.json
+
+        # 生成 tunnel.yml 文件
+        cat > /root/sbox/tunnel.yml << EOF
+tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
+credentials-file: /root/sbox/tunnel.json
+origincert: $TUNNEL_ORIGIN_CERT
+protocol: http2
+
+ingress:
+  - hostname: $argo_domain
+    service: http://localhost:$vmess_port
+    originRequest:
+      noTLSVerify: true
+  - service: "http_status:404"
+EOF
+
+        echo "生成的 tunnel.yml 文件内容:"
+        cat /root/sbox/tunnel.yml
+        # 启动固定隧道
+       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+        echo "固定隧道已启动，日志输出到 /root/sbox/argo_run.log"
+    fi
+else
+    # 用户选择使用临时隧道
+    pid=$(pgrep -f cloudflared)
+    if [ -n "$pid" ]; then
+        # 终止现有进程
+        kill "$pid"
+    fi 
+    # 启动临时隧道
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > /root/sbox/argo.log 2>&1 & 
+    sleep 2
+    echo "等待 Cloudflare Argo 生成地址"
+    sleep 5   
+    # 获取连接到域名
+    argo=$(grep "trycloudflare.com" /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+fi
   rm -rf argo.log
   }
 # download singbox and cloudflared
@@ -98,7 +142,7 @@ download_cloudflared(){
 # download singbox 
 download_singbox() {
     echo -e "\e[1;3;33m正在下载sing-box内核...\e[0m"
-    sleep 3
+    sleep 1
     arch=$(uname -m)
     echo -e "\e[1;3;32m本机系统架构: $arch（ amd64，64-bit 架构）\e[0m"
 
@@ -125,20 +169,20 @@ download_singbox() {
     # Check if the package already exists
     if [ -f "/root/sbox/sing-box" ]; then
         echo -e "\e[1;3;32m文件已经存在，跳过下载。\e[0m"
-        return  # 文件存在，跳过下载
+    else
+        # Download sing-box
+        url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
+        curl -sLo "$download_path" "$url"
+
+        # 解压和移动文件
+        tar -xzf "$download_path" -C /root
+        mv "/root/${package_name}/sing-box" /root/sbox
+        rm -r "$download_path" "/root/${package_name}"
+        chown root:root /root/sbox/sing-box
+        chmod +x /root/sbox/sing-box
     fi
-
-    url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-    curl -sLo "$download_path" "$url"
-
-    # 解压和移动文件
-    tar -xzf "$download_path" -C /root
-    mv "/root/${package_name}/sing-box" /root/sbox
-    rm -r "$download_path" "/root/${package_name}"
-    chown root:root /root/sbox/sing-box
-    chmod +x /root/sbox/sing-box
 }
-
+#生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
     if [[ ! -f /root/sbox/sbconfig_server.json ]]; then
@@ -180,13 +224,30 @@ show_client_configuration() {
          echo -e "\e[1;3;33m$hy2_server_link\e[0m"
          echo ""
     fi
-    # 生成 VMess 客户端链接
-    if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
-        vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
-        ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
-        argo=$(base64 --decode /root/sbox/argo.txt.b64)
-        echo -e "\e[1;3;31mVmess 客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
-       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
+  
+   # 判断是否存在固定隧道配置 生成 VMess 客户端链接
+# 检查是否存在固定隧道
+if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
+    # 使用固定隧道生成链接
+        echo -e "\e[1;3;31m使用固定隧道生成的 Vmess 客户端通用链接,替换$argo_domain为cloudflare优选ip或域名,可获得极致速度体验！\e[0m"
+      echo ""
+      echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
+        # 生成固定隧道链接
+        vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"vmess-tls","tls":"tls","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
+        echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
+ echo ""
+ echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m"
+        vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
+        echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
+        echo ""
+else
+    # 不存在固定隧道，生成临时隧道链接
+  argo=$(base64 --decode /root/sbox/argo.txt.b64)
+  vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
+  ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
+        echo -e "\e[1;3;31m使用临时隧道生成的Vmess客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
+        echo ""
+        echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         echo ""
         vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
@@ -195,9 +256,8 @@ show_client_configuration() {
         echo ""
         vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
           echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
-        echo ""
-    fi
-    
+        echo ""  
+fi    
    # 生成 TUIC 客户端链接
 if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
     tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
@@ -234,6 +294,7 @@ uninstall_singbox() {
         "/root/sbox/public.key.b64"
         "/root/self-cert/private.key"
         "/root/self-cert/cert.pem"
+        "/root/sbox"
     )
     directories_to_remove=(
         "/root/self-cert/"
@@ -262,7 +323,6 @@ echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
 
 }
 install_base
-#安装sing-box函数
 install_singbox() { 
   while true; do
     echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
@@ -427,14 +487,17 @@ if [ -n "$pid" ]; then
   kill "$pid"
 fi
 # 启动 Cloudflare Tunnel
-/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
+/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
+
+# 等待几秒钟以确保 Tunnel 启动完成
 sleep 2
-clear
-echo 等待cloudflare argo生成地址
-sleep 5
-#连接到域名
-argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "等待 Cloudflare Argo 生成地址"
+sleep 2
+
+# 提取域名
+argo=$(strings argo.log | grep trycloudflare.com | awk 'NR==2 {print}' | sed 's|https://||')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
+
 fi
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
@@ -565,7 +628,6 @@ else
     echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
 fi
 }
-#重新安装sing-box
 reinstall_sing_box() {
     show_notice "重新安装中..."
 
@@ -593,6 +655,7 @@ reinstall_sing_box() {
 
 # 用户交互界面
 while true; do
+# Introduction animation
 clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
 echo ""
