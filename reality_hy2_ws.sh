@@ -427,17 +427,14 @@ if [ -n "$pid" ]; then
   kill "$pid"
 fi
 # 启动 Cloudflare Tunnel
-/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux > argo.log 2>&1 &
-
-# 等待几秒钟以确保 Tunnel 启动完成
+/root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
 sleep 2
-echo "等待 Cloudflare Argo 生成地址"
-sleep 2
-
-# 提取域名
-argo=$(strings argo.log | grep trycloudflare.com | awk 'NR==2 {print}' | sed 's|https://||')
+clear
+echo 等待cloudflare argo生成地址
+sleep 5
+#连接到域名
+argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
-
 fi
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
