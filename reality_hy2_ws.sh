@@ -368,8 +368,8 @@ done
     for choice in $choices; do
         case $choice in
             1)
-                echo "开始配置 Reality"
-                sleep 3
+                echo -e "\e[1;3;33m开始配置 Reality\e[0m"
+                sleep 2
                 # 生成 Reality 密钥对
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
                 if [ $? -ne 0 ]; then
@@ -381,13 +381,15 @@ done
                 echo "$public_key" | base64 > /root/sbox/public.key.b64
                 uuid=$(/root/sbox/sing-box generate uuid)
                 short_id=$(/root/sbox/sing-box generate rand --hex 8)
-                echo "UUID 和短 ID 生成完成"
-                echo ""
-                read -p "请输入 Reality 端口 (default: 443): " listen_port_input
+                echo -e "\e[1;3;32mUUID 和短 ID 生成完成\e[0m"
+                echo -e "\e[1;3;32mUUID为: $uuid\e[0m"
+                echo -e "\e[1;3;32m短UUID为: $short_id\e[0m"
+                read -p $'\e[1;3;33m请输入 Reality 端口 (default: 443): \e[0m' listen_port_input
                 listen_port=${listen_port_input:-443}
-                read -p "请输入想要使用的域名 (default: itunes.apple.com): " server_name_input
+                echo -e "\e[1;3;32mvless端口: $listen_port\e[0m"
+                read -p $'\e[1;3;33m请输入想要使用的域名 (default: itunes.apple.com): \e[0m' server_name_input
                 server_name=${server_name_input:-itunes.apple.com}
-                echo ""
+                echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
                 config=$(echo "$config" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
@@ -419,17 +421,16 @@ done
                 ;;
 
             2)
-           echo "开始配置 vmess"
+           echo -e "\e[1;3;33m开始配置 vmess\e[0m"
 sleep 1
 
 # 生成 vmess UUID
 vmess_uuid=$(/root/sbox/sing-box generate uuid)
-
+echo -e "\e[1;3;32mvmess UUID为:$vmess_uuid\e[0m"
 # 询问 vmess 端口
-read -p "请输入 vmess 端口，默认为 15555: " vmess_port
+read -p $'\e[1;3;33m请输入 vmess 端口，默认为 15555: \e[0m' vmess_port
 vmess_port=${vmess_port:-15555}
-echo ""
-
+echo -e "\e[1;3;32mvmess端口:$vmess_port\e[0m"
 # 询问 ws 路径
 read -p "ws 路径 (默认随机生成): " ws_path
 ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
