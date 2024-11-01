@@ -249,7 +249,21 @@ else
         echo -e "\e[1;3;31m使用临时隧道生成的Vmess客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
        echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         echo ""
-        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
+        vmess_link_tls='vmess://'$(echo '{
+  "add": "speed.cloudflare.com",
+  "aid": "0",
+  "host": "'$argo'",
+  "id": "'$vmess_uuid'",
+  "net": "ws",
+  "path": "'$ws_path'",
+  "port": "443",
+  "ps": "sing-box-vmess-tls",
+  "tls": "tls",
+  "type": "none",
+  "allowInsecure": true,
+  "v": "2"
+}' | base64 -w 0)
+
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
         echo ""
         echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
