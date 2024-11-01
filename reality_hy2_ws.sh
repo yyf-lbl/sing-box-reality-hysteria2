@@ -285,11 +285,11 @@ fi
 }
 uninstall_singbox() {
     echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
-      pid=$(pgrep -f cloudflared-linux)
-    if [ -n "$pid" ]; then
-        # 终止现有进程
-        kill "$pid" 2>/dev/null
-    fi 
+   pid=$(pgrep -f cloudflared-linux)
+if [ -n "$pid" ]; then
+    # 终止现有进程
+    pkill -f cloudflared-linux 2>/dev/null
+fi
     sleep 2
     # 尝试停止并禁用singbox服务，如果未发现错误，则抑制错误
     systemctl stop sing-box 2>/dev/null
@@ -450,11 +450,12 @@ read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默�
 use_fixed=${use_fixed:-Y}
 
 if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
-     pid=$(pgrep -f cloudflared-linux)
-    if [ -n "$pid" ]; then
-        # 终止现有进程
-        kill "$pid" 2>/dev/null
-    fi 
+   pid=$(pgrep -f cloudflared-linux)
+if [ -n "$pid" ]; then
+    # 终止现有进程
+    pkill -f cloudflared-linux 2>/dev/null
+fi
+
     # 登录 CF 授权并下载证书
  #   /root/sbox/cloudflared-linux tunnel login
 
@@ -492,10 +493,12 @@ EOF
     fi
 else
     # 用户选择使用临时隧道
-   pid=$(pgrep -f cloudflared-linux)
+pid=$(pgrep -f cloudflared-linux)
 if [ -n "$pid" ]; then
-    kill "$pid" 2>/dev/null
+    # 终止现有进程
+    pkill -f cloudflared-linux 2>/dev/null
 fi
+
     # 启动临时隧道
  /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
 sleep 2
