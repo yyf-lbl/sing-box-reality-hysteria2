@@ -488,7 +488,7 @@ else
         kill "$pid"
     fi 
     # 启动临时隧道
- /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol h2mux>argo.log 2>&1 &
+ /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
 sleep 2
 clear
 echo 等待cloudflare argo生成地址
