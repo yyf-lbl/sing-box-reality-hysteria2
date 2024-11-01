@@ -242,12 +242,11 @@ if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
         echo ""
 else
     # 不存在固定隧道，生成临时隧道链接
-   jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
-        vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
-        ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
-        argo=$(base64 --decode /root/sbox/argo.txt.b64)
+  argo=$(base64 --decode /root/sbox/argo.txt.b64)
+  vmess_uuid=$(jq -r '.inbounds[2].users[0].uuid' /root/sbox/sbconfig_server.json)
+  ws_path=$(jq -r '.inbounds[2].transport.path' /root/sbox/sbconfig_server.json)
         echo -e "\e[1;3;31mVmess 客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
-       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
+        echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         echo ""
         vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
