@@ -283,6 +283,27 @@ if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json
 fi
 
 }
+#重启cloudflare隧道
+restart_tunnel() {
+    echo -e "\e[1;3;32m正在重启隧道...\e[0m"
+
+    # 停止现有的 cloudflared 进程
+    pkill -f cloudflared-linux
+
+    sleep 2  # 等待进程完全终止
+
+    # 判断是固定隧道还是临时隧道
+    if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
+        echo -e "\e[1;3;32m启动固定隧道...\e[0m"
+        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /dev/null 2>&1 &
+    else
+        echo -e "\e[1;3;32m启动临时隧道...\e[0m"
+        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
+    fi
+
+    echo -e "\e[1;3;32m隧道已重新启动。\e[0m"
+}
+
 uninstall_singbox() {
     echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
    pid=$(pgrep -f cloudflared-linux)
@@ -835,14 +856,10 @@ show_client_configuration
         echo ""
         ;;
     7)
-
-        regenarte_cloudflared_argo
-        echo "重新启动完成，查看新的vmess客户端信息"
-        show_client_configuration
-    
+        restart_tunnel
+        show_client_configuration 
         ;;
     8) 
-
        # 检查配置并启动服务
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
     systemctl daemon-reload
