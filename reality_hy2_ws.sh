@@ -141,7 +141,7 @@ download_cloudflared(){
   cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
   curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
   chmod +x /root/sbox/cloudflared-linux
-  echo -e "\e[1;35m=================\e[0m"
+  echo -e "\e[1;35m======================\e[0m"
 }
 # download singbox 
 download_singbox() {
@@ -704,6 +704,7 @@ check_tunnel_status() {
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         # 检查固定隧道状态
         echo -e "\e[1;3;33m正在检查固定隧道状态...\e[0m"
+          sleep 2
         echo ""
         if [ -f "/root/sbox/argo_run.log" ]; then
             if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
