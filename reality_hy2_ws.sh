@@ -306,6 +306,7 @@ restart_tunnel() {
 #卸载sing-box程序
 uninstall_singbox() {
     echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
+    echo ""
    pid=$(pgrep -f cloudflared-linux)
 if [ -n "$pid" ]; then
     # 终止现有进程
@@ -351,7 +352,7 @@ fi
     done
    echo -e "\e[1;3;32msing-box已成功卸载!\e[0m"
 echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
-
+ echo ""
 }
 install_base
 install_singbox() { 
