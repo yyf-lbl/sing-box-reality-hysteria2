@@ -141,7 +141,7 @@ download_cloudflared(){
   cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
   curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
   chmod +x /root/sbox/cloudflared-linux
-  echo ""
+  echo "========="
 }
 # download singbox 
 download_singbox() {
@@ -707,7 +707,7 @@ check_tunnel_status() {
         echo ""
         if [ -f "/root/sbox/argo_run.log" ]; then
             if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
-                echo -e "\e[1;3;32m固定隧道正常运行。\e[0m"
+                echo -e "\e[1;3;32mCfloudflared固定隧道正常运行。\e[0m"
                 echo ""
             else
                 echo -e "\e[1;3;31m固定隧道未能成功启动。\e[0m"
@@ -719,9 +719,11 @@ check_tunnel_status() {
     else
         # 检查临时隧道状态
         echo -e "\e[1;3;33m正在检查临时隧道状态...\e[0m"
+        sleep 2
+        echo ""
         if [ -f "/root/sbox/argo.log" ]; then
             if grep -q "Your quick Tunnel has been created!" /root/sbox/argo.log; then
-                echo -e "\e[1;3;32m临时隧道正常运行!\e[0m"
+                echo -e "\e[1;3;32mCfloudflared临时隧道正常运行!\e[0m"
                # grep "Visit it at" /root/sbox/argo.log  # 输出隧道地址
                echo ""
             else
@@ -738,7 +740,7 @@ while true; do
 # Introduction animation
 clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
-echo -e "\e[1;3;31m=== argo隧道配置文件生成网址  https://fscarmen.cloudflare.now.cc/ ===\e[0m"
+echo -e "\e[1;3;31m=== argo隧道配置文件生成网址 \e[1;3;33mhttps://fscarmen.cloudflare.now.cc/\e[1;3;31m ===\e[0m"
 echo -e "\e[1;3;33m=== 脚本支持: VLESS VMESS HY2 协议 ===\e[0m"  # 蓝色斜体加粗
 echo -e "\e[1;3;31m***********************\e[0m"
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
