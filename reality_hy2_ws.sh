@@ -524,7 +524,7 @@ EOF
         # 启动固定隧道
        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
         echo -e "\e[1;3;32m固定隧道功能已启动！\e[0m"
-        rm -rf /root/sbox/argo_run.log
+    
     fi
 else
     # 用户选择使用临时隧道
@@ -535,14 +535,14 @@ if [ -n "$pid" ]; then
 fi
 
     # 启动临时隧道
- /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
+ /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
 sleep 2
 echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
 sleep 5
 #连接到域名
 argo=$(cat argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
- rm -rf argo.log
+
 fi
 # 生成vmess配置文件
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
