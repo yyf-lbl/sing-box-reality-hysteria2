@@ -699,6 +699,32 @@ reinstall_sing_box() {
         download_cloudflared
         install_singbox
 }
+# 检测隧道状况
+check_tunnel_status() {
+    # 检查固定隧道状态
+    if [ -f "/root/sbox/argo_run.log" ]; then
+        if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
+            echo -e "\e[1;32m隧道正常运行。\e[0m"
+        else
+            echo -e "\e[1;31m隧道未能成功启动。\e[0m"
+            restart_tunnel  # 如果需要，可以调用重启函数
+        fi
+    else
+        echo -e "\e[1;31m找不到 argo_run.log 文件，无法检查隧道状态。\e[0m"
+    fi
+
+    # 检查临时隧道的状态
+    if [ -f "argo.log" ]; then
+        if grep -q "Your quick Tunnel has been created!" argo.log; then
+            echo -e "\e[1;32m临时隧道正常运行，访问链接：\e[0m"
+            grep "Visit it at" argo.log  # 输出隧道地址
+        else
+            echo -e "\e[1;31m临时隧道未能成功启动。\e[0m"
+        fi
+    else
+        echo -e "\e[1;31m找不到 argo.log 文件，无法检查临时隧道状态。\e[0m"
+    fi
+}
 
 # 用户交互界面
 while true; do
@@ -725,6 +751,8 @@ echo  "==============="
 echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;32m9. 查看cloudflare启动状况\e[0m"
 echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
@@ -887,7 +915,9 @@ else
     echo "Error in configuration. Aborting"
 fi
         ;;
-
+    9)
+     check_tunnel_status
+      ;;
     0)
         echo -e "\e[1;3;31m已退出脚本\e[0m"
         exit 0
