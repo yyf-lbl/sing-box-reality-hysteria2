@@ -316,6 +316,24 @@ argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | a
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
     fi
     echo -e "\e[1;3;32m隧道已重新启动。\e[0m"
+     cat > /etc/systemd/system/cloudflared.service << EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+ExecStart=/root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run
+Restart=always
+User=root
+StandardOutput=append:/root/sbox/argo_run.log
+StandardError=append:/root/sbox/argo_run.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+ systemctl daemon-reload
+ systemctl start cloudflared
+ systemctl enable cloudflared
 }
 #卸载sing-box程序
 uninstall_singbox() {
@@ -957,23 +975,6 @@ printf "\e[1;3;33m按任意键返回...\e[0m"
 read -n 1 -s -r
     clear
 done
- cat > /etc/systemd/system/cloudflared.service << EOF
-[Unit]
-Description=Cloudflare Tunnel
-After=network.target
 
-[Service]
-ExecStart=/root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run
-Restart=always
-User=root
-StandardOutput=append:/root/sbox/argo_run.log
-StandardError=append:/root/sbox/argo_run.log
-
-[Install]
-WantedBy=multi-user.target
-EOF
- systemctl daemon-reload
- systemctl start cloudflared
- systemctl enable cloudflared
 
  
