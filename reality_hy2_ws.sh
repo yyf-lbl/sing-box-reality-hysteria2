@@ -3,7 +3,7 @@
 setup_run_script() {
     # 如果 run_script.sh 已存在，直接返回
     if [[ -f ~/run_script.sh ]]; then
-        echo " "
+        echo "run_script.sh 已存在，跳过创建。"
         return
     fi
 
@@ -18,7 +18,6 @@ EOF
 
     # 添加别名到 .bashrc
     echo "alias 5='~/run_script.sh'" >> ~/.bashrc
-
     # 重新加载 .bashrc 以使别名生效
     source ~/.bashrc
 
@@ -26,12 +25,13 @@ EOF
 }
 
 # 检查是否已存在定义，避免重复添加
-if ! grep -q "setup_run_script()" ~/.bashrc; then
+if ! grep -q "setup_run_script" ~/.bashrc; then
     echo "setup_run_script()" >> ~/.bashrc
 fi
 
 # 调用函数
 setup_run_script
+
 
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
