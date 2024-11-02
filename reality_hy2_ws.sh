@@ -16,7 +16,7 @@ EOF
     # 修改权限
     chmod +x ~/run_script.sh
 
-    # 添加别名到 .bashrc 或 .bash_aliases
+    # 添加别名到 .bashrc
     echo "alias 5='~/run_script.sh'" >> ~/.bashrc
 
     # 重新加载 .bashrc 以使别名生效
@@ -25,13 +25,13 @@ EOF
     echo -e "\033[1;3;33m快捷指令已创建 << 数字 5 >>\033[0m"
 }
 
-# 调用函数
-setup_run_script
-
 # 检查是否已存在定义，避免重复添加
 if ! grep -q "setup_run_script()" ~/.bashrc; then
     echo "setup_run_script()" >> ~/.bashrc
 fi
+
+# 调用函数
+setup_run_script
 
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
