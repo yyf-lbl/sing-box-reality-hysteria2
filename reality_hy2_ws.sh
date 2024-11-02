@@ -17,11 +17,11 @@ EOF
     chmod +x ~/run_script.sh
 
     # 添加别名到 .bashrc 或 .bash_aliases
-    echo "alias 00='~/run_script.sh'" >> ~/.bashrc
+    echo "alias 5='~/run_script.sh'" >> ~/.bashrc
 
     # 重新加载 .bashrc 以使别名生效
     source ~/.bashrc
-    echo -e "\033[1;3;33m快捷指令已创建 <<数字 00 >>\033[0m"
+    echo -e "\033[1;3;33m快捷指令已创建 <<数字 5 >>\033[0m"
 }
 # 调用函数
 setup_run_script
@@ -866,7 +866,7 @@ clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
 echo -e "\e[1;3;31m=== argo隧道配置文件生成网址 \e[1;3;33mhttps://fscarmen.cloudflare.now.cc/\e[1;3;31m ===\e[0m"
 echo -e "\e[1;3;33m=== 脚本支持: VLESS VMESS HY2 协议 ===\e[0m" 
-echo -e "\e[1;3;33m=== 脚本快捷键指令：数字00 ===\e[0m" 
+echo -e "\e[1;3;33m=== 脚本快捷键指令：数字 5 ===\e[0m" 
 echo -e "\e[1;3;31m***********************\e[0m"
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo ""
