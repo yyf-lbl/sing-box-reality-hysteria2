@@ -1,5 +1,6 @@
 #!/bin/bash
 #脚本创建快捷方式
+sleep 2
 setup_run_script() {
     # 如果 run_script.sh 已存在，直接返回
     if [[ -f ~/run_script.sh ]]; then
@@ -21,7 +22,7 @@ EOF
 
     # 重新加载 .bashrc 以使别名生效
     source ~/.bashrc
-    echo "快捷指令已创建 5 "
+    echo -e "\033[1;3;33m快捷指令已创建 <<数字 5 >>\033[0m"
 }
 # 调用函数
 setup_run_script
