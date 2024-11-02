@@ -297,10 +297,23 @@ restart_tunnel() {
         echo -e "\e[1;3;32m启动固定隧道...\e[0m"
         /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
     else
-        echo -e "\e[1;3;32m启动临时隧道...\e[0m"
-        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+        echo -e "\e[1;3;32m正在重新启动临时隧道...\e[0m"
+        echo ""
+        vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+        pid=$(pgrep -f cloudflared-linux)
+if [ -n "$pid" ]; then
+    # 终止现有进程
+    pkill -f cloudflared-linux 2>/dev/null
+fi
+    # 启动临时隧道
+ /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+sleep 2
+echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
+sleep 5
+#连接到域名
+argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
     fi
-
     echo -e "\e[1;3;32m隧道已重新启动。\e[0m"
 }
 #卸载sing-box程序
