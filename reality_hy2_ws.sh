@@ -704,9 +704,11 @@ check_tunnel_status() {
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         # 检查固定隧道状态
         echo -e "\e[1;3;33m正在检查固定隧道状态...\e[0m"
+        echo ""
         if [ -f "/root/sbox/argo_run.log" ]; then
             if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
                 echo -e "\e[1;3;32m固定隧道正常运行。\e[0m"
+                echo ""
             else
                 echo -e "\e[1;3;31m固定隧道未能成功启动。\e[0m"
                 restart_tunnel  # 如果需要，可以调用重启函数
@@ -721,6 +723,7 @@ check_tunnel_status() {
             if grep -q "Your quick Tunnel has been created!" /root/sbox/argo.log; then
                 echo -e "\e[1;3;32m临时隧道正常运行!\e[0m"
                # grep "Visit it at" /root/sbox/argo.log  # 输出隧道地址
+               echo ""
             else
                 echo -e "\e[1;3;31m临时隧道未能成功启动。\e[0m"
                 restart_tunnel  # 如果需要，可以调用重启函数
@@ -735,7 +738,7 @@ while true; do
 # Introduction animation
 clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
-echo ""
+echo -e "\e[1;3;31m=== argo隧道配置文件生成网址  https://fscarmen.cloudflare.now.cc/ ===\e[0m"
 echo -e "\e[1;3;33m=== 脚本支持: VLESS VMESS HY2 协议 ===\e[0m"  # 蓝色斜体加粗
 echo -e "\e[1;3;31m***********************\e[0m"
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
