@@ -374,7 +374,7 @@ uninstall_singbox() {
     echo ""
     # 询问用户是否确认卸载
     while true; do
-        read -p "您确定要卸载sing-box服务吗？(y/n) [默认y]: " confirm
+         read -p $'\e[1;3;33m您确定要卸载sing-box服务吗？(y/n) [默认y]: \e[0m' confirm
         confirm=${confirm,,}  # 将输入转换为小写
         
         # 如果输入为空，视为 'y'
