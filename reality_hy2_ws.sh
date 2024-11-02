@@ -298,7 +298,7 @@ restart_tunnel() {
         /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
     else
         echo -e "\e[1;3;32m启动临时隧道...\e[0m"
-        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
+        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
     fi
 
     echo -e "\e[1;3;32m隧道已重新启动。\e[0m"
