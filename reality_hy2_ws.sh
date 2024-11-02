@@ -714,7 +714,7 @@ check_tunnel_status() {
     fi
 
     # 检查临时隧道的状态
-    if [ -f "argo.log" ]; then
+    if [ -f "/root/sbox/argo.log" ]; then
         if grep -q "Your quick Tunnel has been created!" argo.log; then
             echo -e "\e[1;32m临时隧道正常运行，访问链接：\e[0m"
             grep "Visit it at" argo.log  # 输出隧道地址
