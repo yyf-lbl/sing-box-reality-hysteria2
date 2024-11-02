@@ -24,7 +24,7 @@ EOF
 
     echo "run_script.sh 已创建，并已设置别名 5。"
 }
-
+setup_run_script
 # 将函数添加到 .bashrc 文件
 echo "setup_run_script()" >> ~/.bashrc
 # Function to print characters with delay
