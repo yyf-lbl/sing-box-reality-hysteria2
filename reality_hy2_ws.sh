@@ -957,5 +957,23 @@ printf "\e[1;3;33m按任意键返回...\e[0m"
 read -n 1 -s -r
     clear
 done
+ cat > /etc/systemd/system/cloudflared.service << EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+ExecStart=/root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run
+Restart=always
+User=root
+StandardOutput=append:/root/sbox/argo_run.log
+StandardError=append:/root/sbox/argo_run.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+ systemctl daemon-reload
+ systemctl start cloudflared
+ systemctl enable cloudflared
 
  
