@@ -286,7 +286,7 @@ fi
 #重启cloudflare隧道
 restart_tunnel() {
     echo -e "\e[1;3;32m正在检测隧道类型并重启中...\e[0m"
-     vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+     vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
 echo ""
     # 停止现有的 cloudflared 进程
     pkill -f cloudflared-linux
