@@ -703,30 +703,30 @@ reinstall_sing_box() {
 check_tunnel_status() {
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         # 检查固定隧道状态
-        echo -e "\e[1;33m检查固定隧道状态...\e[0m"
+        echo -e "\e[1;3;33m正在检查固定隧道状态...\e[0m"
         if [ -f "/root/sbox/argo_run.log" ]; then
             if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
-                echo -e "\e[1;32m固定隧道正常运行。\e[0m"
+                echo -e "\e[1;3;32m固定隧道正常运行。\e[0m"
             else
-                echo -e "\e[1;31m固定隧道未能成功启动。\e[0m"
+                echo -e "\e[1;3;31m固定隧道未能成功启动。\e[0m"
                 restart_tunnel  # 如果需要，可以调用重启函数
             fi
         else
-            echo -e "\e[1;31m找不到 argo_run.log 文件，无法检查固定隧道状态。\e[0m"
+            echo -e "\e[1;3;31m找不到日志文件，无法检查固定隧道状态。\e[0m"
         fi
     else
         # 检查临时隧道状态
-        echo -e "\e[1;33m检查临时隧道状态...\e[0m"
+        echo -e "\e[1;3;33m正在检查临时隧道状态...\e[0m"
         if [ -f "/root/sbox/argo.log" ]; then
             if grep -q "Your quick Tunnel has been created!" /root/sbox/argo.log; then
-                echo -e "\e[1;32m临时隧道正常运行，访问链接：\e[0m"
-                grep "Visit it at" /root/sbox/argo.log  # 输出隧道地址
+                echo -e "\e[1;3;32m临时隧道正常运行!\e[0m"
+               # grep "Visit it at" /root/sbox/argo.log  # 输出隧道地址
             else
-                echo -e "\e[1;31m临时隧道未能成功启动。\e[0m"
+                echo -e "\e[1;3;31m临时隧道未能成功启动。\e[0m"
                 restart_tunnel  # 如果需要，可以调用重启函数
             fi
         else
-            echo -e "\e[1;31m找不到 argo.log 文件，无法检查临时隧道状态。\e[0m"
+            echo -e "\e[1;3;31m找不到日志文件，无法检查临时隧道状态。\e[0m"
         fi
     fi
 }
@@ -763,7 +763,7 @@ echo  "==============="
 echo ""
 echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
 read -e choice
-  # 黄色斜体加粗
+  echo ""
 case $choice in
     1)
 
