@@ -316,13 +316,14 @@ argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | a
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
     fi
     echo -e "\e[1;3;32m隧道已重新启动。\e[0m"
+    # 添加隧道开机启动文件
      cat > /etc/systemd/system/cloudflared.service << EOF
 [Unit]
 Description=Cloudflare Tunnel
 After=network.target
 
 [Service]
-ExecStart=/root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run
+ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; fi'
 Restart=always
 User=root
 StandardOutput=append:/root/sbox/argo_run.log
@@ -331,6 +332,7 @@ StandardError=append:/root/sbox/argo_run.log
 [Install]
 WantedBy=multi-user.target
 EOF
+
  systemctl daemon-reload
  systemctl start cloudflared
  systemctl enable cloudflared
@@ -706,10 +708,41 @@ EOF
 else
     echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
 fi
+
+# 创建 Cloudflare 服务文件
+vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+CLOUDFLARED_PATH="/root/sbox/cloudflared-linux"
+CONFIG_PATH="/root/sbox/tunnel.yml"
+JSON_PATH="/root/sbox/tunnel.json"
+LOG_PATH="/root/sbox/argo_run.log"
+# 创建 Cloudflare 服务文件
+cat > /etc/systemd/system/cloudflared.service << EOF
+[Unit]
+Description=Cloudflare Tunnel
+After=network.target
+
+[Service]
+ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then $CLOUDFLARED_PATH tunnel --config $CONFIG_PATH run; else $CLOUDFLARED_PATH tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; fi'
+Restart=always
+User=root
+StandardOutput=append:$LOG_PATH
+StandardError=append:$LOG_PATH
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 重新加载系统服务管理器
+systemctl daemon-reload
+
+# 启动并设置服务开机自启
+systemctl start cloudflared
+systemctl enable cloudflared
+
+echo -e "\e[1;3;32mCloudflare Tunnel 服务已配置并已启动！\e[0m"
 }
 reinstall_sing_box() {
-    show_notice "重新安装中..."
-
+    show_notice "将重新安装中..."
     # 停止和禁用 sing-box 服务
     systemctl stop sing-box
     systemctl disable sing-box > /dev/null 2>&1
