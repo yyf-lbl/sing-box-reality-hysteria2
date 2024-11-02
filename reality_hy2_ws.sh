@@ -91,7 +91,7 @@ install_base(){
 }
 # 重新配置隧道
 regenarte_cloudflared_argo(){
- vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+ vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
 # 提示用户选择使用固定 Argo 隧道或临时隧道
 read -p "Y 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): " use_fixed
 use_fixed=${use_fixed:-Y}
@@ -370,15 +370,42 @@ EOF
 }
 #卸载sing-box程序
 uninstall_singbox() {
-    echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
+ echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
     echo ""
-   pid=$(pgrep -f cloudflared-linux)
-if [ -n "$pid" ]; then
-    # 终止现有进程
-    pkill -f cloudflared-linux 2>/dev/null
-fi
+    # 询问用户是否确认卸载
+    while true; do
+        read -p "您确定要卸载sing-box服务吗？(y/n) [默认y]: " confirm
+        confirm=${confirm,,}  # 将输入转换为小写
+        
+        # 如果输入为空，视为 'y'
+        if [[ -z "$confirm" ]]; then
+            confirm="y"
+        fi
+        case "$confirm" in
+            y) 
+                break  # 继续卸载
+                ;;
+            n) 
+                echo "取消卸载。"
+                return
+                ;;
+            *) 
+                echo "无效输入，请输入 y 或 n。"
+                ;;
+        esac
+    done
+    # 停止 Cloudflare 隧道服务
+    if systemctl is-active --quiet cloudflared; then
+        echo "正在停止 Cloudflare 隧道服务..."
+        systemctl stop cloudflared
+    fi
+    # 停止现有的 cloudflared 进程
+    pid=$(pgrep -f cloudflared-linux)
+    if [ -n "$pid" ]; then
+        pkill -f cloudflared-linux 2>/dev/null
+    fi
     sleep 2
-    # 尝试停止并禁用singbox服务，如果未发现错误，则抑制错误
+    # 停止并禁用 sing-box 服务
     systemctl stop sing-box 2>/dev/null
     systemctl disable sing-box 2>/dev/null
     # 定义要删除的文件和目录
@@ -741,12 +768,12 @@ else
 fi
 
 # 创建 Cloudflare 服务文件
-vmess_port=$(jq -r '.inbounds[2].listen_port' /root/sbox/sbconfig_server.json)
+vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
 CLOUDFLARED_PATH="/root/sbox/cloudflared-linux"
 CONFIG_PATH="/root/sbox/tunnel.yml"
 JSON_PATH="/root/sbox/tunnel.json"
 LOG_PATH="/root/sbox/argo_run.log"
-# 创建 Cloudflare 服务文件
+
 cat > /etc/systemd/system/cloudflared.service << EOF
 [Unit]
 Description=Cloudflare Tunnel
