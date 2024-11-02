@@ -1,4 +1,32 @@
 #!/bin/bash
+#脚本创建快捷方式
+setup_run_script() {
+    # 如果 run_script.sh 已存在，直接返回
+    if [[ -f ~/run_script.sh ]]; then
+        echo "run_script.sh 已存在，跳过创建。"
+        return
+    fi
+
+    # 创建 run_script.sh 文件并写入内容
+    cat << 'EOF' > ~/run_script.sh
+#!/bin/bash
+bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)
+EOF
+
+    # 修改权限
+    chmod +x ~/run_script.sh
+
+    # 添加别名到 .bashrc 或 .bash_aliases
+    echo "alias 5='~/run_script.sh'" >> ~/.bashrc
+
+    # 重新加载 .bashrc 以使别名生效
+    source ~/.bashrc
+
+    echo "run_script.sh 已创建，并已设置别名 5。"
+}
+
+# 将函数添加到 .bashrc 文件
+echo "setup_run_script()" >> ~/.bashrc
 # Function to print characters with delay
 print_with_delay() {
     local message="$1"
