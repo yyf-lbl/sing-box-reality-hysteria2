@@ -296,14 +296,29 @@ restart_tunnel() {
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         echo -e "\e[1;3;32m启动固定隧道...\e[0m"
         /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+        sleep 5  # 等待几秒钟以便隧道启动
+        
+        # 检查固定隧道是否成功启动
+        if grep -q "successfully" /root/sbox/argo_run.log; then
+            echo -e "\e[1;3;32m固定隧道已成功启动。\e[0m"
+        else
+            echo -e "\e[1;31m固定隧道启动失败，正在重新启动...\e[0m"
+            restart_tunnel  # 如果失败则递归调用重启函数
+        fi
     else
         echo -e "\e[1;3;32m启动临时隧道...\e[0m"
         /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > argo.log 2>&1 &
+        sleep 5  # 等待几秒钟以便隧道启动
+        
+        # 检查临时隧道是否成功启动
+        if grep -q "successfully" argo.log; then
+            echo -e "\e[1;3;32m临时隧道已成功启动。\e[0m"
+        else
+            echo -e "\e[1;31m临时隧道启动失败，正在重新启动...\e[0m"
+            restart_tunnel  # 如果失败则递归调用重启函数
+        fi
     fi
-
-    echo -e "\e[1;3;32m隧道已重新启动。\e[0m"
 }
-
 uninstall_singbox() {
     echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
    pid=$(pgrep -f cloudflared-linux)
