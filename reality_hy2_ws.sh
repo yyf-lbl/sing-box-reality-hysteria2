@@ -11,10 +11,10 @@ setup_run_script() {
     fi
 
     # 创建 run_script.sh 文件并写入内容
-    cat << 'EOF' > ~/run_script.sh
+    cat << 'SCRIPT' > ~/run_script.sh
 #!/bin/bash
 bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)
-EOF
+SCRIPT
 
     # 修改权限
     chmod +x ~/run_script.sh
@@ -29,6 +29,7 @@ fi
 
 # 调用函数
 setup_run_script
+
 # 检查标志文件是否存在
 if [ ! -f ~/.bashrc_loaded ]; then
     # 加载 .bashrc
