@@ -3,7 +3,7 @@
 setup_run_script() {
     # 如果 run_script.sh 已存在，直接返回
     if [[ -f ~/run_script.sh ]]; then
-        echo "run_script.sh 已存在，跳过创建。"
+        echo " "
         return
     fi
 
@@ -21,13 +21,16 @@ EOF
 
     # 重新加载 .bashrc 以使别名生效
     source ~/.bashrc
-
-    echo "run_script.sh 已创建，并已设置别名 5。"
+    echo "快捷指令已创建 5 "
 }
+# 调用函数
 setup_run_script
-# 将函数添加到 .bashrc 文件
-echo "setup_run_script()" >> ~/.bashrc
-# Function to print characters with delay
+# 检查是否已存在定义，避免重复添加
+if ! grep -q "setup_run_script()" ~/.bashrc; then
+    echo "setup_run_script()" >> ~/.bashrc
+fi
+
+# 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
     local delay="$2"
