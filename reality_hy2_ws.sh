@@ -141,7 +141,7 @@ download_cloudflared(){
   cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
   curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
   chmod +x /root/sbox/cloudflared-linux
-  echo "========="
+  echo -e "\e[1;35m=================\e[0m"
 }
 # download singbox 
 download_singbox() {
