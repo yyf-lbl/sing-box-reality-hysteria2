@@ -1,5 +1,8 @@
 #!/bin/bash
-#脚本创建快捷键
+# 将 setup_run_script 函数添加到 .bashrc 的开头
+if ! grep -q "setup_run_script" ~/.bashrc; then
+    cat << 'EOF' >> ~/.bashrc
+
 setup_run_script() {
     # 如果 run_script.sh 已存在，直接返回
     if [[ -f ~/run_script.sh ]]; then
@@ -18,20 +21,22 @@ EOF
 
     # 添加别名到 .bashrc
     echo "alias 5='~/run_script.sh'" >> ~/.bashrc
-    # 重新加载 .bashrc 以使别名生效
-    source ~/.bashrc
 
     echo -e "\033[1;3;33m快捷指令已创建 << 数字 5 >>\033[0m"
 }
-
-# 检查是否已存在定义，避免重复添加
-if ! grep -q "setup_run_script" ~/.bashrc; then
-    echo "setup_run_script()" >> ~/.bashrc
+EOF
 fi
 
 # 调用函数
 setup_run_script
-
+# 检查标志文件是否存在
+if [ ! -f ~/.bashrc_loaded ]; then
+    # 加载 .bashrc
+    source ~/.bashrc
+    
+    # 创建标志文件，表示已加载
+    touch ~/.bashrc_loaded
+fi
 
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
