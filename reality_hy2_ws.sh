@@ -34,7 +34,6 @@ print_with_delay() {
 #长方形=...框样式
 show_notice() {
     local message="$1"
-    echo -e "\e[1;33m★ ★ ★ $message ★ ★ ★\e[0m"
     local width=50  # 定义长方形的宽度
     local border_char="="  # 边框字符
     local yellow_color="\033[31m"  # 黄色
@@ -561,9 +560,9 @@ done
                 ;;
 
             2)
-           show_notice "开始配置 vmess 协议..."
+           show_notice "★ ★ ★ 开始配置 vmess 协议... ★ ★ ★"
            sleep 2 
-           echo -e "\e[1;3;33m正在自动生成Tuic-UUID\e[0m"
+           echo -e "\e[1;3;33m正在自动生成Vmess-UUID\e[0m"
            sleep 1
            vmess_uuid=$(/root/sbox/sing-box generate uuid)
            echo -e "\e[1;3;32mvmess UUID为: $vmess_uuid\e[0m"
@@ -675,7 +674,7 @@ fi
                 ;;
 
             3)
-                show_notice "开始配置 Hysteria2 协议..."
+                show_notice "★ ★ ★ 开始配置 Hysteria2 协议... ★ ★ ★"
                 sleep 2
                 echo -e "\e[1;3;33m正在生成Hysteria2随机密码\e[0m"
                 sleep 1
@@ -714,7 +713,7 @@ fi
                     }]')
                 ;; 
            4)
-    show_notice "开始配置 Tuic 协议..."
+    show_notice "★ ★ ★ 开始配置 Tuic 协议... ★ ★ ★"
     sleep 2
     echo -e "\e[1;3;33m正在自动生成Tuic随机密码\e[0m"
     sleep 1
