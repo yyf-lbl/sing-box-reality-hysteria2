@@ -1019,9 +1019,9 @@ modify_vless() {
     server_name=${server_name:-$current_server_name}
 
     # 修改配置文件，确保只修改 listen_port 和 server_name
-    jq --argjson listen_port "$listen_port" --argjson server_name "$server_name" \
-        '(.inbounds[] | select(.type == "vless") | .listen_port  .tls.server_name) = $listen_port $server_name' \
-        /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+    jq --argjson listen_port "$listen_port" --arg server_name "$server_name" \
+    '(.inbounds[] | select(.type == "vless")) |= (.listen_port = $listen_port | .tls.server_name = $server_name)' \
+    /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
 
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
@@ -1076,9 +1076,9 @@ modify_vmess() {
     echo -e "\e[1;3;32m选择的 Vmess 端口: $vmess_port\e[0m"
 sleep 2
     # 修改配置文件，只更新 listen_port
-    jq --arg listen_port "$vmess_port" \
-        '.inbounds[] | select(.type == "vmess") | .listen_port = ($listen_port | tonumber)' \
-        /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+    jq --argjson listen_port "$vmess_port" \
+    '(.inbounds[] | select(.type == "vmess").listen_port) = $listen_port' \
+    /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
 
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
@@ -1190,10 +1190,11 @@ modify_tuic() {
     sleep 1
 
     # 修改配置文件
-    jq --arg password "$tuic_password" --arg uuid "$tuic_uuid" --arg listen_port "$tuic_listen_port" --arg server_name "$tuic_server_name" \
-        '.inbounds[] | select(.type == "tuic") | .listen_port = ($listen_port | tonumber) | .users[0].password = $password | .tls.server_name = $server_name' \
-        /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
-
+    jq --arg password "$tuic_password" --arg uuid "$tuic_uuid" --argjson listen_port "$tuic_listen_port" --arg server_name "$tuic_server_name" \
+    '(.inbounds[] | select(.type == "tuic") | .listen_port) = $listen_port |
+     (.inbounds[] | select(.type == "tuic") | .users[0].password) = $password |
+     (.inbounds[] | select(.type == "tuic") | .tls.server_name) = $server_name' \
+    /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo "TUIC 配置修改完成"
