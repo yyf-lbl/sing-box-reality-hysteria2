@@ -500,12 +500,14 @@ done
             1)
                 echo -e "\e[1;3;33m开始配置 Reality\e[0m"
                 sleep 2
-                # 生成 Reality 密钥对
+                echo "\e[1;3;33m正在生成vless密匙对...\e[0m" 
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
                 if [ $? -ne 0 ]; then
-                    echo "生成 Reality 密钥对失败。"
+                    echo -e "\e[1;3;31m生成 Reality 密钥对失败。\e[0m"
                     exit 1
                 fi
+                echo "\e[1;3;33m生成vless密匙对成功\e[0m"
+         
                 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
                 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
                 echo "$public_key" | base64 > /root/sbox/public.key.b64
@@ -520,6 +522,7 @@ done
                 read -p $'\e[1;3;33m请输入想要使用的域名 (default: itunes.apple.com): \e[0m' server_name_input
                 server_name=${server_name_input:-itunes.apple.com}
                 echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
+                
                 config=$(echo "$config" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
