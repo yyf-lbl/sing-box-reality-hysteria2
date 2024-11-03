@@ -685,13 +685,13 @@ fi
                 hy_listen_port=${hy_listen_port_input:-8443}
                 echo -e "\e[1;3;32mHysteria2端口: $hy_listen_port\e[0m"
                 sleep 1
-                read -p -p $'\e[1;3;33m请输入自签证书域名 (默认域名: bing.com): \e[0m' hy_server_name_input
+                read -p $'\e[1;3;33m请输入自签证书域名 (默认域名: bing.com): \e[0m' hy_server_name_input
                 sleep 1
                 hy_server_name=${hy_server_name_input:-bing.com}            
                 mkdir -p /root/self-cert/
                 openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
                 openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-                echo "\e[1;3;32m自签证书已生成成功\e[0m"
+                echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
                 echo ""
                 config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
@@ -712,7 +712,7 @@ fi
                     }]')
                 ;; 
            4)
-    echo echo -e "\e[1;3;33m正在开始配置TUIC协议\e[0m"
+    echo -e "\e[1;3;33m正在开始配置TUIC协议\e[0m"
     sleep 2
     echo -e "\e[1;3;33m正在自动生成Tuic随机密码\e[0m"
     sleep 1
