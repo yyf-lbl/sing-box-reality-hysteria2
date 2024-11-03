@@ -499,7 +499,7 @@ done
     for choice in $choices; do
         case $choice in
             1)
-                show_notice "★ ★ ★ 开始配置 vless 协议... ★ ★ ★"
+                show_notice "★ ★ ★ 开始配置Vless协议 ★ ★ ★"
                 sleep 2
                 echo -e "\e[1;3;33m正在生成vless密匙对...\e[0m" 
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
@@ -560,7 +560,7 @@ done
                 ;;
 
             2)
-           show_notice "★ ★ ★ 开始配置 vmess 协议... ★ ★ ★"
+           show_notice "★ ★ ★ 开始配置Vmess协议 ★ ★ ★"
            sleep 2 
            echo -e "\e[1;3;33m正在自动生成Vmess-UUID\e[0m"
            sleep 1
@@ -674,7 +674,7 @@ fi
                 ;;
 
             3)
-                show_notice "★ ★ ★ 开始配置 Hysteria2 协议... ★ ★ ★"
+                show_notice "★ ★ ★ 开始配置Hysteria2协议 ★ ★ ★"
                 sleep 2
                 echo -e "\e[1;3;33m正在生成Hysteria2随机密码\e[0m"
                 sleep 1
@@ -713,7 +713,7 @@ fi
                     }]')
                 ;; 
            4)
-    show_notice "★ ★ ★ 开始配置 Tuic 协议... ★ ★ ★"
+    show_notice "★ ★ ★ 开始配置Tuic协议 ★ ★ ★"
     sleep 2
     echo -e "\e[1;3;33m正在自动生成Tuic随机密码\e[0m"
     sleep 1
