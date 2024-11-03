@@ -933,7 +933,7 @@ detect_protocols() {
         return 1  # 返回非零值表示未找到协议
     fi
 
-    echo -e "\e[1;3;32m请选择要修改的协议：\e[0m"
+    echo -e "\e[1;3;33m请选择要修改的协议：\e[0m"
     for i in "${!options[@]}"; do
         echo -e "\e[1;3;32m$((i + 1))) ${options[i]}\e[0m"
     done
@@ -943,7 +943,7 @@ detect_protocols() {
     
     # 读取用户输入
     while true; do
-        echo -e -n "\e[1;3;33m请输入选项 (1/${#options[@]}/$((i + 2))):\e[0m "
+        echo -e -n "\e[1;3;33m请输入选项 :\e[0m "
         read modify_choice
         if [[ "$modify_choice" =~ ^[1-9][0-9]*$ ]] && [ "$modify_choice" -le $((i + 2)) ]; then
             break
