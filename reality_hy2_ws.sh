@@ -992,7 +992,8 @@ detect_protocols() {
     echo -e "\e[1;3;32m$((i + 2))) 全部修改\e[0m"
     # 读取用户输入
     while true; do
-        read -p $'\e[1;3;33m请输入选项 (1/'"${#options[@]}"'/''$((i + 2))'):\e[0m ' modify_choice
+        prompt_message=$'\e[1;3;33m请输入选项 (1/'"${#options[@]}"'/''$((i + 2))'):\e[0m '
+        read -p "$prompt_message" modify_choice
         if [[ "$modify_choice" =~ ^[1-9][0-9]*$ ]] && [ "$modify_choice" -le $((i + 2)) ]; then
             break
         else
