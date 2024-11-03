@@ -968,7 +968,7 @@ detect_protocols() {
     # 获取已安装的协议类型
     protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
-    echo -e "\e[1;3;33m检测到已安装协议如下:\e[0m"
+    echo -e "\e[1;3;32m已安装协议如下:\e[0m"
     echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息，绿色斜体加粗
     echo ""
 
@@ -989,7 +989,7 @@ detect_protocols() {
         return 1  # 返回非零值表示未找到协议
     fi
 
-    echo -e "\e[1;3;32m请选择要修改的协议：\e[0m"
+    echo -e "\e[1;3;33m请选择要修改的协议：\e[0m"
     for i in "${!options[@]}"; do
         echo -e "\e[1;3;32m$((i + 1))) ${options[i]}\e[0m"
     done
@@ -999,7 +999,7 @@ detect_protocols() {
 
     # 读取用户输入
     while true; do
-        read -p "请输入选项 (1/${#options[@]}/$((i + 2))): " modify_choice
+        read -p $'\e[1;3;33m请输入选项 (1/'"${#options[@]}"'/''$((i + 2))'):\e[0m ' modify_choice
         if [[ "$modify_choice" =~ ^[1-9][0-9]*$ ]] && [ "$modify_choice" -le $((i + 2)) ]; then
             break
         else
