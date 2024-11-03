@@ -34,6 +34,7 @@ print_with_delay() {
 #长方形=...框样式
 show_notice() {
     local message="$1"
+    echo -e "\e[1;33m★ ★ ★ $message ★ ★ ★\e[0m"
     local width=50  # 定义长方形的宽度
     local border_char="="  # 边框字符
     local yellow_color="\033[31m"  # 黄色
