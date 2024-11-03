@@ -551,20 +551,21 @@ done
                 ;;
 
             2)
-           echo -e "\e[1;3;33m开始配置 vmess\e[0m"
-sleep 1
-
-# 生成 vmess UUID
-vmess_uuid=$(/root/sbox/sing-box generate uuid)
-echo -e "\e[1;3;32mvmess UUID为:$vmess_uuid\e[0m"
-# 询问 vmess 端口
-read -p $'\e[1;3;33m请输入 vmess 端口，默认为 15555: \e[0m' vmess_port
-vmess_port=${vmess_port:-15555}
-echo -e "\e[1;3;32mvmess端口:$vmess_port\e[0m"
-# 询问 ws 路径
-read -p $'\e[1;3;33mws 路径 (默认随机生成): \e[0m' ws_path
-ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-echo -e "\e[1;3;32mws路径为:$ws_path\e[0m"
+           echo -e "\e[1;3;33m正在开始配置 vmess\e[0m"
+           sleep 2 
+           echo -e "\e[1;3;33m正在自动生成Tuic-UUID\e[0m"
+           sleep 1
+           vmess_uuid=$(/root/sbox/sing-box generate uuid)
+           echo -e "\e[1;3;32mvmess UUID为:$vmess_uuid\e[0m"
+           sleep 1
+           read -p $'\e[1;3;33m请输入 vmess 端口(默认端口:15555): \e[0m' vmess_port
+           vmess_port=${vmess_port:-15555}
+           echo -e "\e[1;3;32mvmess端口:$vmess_port\e[0m"
+           sleep 1
+           read -p $'\e[1;3;33mws 路径 (默认随机生成): \e[0m' ws_path
+           sleep 1
+           ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
+           echo -e "\e[1;3;32mws路径为:$ws_path\e[0m"
 # 提示用户选择使用固定 Argo 隧道或临时隧道
 read -p $'\e[1;3;33mY 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): \e[0m' use_fixed
 use_fixed=${use_fixed:-Y}
@@ -664,17 +665,25 @@ fi
                 ;;
 
             3)
-                echo "开始配置 Hysteria2"
-                echo ""
+                echo -e "\e[1;3;33m开始配置... Hysteria2\e[0m"
+                sleep 2
+                echo -e "\e[1;3;33m正在生成Hysteria2随机密码\e[0m"
+                sleep 1
                 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
-                read -p "请输入 Hysteria2 监听端口 (default: 8443): " hy_listen_port_input
+                echo -e "\e[1;3;32m随机生成的hy2密码: $hy_password\e[0m"
+                sleep 1
+                read -p $'\e[1;3;33m请输入 Hysteria2 监听端口 (default: 8443): \e[0m' hy_listen_port_input
+                sleep 1
                 hy_listen_port=${hy_listen_port_input:-8443}
-                read -p "输入自签证书域名 (default: bing.com): " hy_server_name_input
-                hy_server_name=${hy_server_name_input:-bing.com}
+                echo -e "\e[1;3;32mHysteria2端口:$hy_listen_port\e[0m"
+                sleep 1
+                read -p -p $'\e[1;3;33m请输入自签证书域名 (默认域名: bing.com): \e[0m' hy_server_name_input
+                sleep 1
+                hy_server_name=${hy_server_name_input:-bing.com}            
                 mkdir -p /root/self-cert/
                 openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
                 openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
-                echo "自签证书生成完成"
+                echo "\e[1;3;32m自签证书已生成成功\e[0m"
                 echo ""
                 config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
@@ -695,19 +704,30 @@ fi
                     }]')
                 ;; 
            4)
-    echo "开始配置 TUIC"
-    echo ""
+    echo echo -e "\e[1;3;33m正在开始配置TUIC协议\e[0m"
+    sleep 2
+    echo -e "\e[1;3;33m正在自动生成Tuic随机密码\e[0m"
+    sleep 1
     tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
+    echo -e "\e[1;3;32mTuic随机密码: $tuic_password\e[0m"
+    sleep 1
+    echo -e "\e[1;3;33m正在自动生成Tuic-UUID\e[0m"
+    sleep 1
     tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
-    read -p "请输入 TUIC 监听端口 (default: 8080): " tuic_listen_port_input
+    echo -e "\e[1;3;33m随机生成Tuic-UUID：$tuic_uuid\e[0m"
+    sleep 1
+    read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080): \e[0m' tuic_listen_port_input
+    sleep 1
     tuic_listen_port=${tuic_listen_port_input:-8080}
-    read -p "输入 TUIC 自签证书域名 (default: bing.com): " tuic_server_name_input
+    echo -e "\e[1;3;32mTuic端口：$tuic_listen_port\e[0m"
+    sleep 1
+    read -p $'\e[1;3;33m输入 TUIC 自签证书域名 (默认域名: bing.com): \e[0m' tuic_server_name_input
+    sleep 1
     tuic_server_name=${tuic_server_name_input:-bing.com}
-
     mkdir -p /root/self-cert/
     openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
-    echo "自签证书生成完成"
+    echo "\e[1;3;32m自签证书已生成成功\e[0m"
     echo ""
 
     config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
