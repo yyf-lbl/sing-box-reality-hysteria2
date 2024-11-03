@@ -2,8 +2,9 @@
 # 创建快捷指令
 add_alias() {
     config_file=$1
-    alias_names=("a" "q")
-    [ ! -f "$config_file" ] || touch "$config_file"  
+    alias_names=("a" "5")
+    [ -f "$config_file" ] || touch "$config_file"  # 如果文件不存在，则创建
+
     # 检查标志文件是否存在
     if [ ! -f "/tmp/alias_added.flag" ]; then
         for alias_name in "${alias_names[@]}"; do
@@ -16,7 +17,7 @@ add_alias() {
     else
         echo "Aliases have already been added."
     fi
-    . "$config_file"
+    . "$config_file"  # 加载配置文件
 }
 config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
 for config_file in "${config_files[@]}"; do
