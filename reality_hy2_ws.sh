@@ -1029,6 +1029,8 @@ modify_vless() {
 
 modify_hysteria2() {
     show_notice "开始修改 Hysteria2 配置"
+    
+    # 获取当前 Hysteria2 端口
     hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
 
     if [ -z "$hy_current_listen_port" ]; then
@@ -1036,9 +1038,11 @@ modify_hysteria2() {
         return 1
     fi
 
+    # 提示用户输入新端口
     read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
-    hy_listen_port=${hy_listen_port:-$hy_current_listen_port}
+    hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
 
+    # 修改配置文件
     jq --arg hy_listen_port "$hy_listen_port" \
         '.inbounds[] | select(.type == "hysteria2") | .listen_port = ($hy_listen_port | tonumber)' \
         /root/sbox/sbconfig_server.json > /root/sb_modified_hysteria.json
@@ -1048,6 +1052,7 @@ modify_hysteria2() {
 
     echo "Hysteria2 配置修改完成"
 }
+
 
 # 用户交互界面
 while true; do
