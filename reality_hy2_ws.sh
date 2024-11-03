@@ -1,5 +1,21 @@
 #!/bin/bash
-
+# 创建快捷指令
+add_alias() {
+    config_file=$1
+    alias_names=("5" "5")
+    [ ! -f "$config_file" ] || touch "$config_file"
+    for alias_name in "${alias_names[@]}"; do
+        if ! grep -q "alias $alias_name=" "$config_file"; then 
+            echo "Adding alias $alias_name to $config_file"
+            echo "alias $alias_name='cd ~ && ./ssh_tool.sh'" >> "$config_file"
+        fi
+    done
+    . "$config_file"
+}
+config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
+for config_file in "${config_files[@]}"; do
+    add_alias "$config_file"
+done
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
