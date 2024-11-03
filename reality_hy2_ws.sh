@@ -917,15 +917,18 @@ detect_protocols() {
     echo -e "\e[1;3;33m已安装协议如下:\e[0m"
     echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息，绿色斜体加粗
     echo ""
+    
     # 初始化选项数组
     options=()
-    protocol_list=("VLESS" "VMess" "Hysteria2" "TUIC")
+    protocol_list=("vless" "vmess" "hysteria2" "tuic")
+    
     # 根据检测到的协议生成选项
     for protocol in "${protocol_list[@]}"; do
         if echo "$protocols" | grep -q -i "$protocol"; then
-            options+=("$protocol")
+            options+=("${protocol^}")  # 将首字母大写
         fi
     done
+    
     # 输出可修改的协议选项
     if [ ${#options[@]} -eq 0 ]; then
         echo -e "\e[1;3;31m没有检测到可修改的协议。\e[0m"
@@ -936,8 +939,10 @@ detect_protocols() {
     for i in "${!options[@]}"; do
         echo -e "\e[1;3;32m$((i + 1))) ${options[i]}\e[0m"
     done
+    
     # 添加“全部修改”选项
     echo -e "\e[1;3;32m$((i + 2))) 全部修改\e[0m"
+    
     # 读取用户输入
     while true; do
         echo -e -n "\e[1;3;33m请输入选项 (1/${#options[@]}/$((i + 2))):\e[0m "
@@ -948,73 +953,47 @@ detect_protocols() {
             echo -e "\e[1;3;31m无效选项，请重新输入。\e[0m"
         fi
     done
+    
     # 根据用户选择进行修改
-    if [ "$modify_choice" -eq $((i + 1)) ]; then
+    if [ "$modify_choice" -eq $((i + 2)) ]; then
         echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
         # 这里添加代码以修改所有协议
         for protocol in "${options[@]}"; do
             echo -e "\e[1;3;32m修改 $protocol 协议...\e[0m"
-            # 这里添加具体的修改逻辑
+            case $protocol in
+                "Vless")
+                    modify_vless
+                    ;;
+                "Vmess")
+                    modify_vmess  # 需要定义此函数
+                    ;;
+                "Hysteria2")
+                    modify_hysteria2
+                    ;;
+                "Tuic")
+                    modify_tuic  # 需要定义此函数
+                    ;;
+            esac
         done
     else
         selected_protocol=${options[$((modify_choice - 1))]}
         echo -e "\e[1;3;33m正在修改 $selected_protocol 协议...\e[0m"
-        # 这里添加具体的修改逻辑
+        case $selected_protocol in
+            "Vless")
+                modify_vless
+                ;;
+            "Vmess")
+                modify_vmex  # 需要定义此函数
+                ;;
+            "Hysteria2")
+                modify_hysteria2
+                ;;
+            "Tuic")
+                modify_tuic  # 需要定义此函数
+                ;;
+        esac
     fi
 }
-
-# 用户交互界面
-while true; do
-# Introduction animation
-clear
-echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
-echo -e "\e[1;3;31m=== argo隧道配置文件生成网址 \e[1;3;33mhttps://fscarmen.cloudflare.now.cc/\e[1;3;31m ===\e[0m"
-echo -e "\e[1;3;33m=== 脚本支持: VLESS VMESS HY2 协议 ===\e[0m" 
-echo ""
-echo -e "\e[1;3;33m=== 脚本快捷键指令键：a 或 5 ===\e[0m" 
-echo -e "\e[1;3;31m***********************\e[0m"
-echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
-echo ""
-echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;31m5. 卸载Sing-box\e[0m"  # 红色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;32m6. 更新SingBox内核\e[0m"  # 绿色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
-echo  "==============="
-echo -e "\e[1;3;32m9. 查看cloudflare启动状况\e[0m"
-echo  "==============="
-echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
-echo  "==============="
-echo ""
-echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
-read -e choice
-  echo ""
-case $choice in
-    1)
-
-        echo -e "\e[1;3;32m开始安装sing-box服务，请稍后...\e[0m"
-        echo " "
-          mkdir -p "/root/sbox/"
-        download_singbox
-        download_cloudflared
-        install_singbox
-        setup_services
-        sleep 2
-        ;;
-    2)
-       reinstall_sing_box
-        ;;
-    3)
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
     # 获取当前端口
@@ -1070,20 +1049,71 @@ modify_hysteria2() {
     echo "Hysteria2 配置修改完成"
 }
 
-# 主逻辑
-detect_protocols
+# 用户交互界面
+while true; do
+# Introduction animation
+clear
+echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
+echo -e "\e[1;3;31m=== argo隧道配置文件生成网址 \e[1;3;33mhttps://fscarmen.cloudflare.now.cc/\e[1;3;31m ===\e[0m"
+echo -e "\e[1;3;33m=== 脚本支持: VLESS VMESS HY2 协议 ===\e[0m" 
+echo ""
+echo -e "\e[1;3;33m=== 脚本快捷键指令键：a 或 5 ===\e[0m" 
+echo -e "\e[1;3;31m***********************\e[0m"
+echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
+echo ""
+echo -e "\e[1;3;32m1. 安装sing-box服务\e[0m"  # 绿色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;33m2. 重新安装\e[0m"  # 黄色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;31m5. 卸载Sing-box\e[0m"  # 红色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;32m6. 更新SingBox内核\e[0m"  # 绿色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
+echo  "==============="
+echo -e "\e[1;3;32m9. 查看cloudflare启动状况\e[0m"
+echo  "==============="
+echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
+echo  "==============="
+echo ""
+echo -ne "\e[1;3;33m输入您的选择 (0-8): \e[0m " 
+read -e choice
+  echo ""
+case $choice in
+    1)
 
-# 重启服务并验证
-echo "配置修改完成，重新启动 sing-box 服务..."
-systemctl restart sing-box
-if [ $? -eq 0 ]; then
-    echo "sing-box 服务重启成功"
-else
-    echo "sing-box 服务重启失败，请检查日志"
-    # 恢复备份
-    mv /root/sbox/sbconfig_server_backup.json /root/sbox/sbconfig_server.json
-fi
-show_client_configuration
+        echo -e "\e[1;3;32m开始安装sing-box服务，请稍后...\e[0m"
+        echo " "
+          mkdir -p "/root/sbox/"
+        download_singbox
+        download_cloudflared
+        install_singbox
+        setup_services
+        sleep 2
+        ;;
+    2)
+       reinstall_sing_box
+        ;;
+    3)
+       # 主逻辑
+       detect_protocols
+       # 重启服务并验证
+       echo "配置修改完成，重新启动 sing-box 服务..."
+       systemctl restart sing-box
+         if [ $? -eq 0 ]; then
+             echo "sing-box 服务重启成功"
+         else
+            echo "sing-box 服务重启失败，请检查日志"
+            # 恢复备份
+            mv /root/sbox/sbconfig_server_backup.json /root/sbox/sbconfig_server.json
+         fi
+           show_client_configuration
         ;;
     4)  
 
