@@ -1042,7 +1042,7 @@ modify_hysteria2() {
     # 使用 jq 更新 listen_port，直接修改原文件
     jq --argjson hy_listen_port "$hy_listen_port" \
         '(.inbounds[] | select(.type == "hysteria2") | .listen_port) = $hy_listen_port' \
-        /root/sbox/sbconfig_server.json | sponge /root/sbox/sbconfig_server.json
+        /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server.json
 
     if [ $? -ne 0 ]; then
         echo "修改配置文件时出错。"
