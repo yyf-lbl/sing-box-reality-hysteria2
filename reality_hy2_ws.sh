@@ -261,7 +261,6 @@ show_client_configuration() {
 
         hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
          echo -e "\e[1;3;31mHysteria2 客户端通用链接：\e[0m"
-         echo ""
          echo -e "\e[1;3;33m$hy2_server_link\e[0m"
          echo ""
     fi
@@ -994,8 +993,10 @@ detect_protocols() {
         esac
     fi
 }
+# 修改vless协议
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
+    
     # 获取当前端口
     current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
     
@@ -1018,15 +1019,16 @@ modify_vless() {
     read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
     server_name=${server_name:-$current_server_name}
 
-    # 修改配置文件
+    # 修改配置文件，确保只修改 listen_port 和 server_name
     jq --arg listen_port "$listen_port" --arg server_name "$server_name" \
-        '.inbounds[] | select(.type == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name | .tls.reality.handshake.server = $server_name' \
-        /root/sbox/sbconfig_server.json > /root/sb_modified_vless.json
+        '.inbounds[] | select(.type == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name' \
+        /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
 
-    mv /root/sb_modified_vless.json /root/sbox/sbconfig_server.json
+    # 用临时文件替换原文件
+    mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo "VLESS 配置修改完成"
 }
-
+# 修改hysteria2协议
 modify_hysteria2() {
     show_notice "开始修改 Hysteria2 配置"
 
@@ -1057,6 +1059,72 @@ modify_hysteria2() {
         return 1
     fi
 }
+# 修改vmess协议
+modify_vmess() {
+    show_notice "开始修改 Vmess 协议"
+    sleep 2 
+    # 获取当前 Vmess 端口
+    current_vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
+    
+    if [ -z "$current_vmess_port" ]; then
+        echo "未能获取当前 Vmess 端口，请检查配置文件。"
+        return 1
+    fi
+
+    echo -e "\e[1;3;32m当前 Vmess 端口: $current_vmess_port\e[0m"
+    sleep 1
+
+    # 读取用户输入的端口
+    read -p $'\e[1;3;33m请输入 Vmess 端口 (当前端口: $current_vmess_port，留空以保持当前设置): \e[0m' vmess_port_input
+    vmess_port=${vmess_port_input:-$current_vmess_port}
+    echo -e "\e[1;3;32m选择的 Vmess 端口: $vmess_port\e[0m"
+
+    # 修改配置文件，只更新 listen_port
+    jq --arg listen_port "$vmess_port" \
+        '.inbounds[] | select(.type == "vmess") | .listen_port = ($listen_port | tonumber)' \
+        /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+
+    # 用临时文件替换原文件
+    mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
+    echo "Vmess 端口修改完成"
+}
+
+# 修改tuic协议
+modify_tuic() {
+    show_notice "开始修改 TUIC 配置"
+    
+    echo -e "\e[1;3;33m正在自动生成 TUIC 随机密码\e[0m"
+    sleep 1
+    tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
+    echo -e "\e[1;3;32mTUIC 随机密码: $tuic_password\e[0m"
+    sleep 1
+    
+    echo -e "\e[1;3;33m正在自动生成 TUIC UUID\e[0m"
+    sleep 1
+    tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
+    echo -e "\e[1;3;32m随机生成 TUIC UUID: $tuic_uuid\e[0m"
+    sleep 1
+
+    read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080): \e[0m' tuic_listen_port_input
+    tuic_listen_port=${tuic_listen_port_input:-8080}
+    echo -e "\e[1;3;32mTUIC 端口: $tuic_listen_port\e[0m"
+    sleep 1
+
+    read -p $'\e[1;3;33m输入 TUIC 自签证书域名 (默认域名: bing.com): \e[0m' tuic_server_name_input
+    tuic_server_name=${tuic_server_name_input:-bing.com}
+    echo -e "\e[1;3;32mTUIC 域名: $tuic_server_name\e[0m"
+    sleep 1
+
+    # 修改配置文件
+    jq --arg password "$tuic_password" --arg uuid "$tuic_uuid" --arg listen_port "$tuic_listen_port" --arg server_name "$tuic_server_name" \
+        '.inbounds[] | select(.type == "tuic") | .listen_port = ($listen_port | tonumber) | .users[0].password = $password | .tls.server_name = $server_name' \
+        /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+
+    # 用临时文件替换原文件
+    mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
+    echo "TUIC 配置修改完成"
+}
+
 # 用户交互界面
 while true; do
 # Introduction animation
