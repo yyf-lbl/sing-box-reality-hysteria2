@@ -2,7 +2,7 @@
 # 创建快捷指令
 add_alias() {
     config_file=$1
-    alias_names=("a" "5")
+    alias_names=("a" "q")
     [ ! -f "$config_file" ] || touch "$config_file"  
     # 检查标志文件是否存在
     if [ ! -f "/tmp/alias_added.flag" ]; then
