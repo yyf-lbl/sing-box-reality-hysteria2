@@ -984,6 +984,11 @@ detect_protocols() {
     done
 
     # 输出可修改的协议选项
+    if [ ${#options[@]} -eq 0 ]; then
+        echo -e "\e[1;3;31m没有检测到可修改的协议。\e[0m"
+        return
+    fi
+
     echo -e "\e[1;3;32m请选择要修改的协议：\e[0m"
     for i in "${!options[@]}"; do
         echo -e "\e[1;3;32m$((i + 1))) ${options[i]}\e[0m"
