@@ -12,14 +12,13 @@ add_alias() {
  fi
     done
     . "$config_file"
-    # 重新加载 .bashrc
-     source /root/.bashrc
 }
 config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
 for config_file in "${config_files[@]}"; do
     add_alias "$config_file"
 done
-
+# 重新加载 .bashrc
+     source /root/.bashrc
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
