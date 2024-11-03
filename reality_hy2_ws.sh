@@ -506,7 +506,7 @@ done
                     echo -e "\e[1;3;31m生成 Reality 密钥对失败。\e[0m"
                     exit 1
                 fi
-                echo -e "\e[1;3;33m生成vless密匙对成功\e[0m"
+                echo -e "\e[1;3;32m生成vless密匙对成功\e[0m"
                 sleep 1
                 echo -e "\e[1;3;33m正在提取提取私钥和公钥...\e[0m"
                 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
