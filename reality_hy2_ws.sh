@@ -1042,17 +1042,16 @@ modify_hysteria2() {
     read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
 
-    # 修改配置文件
+    # 修改配置文件，只更新 listen_port
     jq --arg hy_listen_port "$hy_listen_port" \
         '.inbounds[] | select(.type == "hysteria2") | .listen_port = ($hy_listen_port | tonumber)' \
         /root/sbox/sbconfig_server.json > /root/sb_modified_hysteria.json
 
-    # 使用 `sponge` 避免覆盖的问题，确保可以同时读取和写入
+    # 使用 `sponge` 或临时文件避免覆盖的问题
     mv /root/sb_modified_hysteria.json /root/sbox/sbconfig_server.json
 
     echo "Hysteria2 配置修改完成"
 }
-
 
 # 用户交互界面
 while true; do
