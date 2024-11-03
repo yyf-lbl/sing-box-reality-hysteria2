@@ -969,7 +969,7 @@ detect_protocols() {
     protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
     echo -e "\e[1;3;33m检测到已安装协议如下:\e[0m"
-    echo "$protocols"
+    echo -e "\e[1;3;32m$protocols\e[0m"
     echo ""
 
     # 初始化选项数组
