@@ -20,7 +20,7 @@ SCRIPT
     chmod +x ~/run_script.sh
 
     # 添加别名到 .bashrc
-    echo "alias 5='~/run_script.sh'" >> ~/.bashrc
+     "alias 5='~/run_script.sh'" >> ~/.bashrc
 
     echo -e "\033[1;3;33m快捷指令已创建 << 数字 5 >>\033[0m"
 }
