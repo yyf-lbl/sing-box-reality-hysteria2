@@ -7,7 +7,7 @@ add_alias() {
     for alias_name in "${alias_names[@]}"; do
         if ! grep -q "alias $alias_name=" "$config_file"; then 
             echo "Adding alias $alias_name to $config_file"
-            echo "alias $alias_name='cd ~ && ./ssh_tool.sh'" >> "$config_file"
+            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
         fi
     done
     . "$config_file"
