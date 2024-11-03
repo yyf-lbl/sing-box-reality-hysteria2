@@ -462,7 +462,7 @@ install_singbox() {
     echo -e "\e[1;3;33m3) Hysteria2\e[0m"
     echo -e "\e[1;3;33m4) Tuic\e[0m"
     echo -ne "\e[1;3;33m请输入你的选择: \e[0m" && read choices
-    
+    echo ""  
     # 检查输入是否为空
     if [[ -z "$choices" ]]; then
         echo "输入不能为空，请重新输入。"
@@ -499,7 +499,7 @@ done
     for choice in $choices; do
         case $choice in
             1)
-                echo -e "\e[1;3;33m开始配置 Reality\e[0m"
+                show_notice "开始配置vless协议..."
                 sleep 2
                 echo -e "\e[1;3;33m正在生成vless密匙对...\e[0m" 
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
@@ -674,7 +674,7 @@ fi
                 ;;
 
             3)
-                echo -e "\e[1;3;33m开始配置... Hysteria2\e[0m"
+                echo -e "\e[1;3;33m===开始配置Hysteria2...=== \e[0m"
                 sleep 2
                 echo -e "\e[1;3;33m正在生成Hysteria2随机密码\e[0m"
                 sleep 1
