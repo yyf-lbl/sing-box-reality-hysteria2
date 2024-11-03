@@ -36,8 +36,8 @@ show_notice() {
     local message="$1"
     local width=50  # 定义长方形的宽度
     local border_char="="  # 边框字符
-    local yellow_color="\033[33m"  # 黄色
-    local yellow_bold_italic="\033[31;1;3m"  # 黄色斜体加粗
+    local yellow_color="\033[31m"  # 黄色
+    local yellow_bold_italic="\033[33;1;3m"  # 黄色斜体加粗
     local reset_color="\033[0m"  # 重置颜色
     # 打印黄色边框
     printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印顶部边框
