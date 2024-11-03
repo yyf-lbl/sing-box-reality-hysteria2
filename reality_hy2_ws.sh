@@ -560,7 +560,7 @@ done
                 ;;
 
             2)
-           echo -e "\e[1;3;33m正在开始配置 vmess\e[0m"
+           show_notice "开始配置 vmess 协议..."
            sleep 2 
            echo -e "\e[1;3;33m正在自动生成Tuic-UUID\e[0m"
            sleep 1
@@ -674,7 +674,7 @@ fi
                 ;;
 
             3)
-                echo -e "\e[1;3;33m===开始配置Hysteria2...=== \e[0m"
+                show_notice "开始配置Hysteria2协议..."
                 sleep 2
                 echo -e "\e[1;3;33m正在生成Hysteria2随机密码\e[0m"
                 sleep 1
@@ -713,7 +713,7 @@ fi
                     }]')
                 ;; 
            4)
-    echo -e "\e[1;3;33m正在开始配置TUIC协议\e[0m"
+    show_notice "开始配置Tuic协议..."
     sleep 2
     echo -e "\e[1;3;33m正在自动生成Tuic随机密码\e[0m"
     sleep 1
