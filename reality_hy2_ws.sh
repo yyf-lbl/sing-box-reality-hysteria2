@@ -527,7 +527,7 @@ done
                 read -p $'\e[1;3;33m请输入想要使用的域名 (默认域名: itunes.apple.com): \e[0m' server_name_input
                 server_name=${server_name_input:-itunes.apple.com}
                 echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
-                
+                echo ""
                 config=$(echo "$config" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
@@ -650,8 +650,8 @@ sleep 5
 #连接到域名
 argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
-
 fi
+echo ""
 # 生成vmess配置文件
  config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
