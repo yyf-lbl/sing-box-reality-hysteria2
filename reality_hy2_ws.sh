@@ -82,7 +82,6 @@ install_base(){
 regenarte_cloudflared_argo(){
  vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
 # 提示用户选择使用固定 Argo 隧道或临时隧道
-# 提示用户选择使用固定 Argo 隧道或临时隧道
 read -p $'\e[1;3;33mY 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): \e[0m' use_fixed
 use_fixed=${use_fixed:-Y}
 
@@ -982,13 +981,13 @@ detect_protocols() {
                 modify_vless
                 ;;
             "Vmess")
-                modify_vmex  # 需要定义此函数
+                modify_vmess  
                 ;;
             "Hysteria2")
                 modify_hysteria2
                 ;;
             "Tuic")
-                modify_tuic  # 需要定义此函数
+                modify_tuic  
                 ;;
         esac
     fi
@@ -1071,14 +1070,11 @@ modify_vmess() {
         return 1
     fi
 
-    echo -e "\e[1;3;32m当前 Vmess 端口: $current_vmess_port\e[0m"
-    sleep 1
-
     # 读取用户输入的端口
-    read -p $'\e[1;3;33m请输入 Vmess 端口 (当前端口: $current_vmess_port，留空以保持当前设置): \e[0m' vmess_port_input
+    read -p $'\e[1;3;33m请输入新的 Vmess 端口 (当前端口: $current_vmess_port): \e[0m' vmess_port_input
     vmess_port=${vmess_port_input:-$current_vmess_port}
     echo -e "\e[1;3;32m选择的 Vmess 端口: $vmess_port\e[0m"
-
+sleep 2
     # 修改配置文件，只更新 listen_port
     jq --arg listen_port "$vmess_port" \
         '.inbounds[] | select(.type == "vmess") | .listen_port = ($listen_port | tonumber)' \
@@ -1086,7 +1082,85 @@ modify_vmess() {
 
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
-    echo "Vmess 端口修改完成"
+    
+     vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
+# 提示用户选择使用固定 Argo 隧道或临时隧道
+read -p $'\e[1;3;33mY 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): \e[0m' use_fixed
+use_fixed=${use_fixed:-Y}
+
+if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
+   pid=$(pgrep -f cloudflared-linux)
+if [ -n "$pid" ]; then
+    # 终止现有进程
+    pkill -f cloudflared-linux 2>/dev/null
+fi
+ echo -e "\033[1;3;33m请访问以下网站生成 Argo 固定隧道所需的Json配置信息。${RESET}"
+        echo ""
+        echo -e "${red}      https://fscarmen.cloudflare.now.cc/ ${reset}"
+        echo ""
+    # 确保输入有效的 Argo 域名
+while true; do
+    read -p $'\e[1;3;33m请输入你的 Argo 域名: \e[0m' argo_domain
+    if [[ -n "$argo_domain" ]] && [[ "$argo_domain" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+        break
+    else
+        echo -e "\e[1;3;31m输入无效，请输入一个有效的域名（不能为空）。\e[0m"
+    fi
+done
+
+# 确保输入有效的 Argo 密钥 (token 或 JSON)
+while true; do
+    read -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
+    if [[ -n "$argo_auth" ]] && ( [[ "$argo_auth" =~ ^[a-zA-Z0-9._-]+$ ]] || [[ "$argo_auth" =~ ^\{.*\}$ ]] ); then
+        break
+    else
+        echo -e "\e[1;3;31m输入无效，请输入有效的 token（不能为空）或 JSON 格式的密钥。\e[0m"
+    fi
+done
+
+    # 处理 Argo 的配置
+    if [[ $argo_auth =~ TunnelSecret ]]; then
+        # 创建 JSON 凭据文件
+        echo "$argo_auth" > /root/sbox/tunnel.json
+
+        # 生成 tunnel.yml 文件
+ cat > /root/sbox/tunnel.yml << EOF
+tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
+credentials-file: /root/sbox/tunnel.json
+protocol: http2
+
+ingress:
+  - hostname: $argo_domain
+    service: http://localhost:$vmess_port
+    originRequest:
+      noTLSVerify: true
+  - service: "http_status:404"
+EOF
+
+      #  echo "生成的 tunnel.yml 文件内容:"
+      #  cat /root/sbox/tunnel.yml
+        # 启动固定隧道
+       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+        echo -e "\e[1;3;32m固定隧道功能已启动！\e[0m"
+    
+    fi
+else
+    # 用户选择使用临时隧道
+pid=$(pgrep -f cloudflared-linux)
+if [ -n "$pid" ]; then
+    # 终止现有进程
+    pkill -f cloudflared-linux 2>/dev/null
+fi
+    # 启动临时隧道
+ /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+sleep 2
+echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
+sleep 5
+#连接到域名
+argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+echo "$argo" | base64 > /root/sbox/argo.txt.b64
+fi
+echo "Vmess 端口修改完成"
 }
 
 # 修改tuic协议
@@ -1182,6 +1256,8 @@ case $choice in
        # 重启服务并验证
        echo "配置修改完成，重新启动 sing-box 服务..."
        systemctl restart sing-box
+       systemctl restart cloudflared
+        sleep 2
          if [ $? -eq 0 ]; then
              echo "sing-box 服务重启成功"
          else
