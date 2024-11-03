@@ -968,13 +968,13 @@ detect_protocols() {
     # 获取已安装的协议类型
     protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
-    echo -e "\e[1;3;32m已安装协议如下:\e[0m"
+    echo -e "\e[1;3;33m检测到已安装协议如下:\e[0m"
     echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息，绿色斜体加粗
     echo ""
 
     # 初始化选项数组
     options=()
-    protocol_list=("Vless" "Vmess" "Hysteria2" "TUIC")
+    protocol_list=("VLESS" "VMess" "Hysteria2" "TUIC")
 
     # 根据检测到的协议生成选项
     for protocol in "${protocol_list[@]}"; do
@@ -1007,6 +1007,7 @@ detect_protocols() {
         fi
     done
 }
+
 
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
