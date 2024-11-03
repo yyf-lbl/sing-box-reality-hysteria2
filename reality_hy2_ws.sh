@@ -880,10 +880,10 @@ check_tunnel_status() {
         echo ""
         if [ -f "/root/sbox/argo_run.log" ]; then
             if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
-                echo -e "\e[1;3;32mCfloudflared固定隧道正常运行。\e[0m"
+                echo -e "\e[1;3;32mCfloudflare 固定隧道正常运行。\e[0m"
                 echo ""
             else
-                echo -e "\e[1;3;31m固定隧道未能成功启动。\e[0m"
+                echo -e "\e[1;3;31mCfloudflare 固定隧道未能成功启动。\e[0m"
                 restart_tunnel  # 如果需要，可以调用重启函数
             fi
         else
@@ -896,11 +896,11 @@ check_tunnel_status() {
         echo ""
         if [ -f "/root/sbox/argo.log" ]; then
             if grep -q "Your quick Tunnel has been created!" /root/sbox/argo.log; then
-                echo -e "\e[1;3;32mCfloudflared临时隧道正常运行!\e[0m"
+                echo -e "\e[1;3;32mCfloudflare 临时隧道正常运行!\e[0m"
                # grep "Visit it at" /root/sbox/argo.log  # 输出隧道地址
                echo ""
             else
-                echo -e "\e[1;3;31m临时隧道未能成功启动。\e[0m"
+                echo -e "\e[1;3;31mCfloudflare 临时隧道未能成功启动。\e[0m"
                 restart_tunnel  # 如果需要，可以调用重启函数
             fi
         else
@@ -928,7 +928,7 @@ echo -e "\e[1;3;36m3. 修改配置\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;31m5. 卸载SingBox\e[0m"  # 红色斜体加粗
+echo -e "\e[1;3;31m5. 卸载Sing-box\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m6. 更新SingBox内核\e[0m"  # 绿色斜体加粗
 echo  "==============="
@@ -962,22 +962,41 @@ case $choice in
     3)
       # 检测协议并提供修改选项
 detect_protocols() {
-    echo "正在检测已安装的协议..."
+    echo -e "\e[1;3;33m正在检测已安装的协议...\e[0m"
+    sleep 3
+
+    # 获取已安装的协议类型
     protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
-    echo "检测到的协议:"
+    echo -e "\e[1;3;33m检测到已安装协议如下:\e[0m"
     echo "$protocols"
-
     echo ""
-    echo "请选择要修改的协议："
-    echo "1) VLESS"
-    echo "2) Hysteria2"
-    echo "3) 全部修改"
-    read -p "请输入选项 (1/2/3): " modify_choice
+
+    # 初始化选项数组
+    options=()
+    protocol_list=("VLESS" "VMess" "Hysteria2" "TUIC")
+
+    # 根据检测到的协议生成选项
+    for protocol in "${protocol_list[@]}"; do
+        if echo "$protocols" | grep -q "$protocol"; then
+            options+=("$protocol")
+        fi
+    done
+
+    # 输出可修改的协议选项
+    echo -e "\e[1;3;32m请选择要修改的协议：\e[0m"
+    for i in "${!options[@]}"; do
+        echo -e "\e[1;3;32m$((i + 1))) ${options[i]}\e[0m"
+    done
+
+    # 添加“全部修改”选项
+    echo -e "\e[1;3;32m$((i + 2))) 全部修改\e[0m"
+
+    read -p "请输入选项 (1/${#options[@]}/$((i + 2))): " modify_choice
 }
+
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
-
     # 获取当前端口
     current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
     
