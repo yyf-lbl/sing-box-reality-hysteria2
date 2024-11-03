@@ -969,16 +969,16 @@ detect_protocols() {
     protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
 
     echo -e "\e[1;3;33m检测到已安装协议如下:\e[0m"
-    echo -e "\e[1;3;32m$protocols\e[0m"
+    echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息，绿色斜体加粗
     echo ""
 
     # 初始化选项数组
     options=()
-    protocol_list=("VLESS" "VMess" "Hysteria2" "TUIC")
+    protocol_list=("Vless" "Vmess" "Hysteria2" "TUIC")
 
     # 根据检测到的协议生成选项
     for protocol in "${protocol_list[@]}"; do
-        if echo "$protocols" | grep -q "$protocol"; then
+        if echo "$protocols" | grep -q -i "$protocol"; then
             options+=("$protocol")
         fi
     done
@@ -986,7 +986,7 @@ detect_protocols() {
     # 输出可修改的协议选项
     if [ ${#options[@]} -eq 0 ]; then
         echo -e "\e[1;3;31m没有检测到可修改的协议。\e[0m"
-        return
+        return 1  # 返回非零值表示未找到协议
     fi
 
     echo -e "\e[1;3;32m请选择要修改的协议：\e[0m"
@@ -997,7 +997,15 @@ detect_protocols() {
     # 添加“全部修改”选项
     echo -e "\e[1;3;32m$((i + 2))) 全部修改\e[0m"
 
-    read -p "请输入选项 (1/${#options[@]}/$((i + 2))): " modify_choice
+    # 读取用户输入
+    while true; do
+        read -p "请输入选项 (1/${#options[@]}/$((i + 2))): " modify_choice
+        if [[ "$modify_choice" =~ ^[1-9][0-9]*$ ]] && [ "$modify_choice" -le $((i + 2)) ]; then
+            break
+        else
+            echo -e "\e[1;3;31m无效选项，请重新输入。\e[0m"
+        fi
+    done
 }
 
 modify_vless() {
