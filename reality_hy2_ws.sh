@@ -507,19 +507,24 @@ done
                     exit 1
                 fi
                 echo "\e[1;3;33m生成vless密匙对成功\e[0m"
-         
+                sleep 1
+                echo "\e[1;3;33m正在提取提取私钥和公钥...\e[0m"
                 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
                 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
                 echo "$public_key" | base64 > /root/sbox/public.key.b64
+                echo "\e[1;3;32m提取提取私钥和公钥成功\e[0m"
+                echo "\e[1;3;33m正在随机生成UUID和短UUID\e[0m"
                 uuid=$(/root/sbox/sing-box generate uuid)
                 short_id=$(/root/sbox/sing-box generate rand --hex 8)
-                echo -e "\e[1;3;32mUUID 和短 ID 生成完成\e[0m"
+                sleep 1
                 echo -e "\e[1;3;32mUUID为: $uuid\e[0m"
                 echo -e "\e[1;3;32m短UUID为: $short_id\e[0m"
-                read -p $'\e[1;3;33m请输入 Reality 端口 (default: 443): \e[0m' listen_port_input
+                sleep 1
+                read -p $'\e[1;3;33m请输入 Reality 端口 (默认端口: 443): \e[0m' listen_port_input
                 listen_port=${listen_port_input:-443}
                 echo -e "\e[1;3;32mvless端口: $listen_port\e[0m"
-                read -p $'\e[1;3;33m请输入想要使用的域名 (default: itunes.apple.com): \e[0m' server_name_input
+                sleep 1
+                read -p $'\e[1;3;33m请输入想要使用的域名 (默认域名: itunes.apple.com): \e[0m' server_name_input
                 server_name=${server_name_input:-itunes.apple.com}
                 echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
                 
@@ -559,16 +564,16 @@ done
            echo -e "\e[1;3;33m正在自动生成Tuic-UUID\e[0m"
            sleep 1
            vmess_uuid=$(/root/sbox/sing-box generate uuid)
-           echo -e "\e[1;3;32mvmess UUID为:$vmess_uuid\e[0m"
+           echo -e "\e[1;3;32mvmess UUID为: $vmess_uuid\e[0m"
            sleep 1
            read -p $'\e[1;3;33m请输入 vmess 端口(默认端口:15555): \e[0m' vmess_port
            vmess_port=${vmess_port:-15555}
-           echo -e "\e[1;3;32mvmess端口:$vmess_port\e[0m"
+           echo -e "\e[1;3;32mvmess端口: $vmess_port\e[0m"
            sleep 1
            read -p $'\e[1;3;33mws 路径 (默认随机生成): \e[0m' ws_path
            sleep 1
            ws_path=${ws_path:-$(/root/sbox/sing-box generate rand --hex 6)}
-           echo -e "\e[1;3;32mws路径为:$ws_path\e[0m"
+           echo -e "\e[1;3;32mws路径为: $ws_path\e[0m"
 # 提示用户选择使用固定 Argo 隧道或临时隧道
 read -p $'\e[1;3;33mY 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): \e[0m' use_fixed
 use_fixed=${use_fixed:-Y}
@@ -678,7 +683,7 @@ fi
                 read -p $'\e[1;3;33m请输入 Hysteria2 监听端口 (default: 8443): \e[0m' hy_listen_port_input
                 sleep 1
                 hy_listen_port=${hy_listen_port_input:-8443}
-                echo -e "\e[1;3;32mHysteria2端口:$hy_listen_port\e[0m"
+                echo -e "\e[1;3;32mHysteria2端口: $hy_listen_port\e[0m"
                 sleep 1
                 read -p -p $'\e[1;3;33m请输入自签证书域名 (默认域名: bing.com): \e[0m' hy_server_name_input
                 sleep 1
