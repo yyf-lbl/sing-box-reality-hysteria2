@@ -500,20 +500,20 @@ done
             1)
                 echo -e "\e[1;3;33m开始配置 Reality\e[0m"
                 sleep 2
-                echo "\e[1;3;33m正在生成vless密匙对...\e[0m" 
+                echo -e "\e[1;3;33m正在生成vless密匙对...\e[0m" 
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
                 if [ $? -ne 0 ]; then
                     echo -e "\e[1;3;31m生成 Reality 密钥对失败。\e[0m"
                     exit 1
                 fi
-                echo "\e[1;3;33m生成vless密匙对成功\e[0m"
+                echo -e "\e[1;3;33m生成vless密匙对成功\e[0m"
                 sleep 1
-                echo "\e[1;3;33m正在提取提取私钥和公钥...\e[0m"
+                echo -e "\e[1;3;33m正在提取提取私钥和公钥...\e[0m"
                 private_key=$(echo "$key_pair" | awk '/PrivateKey/ {print $2}' | tr -d '"')
                 public_key=$(echo "$key_pair" | awk '/PublicKey/ {print $2}' | tr -d '"')
                 echo "$public_key" | base64 > /root/sbox/public.key.b64
-                echo "\e[1;3;32m提取提取私钥和公钥成功\e[0m"
-                echo "\e[1;3;33m正在随机生成UUID和短UUID\e[0m"
+                echo -e "\e[1;3;32m提取提取私钥和公钥成功\e[0m"
+                echo -e "\e[1;3;33m正在随机生成UUID和短UUID\e[0m"
                 uuid=$(/root/sbox/sing-box generate uuid)
                 short_id=$(/root/sbox/sing-box generate rand --hex 8)
                 sleep 1
