@@ -2,7 +2,7 @@
 # 创建快捷指令
 add_alias() {
     config_file=$1
-    alias_names=("5" "5")
+    alias_names=("a" "a")
     [ ! -f "$config_file" ] || touch "$config_file"
     for alias_name in "${alias_names[@]}"; do
         if ! grep -q "alias $alias_name=" "$config_file"; then 
@@ -852,7 +852,7 @@ clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
 echo -e "\e[1;3;31m=== argo隧道配置文件生成网址 \e[1;3;33mhttps://fscarmen.cloudflare.now.cc/\e[1;3;31m ===\e[0m"
 echo -e "\e[1;3;33m=== 脚本支持: VLESS VMESS HY2 协议 ===\e[0m" 
-echo -e "\e[1;3;33m=== 脚本快捷键指令：数字 5 ===\e[0m" 
+echo -e "\e[1;3;33m=== 脚本快捷键指令：a ===\e[0m" 
 echo -e "\e[1;3;31m***********************\e[0m"
 echo -e "\e[1;3;36m请选择选项:\e[0m"  # 青色斜体加粗
 echo ""
