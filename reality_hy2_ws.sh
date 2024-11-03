@@ -735,7 +735,7 @@ fi
     mkdir -p /root/self-cert/
     openssl ecparam -genkey -name prime256v1 -out /root/self-cert/private.key
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
-    echo "\e[1;3;32m自签证书已生成成功\e[0m"
+    echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
     echo ""
 
     config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
