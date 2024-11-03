@@ -1,6 +1,5 @@
 #!/bin/bash
 # 将 setup_run_script 函数添加到 .bashrc 的开头
-# 将 setup_run_script 函数添加到 .bashrc 的开头
 if ! grep -q "setup_run_script" ~/.bashrc; then
     cat << 'EOF' >> ~/.bashrc
 
