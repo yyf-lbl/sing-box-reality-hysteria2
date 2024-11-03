@@ -2,20 +2,28 @@
 # 创建快捷指令
 add_alias() {
     config_file=$1
-    alias_names=("a" "a")
-    [ ! -f "$config_file" ] || touch "$config_file"
-    for alias_name in "${alias_names[@]}"; do
-        if ! grep -q "alias $alias_name=" "$config_file"; then 
-            echo "Adding alias $alias_name to $config_file"
-            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
-        fi
-    done
+    alias_names=("a" "5")
+    [ ! -f "$config_file" ] || touch "$config_file"  
+    # 检查标志文件是否存在
+    if [ ! -f "/tmp/alias_added.flag" ]; then
+        for alias_name in "${alias_names[@]}"; do
+            if ! grep -q "alias $alias_name=" "$config_file"; then 
+                echo "Adding alias $alias_name to $config_file"
+                echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
+            fi
+        done
+        touch /tmp/alias_added.flag  # 创建标志文件
+    else
+        echo "Aliases have already been added."
+    fi
     . "$config_file"
 }
 config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
 for config_file in "${config_files[@]}"; do
     add_alias "$config_file"
 done
+# 重新加载 .bashrc
+source /root/.bashrc
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
