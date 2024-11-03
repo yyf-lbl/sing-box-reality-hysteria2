@@ -2,7 +2,7 @@
 # 创建快捷指令
 add_alias() {
     config_file=$1
-    alias_names=("k" "K")
+    alias_names=("a" "5")
     [ ! -f "$config_file" ] || touch "$config_file"
     for alias_name in "${alias_names[@]}"; do
         if ! grep -q "alias $alias_name=" "$config_file"; then 
