@@ -499,7 +499,7 @@ done
     for choice in $choices; do
         case $choice in
             1)
-                show_notice "★★★开始配置 vless 协议...★★★"
+                show_notice "★ ★ ★ 开始配置 vless 协议... ★ ★ ★"
                 sleep 2
                 echo -e "\e[1;3;33m正在生成vless密匙对...\e[0m" 
                 key_pair=$(/root/sbox/sing-box generate reality-keypair)
