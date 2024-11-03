@@ -1019,8 +1019,8 @@ modify_vless() {
     server_name=${server_name:-$current_server_name}
 
     # 修改配置文件，确保只修改 listen_port 和 server_name
-    jq --arg listen_port "$listen_port" --arg server_name "$server_name" \
-        '.inbounds[] | select(.type == "vless") | .listen_port = ($listen_port | tonumber) | .tls.server_name = $server_name' \
+    jq --argjson listen_port "$listen_port" --argjson server_name "$server_name" \
+        '(.inbounds[] | select(.type == "vless") | .listen_port  .tls.server_name) = $listen_port $server_name' \
         /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
 
     # 用临时文件替换原文件
