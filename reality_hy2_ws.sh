@@ -1028,8 +1028,7 @@ modify_vless() {
 }
 
 modify_hysteria2() {
-    show_notice "开始修改 Hysteria2 配置"
-    
+    show_notice "开始修改 Hysteria2 配置"  
     # 获取当前 Hysteria2 端口
     hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
 
@@ -1037,19 +1036,18 @@ modify_hysteria2() {
         echo "未能获取当前 Hysteria2 端口，请检查配置文件。"
         return 1
     fi
-
     # 提示用户输入新端口
     read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
+    # 使用 jq 更新 listen_port，直接修改原文件
+    jq --argjson hy_listen_port "$hy_listen_port" \
+        '(.inbounds[] | select(.type == "hysteria2") | .listen_port) = $hy_listen_port' \
+        /root/sbox/sbconfig_server.json | sponge /root/sbox/sbconfig_server.json
 
-    # 修改配置文件，只更新 listen_port
-    jq --arg hy_listen_port "$hy_listen_port" \
-        '.inbounds[] | select(.type == "hysteria2") | .listen_port = ($hy_listen_port | tonumber)' \
-        /root/sbox/sbconfig_server.json > /root/sb_modified_hysteria.json
-
-    # 使用 `sponge` 或临时文件避免覆盖的问题
-    mv /root/sb_modified_hysteria.json /root/sbox/sbconfig_server.json
-
+    if [ $? -ne 0 ]; then
+        echo "修改配置文件时出错。"
+        return 1
+    fi
     echo "Hysteria2 配置修改完成"
 }
 
