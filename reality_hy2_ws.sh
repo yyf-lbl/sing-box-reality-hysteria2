@@ -966,7 +966,7 @@ detect_protocols() {
     sleep 3
     # 获取已安装的协议类型
     protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
-    echo -e "\e[1;3;33m检测到已安装协议如下:\e[0m"
+    echo -e "\e[1;3;33m已安装协议如下:\e[0m"
     echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息，绿色斜体加粗
     echo ""
     # 初始化选项数组
