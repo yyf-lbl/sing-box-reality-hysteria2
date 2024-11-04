@@ -989,7 +989,7 @@ detect_protocols() {
 # 修改vless协议
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
-    
+    sleep 2
     # 获取当前端口
     current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
     
@@ -998,9 +998,10 @@ modify_vless() {
         return 1
     fi
 
-    read -p "请输入想要修改的 VLESS 端口号 (当前端口为 $current_listen_port): " listen_port
+    read -p $'\e[1;3;33m请输入想要修改的 VLESS 端口号 (当前端口为 '"$current_listen_port"'): \e[0m ' listen_port
     listen_port=${listen_port:-$current_listen_port}
-
+    sleep 1
+   echo -e "\e[1;3;32m新的Vless 端口: $listen_port\e[0m"
     # 获取当前服务器名
     current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
     if [ -z "$current_server_name" ]; then
@@ -1008,18 +1009,22 @@ modify_vless() {
         return 1
     fi
     read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
+    sleep 1
     server_name=${server_name:-$current_server_name}
+    echo -e "\e[1;3;32m新的VLESS h2 域名: $server_name\e[0m"
+    sleep 1
     # 修改配置文件，确保只修改 listen_port 和 server_name
     jq --argjson listen_port "$listen_port" --arg server_name "$server_name" \
     '(.inbounds[] | select(.type == "vless")) |= (.listen_port = $listen_port | .tls.server_name = $server_name)' \
     /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
-    echo "VLESS 配置修改完成"
+    echo -e "\e[1;3;32mVess 配置修改完成\e[0m"
 }
 # 修改hysteria2协议
 modify_hysteria2() {
     show_notice "开始修改 Hysteria2 配置"
+    sleep 2
     # 获取当前 Hysteria2 端口
     hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
 
@@ -1030,7 +1035,8 @@ modify_hysteria2() {
     # 提示用户输入新端口
     read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
-
+    echo -e "\e[1;3;32mHysteria2 端口: $hy_listen_port\e[0m"
+    sleep 1
     # 使用 jq 更新 listen_port
     jq --argjson hy_listen_port "$hy_listen_port" \
         '(.inbounds[] | select(.type == "hysteria2") | .listen_port) = $hy_listen_port' \
@@ -1039,7 +1045,7 @@ modify_hysteria2() {
     # 确保 jq 成功执行
     if [ $? -eq 0 ]; then
         mv /root/sbox/sbconfig_server.json.tmp /root/sbox/sbconfig_server.json
-        echo "Hysteria2 配置修改完成"
+        echo -e "\e[1;3;32mHysteria2 配置修改完成===\e[0m"
     else
         echo "修改配置文件时出错。"
         rm /root/sbox/sbconfig_server.json.tmp  # 清理临时文件
@@ -1048,7 +1054,8 @@ modify_hysteria2() {
 }
 # 修改tuic协议
 modify_tuic() {
-    show_notice "开始修改 TUIC 配置"   
+    show_notice "开始修改 TUIC 配置" 
+    sleep 2
     echo -e "\e[1;3;33m正在自动生成 TUIC 随机密码\e[0m"
     sleep 1
     tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
@@ -1075,7 +1082,7 @@ modify_tuic() {
     /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
-    echo "TUIC 配置修改完成"
+    echo -e "\e[1;3;32m===TUIC 配置修改完成===\e[0m" 
 }
 # 用户交互界面
 while true; do
@@ -1130,14 +1137,14 @@ case $choice in
        # 主逻辑
        detect_protocols
        # 重启服务并验证
-       echo "配置修改完成，重新启动 sing-box 服务..."
+       echo -e "\e[1;3;33m配置修改完成，正在重新启动 sing-box 服务...\e[0m"
        systemctl restart sing-box
-       systemctl restart cloudflared
+       systemctl restart cloudflared > /dev/null 2>&1
         sleep 2
          if [ $? -eq 0 ]; then
-             echo "sing-box 服务重启成功"
+             echo -e "\e[1;3;32msing-box 服务重启成功\e[0m"
          else
-            echo "sing-box 服务重启失败，请检查日志"
+            echo -e "\e[1;3;31msing-box 服务重启失败，请检查日志\e[0m"
             # 恢复备份
             mv /root/sbox/sbconfig_server_backup.json /root/sbox/sbconfig_server.json
          fi
