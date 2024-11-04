@@ -870,17 +870,32 @@ reinstall_sing_box() {
         install_singbox
 }
 
-check_cloudflared_status() {
-    echo "检查 Cloudflare 隧道状态..."
+check_services_status() {
+    echo -e "\e[1;3;33m正在检查 cloudflared 和 sing-box 服务的当前状态...\e[0m"
     sleep 1
-    status_output=$(systemctl status cloudflared 2>&1)  # 捕获输出
-    if echo "$status_output" | grep -q "active (running)"; then
-        echo -e "\e[1;32mCloudflare服务启动正常\e[0m"
-    elif echo "$status_output" | grep -q "inactive (dead)"; then
-        echo -e "\e[31mCloudflare Cloudflare服务未启动。\e[0m"
+
+    # 检查 cloudflared 服务状态
+    cloudflared_status=$(systemctl status cloudflared 2>&1)
+    if echo "$cloudflared_status" | grep -q "active (running)"; then
+        echo -e "\e[1;3;32mCloudflare 服务启动正常\e[0m"
+    elif echo "$cloudflared_status" | grep -q "inactive (dead)"; then
+        echo -e "\e[1;3;31mCloudflare 服务未启动。\e[0m"
     else
-        echo -e "\e[33mCloudflare 隧道状态未知，请检查服务状态。\e[0m"
+        echo -e "\e[1;3;33mCloudflare 服务状态未知，请检查服务状态。\e[0m"
     fi
+
+    echo ""  # 输出一个空行，增加可读性
+
+    # 检查 sing-box 服务状态
+    singbox_status=$(systemctl status sing-box 2>&1)
+    if echo "$singbox_status" | grep -q "active (running)"; then
+        echo -e "\e[1;3;32mSing-box 服务启动正常\e[0m"
+    elif echo "$singbox_status" | grep -q "inactive (dead)"; then
+        echo -e "\e[1;3;31mSing-box 服务未启动。\e[0m"
+    else
+        echo -e "\e[1;3;33mSing-box 服务状态未知，请检查服务状态。\e[0m"
+    fi
+    echo "" 
 }
 
 # 检测隧道状况
