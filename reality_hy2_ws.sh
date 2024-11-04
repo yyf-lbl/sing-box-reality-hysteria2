@@ -413,7 +413,8 @@ uninstall_singbox() {
     # 停止 Cloudflare 隧道服务
     if systemctl is-active --quiet cloudflared; then
         echo -e "\e[1;3;33m正在停止 Cloudflare 隧道服务...\e[0m"
-        systemctl stop cloudflared
+        systemctl stop cloudflared 2>/dev/null
+        systemctl disable cloudflared 2>/dev/null
     fi
     # 停止现有的 cloudflared 进程
     pid=$(pgrep -f cloudflared-linux)
@@ -459,6 +460,8 @@ uninstall_singbox() {
             fi
         fi
     done
+   #  重新加载系统的单元文件配置
+    systemctl daemon-reload
    echo -e "\e[1;3;32msing-box已成功卸载!\e[0m"
 echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
  echo ""
