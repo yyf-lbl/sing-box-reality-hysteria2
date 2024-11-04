@@ -872,7 +872,7 @@ reinstall_sing_box() {
 
 check_services_status() {
     echo -e "\e[1;3;33m正在检查 cloudflared 和 sing-box 服务的当前状态...\e[0m"
-    sleep 1
+    sleep 2
     # 检查 sing-box 服务状态
     singbox_status=$(systemctl status sing-box 2>&1)
     if echo "$singbox_status" | grep -q "active (running)"; then
@@ -882,7 +882,7 @@ check_services_status() {
     else
         echo -e "\e[1;3;33mSing-box 服务状态未知，请检查服务状态。\e[0m"
     fi
-    
+    sleep 2
     # 检查 cloudflared 服务状态
     cloudflared_status=$(systemctl status cloudflared 2>&1)
     if echo "$cloudflared_status" | grep -q "active (running)"; then
