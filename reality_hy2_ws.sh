@@ -991,7 +991,8 @@ detect_protocols() {
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
     sleep 2
-    # 获取当前端口
+
+    # 获取当前 VLESS 监听端口
     current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
     
     if [ -z "$current_listen_port" ]; then
@@ -999,36 +1000,61 @@ modify_vless() {
         return 1
     fi
 
-    printf "\e[1;3;33m请输入想要修改的 VLESS 端口号 (当前端口为: %s):\e[0m " "$current_listen_port"
-    read listen_port
-    listen_port=${listen_port:-$current_listen_port}
+    # 输入新的 VLESS 端口，提示范围
+    while true; do
+        printf "\e[1;3;33m请输入想要修改的 VLESS 端口号 (当前端口为: %s，范围: 1-65535):\e[0m " "$current_listen_port"
+        read listen_port  
+        sleep 1
+        
+        # 自动生成随机端口号
+        if [ -z "$listen_port" ]; then
+            listen_port=$((RANDOM % 64512 + 1024))  # 生成 1024 到 65535 之间的随机端口
+            echo -e "\e[1;3;32m未输入，已自动生成新的 VLESS 端口: $listen_port\e[0m"
+            break
+        fi
+        
+        # 验证端口范围
+        if [[ "$listen_port" =~ ^[1-9][0-9]{0,4}$ && "$listen_port" -le 65535 ]]; then
+            break  # 输入有效，退出循环
+        else
+            echo -e "\e[31m无效的端口号，请输入范围在 1-65535 之间的数字。\e[0m"
+        fi
+    done
+
+    echo -e "\e[1;3;32m新的 VLESS 端口: $listen_port\e[0m"
     sleep 1
-   echo -e "\e[1;3;32m新的 Vless 端口: $listen_port\e[0m"
+
     # 获取当前服务器名
     current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
+    
     if [ -z "$current_server_name" ]; then
         echo "未能获取当前 VLESS h2 域名，请检查配置文件。"
         return 1
     fi
-    printf "\e[1;3;33m请输入想要修改的 VLESS 端口号 (当前域名为: %s):\e[0m " "$current_server_name"
+
+    printf "\e[1;3;33m请输入想要修改的 VLESS h2 域名 (当前域名为: %s):\e[0m " "$current_server_name"
     read server_name
+    server_name=${server_name:-$current_server_name}  # 如果输入为空则使用当前服务器名
+    echo -e "\e[1;3;32m新的 VLESS h2 域名: $server_name\e[0m"
     sleep 1
-    server_name=${server_name:-$current_server_name}
-    echo -e "\e[1;3;32m新的VLESS h2 域名: $server_name\e[0m"
-    sleep 1
+
     # 修改配置文件，确保只修改 listen_port 和 server_name
     jq --argjson listen_port "$listen_port" --arg server_name "$server_name" \
-    '(.inbounds[] | select(.type == "vless")) |= (.listen_port = $listen_port | .tls.server_name = $server_name)' \
-    /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+       '(.inbounds[] | select(.type == "vless")) |= (.listen_port = $listen_port | .tls.server_name = $server_name)' \
+       /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
-    echo -e "\e[1;3;32m=== Vess 配置修改完成 ===\e[0m"
+
+    echo -e "\e[1;3;32m=== VLESS 配置修改完成 ===\e[0m"
     echo ""
 }
+
 # 修改hysteria2协议
 modify_hysteria2() {
     show_notice "开始修改 Hysteria2 配置"
     sleep 2
+
     # 获取当前 Hysteria2 端口
     hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
 
@@ -1036,12 +1062,30 @@ modify_hysteria2() {
         echo "未能获取当前 Hysteria2 端口，请检查配置文件。"
         return 1
     fi
-    # 提示用户输入新端口
-    printf "\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为: %s):\e[0m " "$hy_current_listen_port"
-    read hy_listen_port
-    hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
+    # 输入新的 Hysteria2 端口，提示范围
+    while true; do
+        printf "\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为: %s，范围: 1-65535):\e[0m " "$hy_current_listen_port"
+        read hy_listen_port
+        sleep 1
+        # 自动生成随机端口号
+        if [ -z "$hy_listen_port" ]; then
+            hy_listen_port=$((RANDOM % 64512 + 1024))  # 生成 1024 到 65535 之间的随机端口
+            echo -e "\e[1;3;32m未输入，已自动生成新的 Hysteria2 端口: $hy_listen_port\e[0m"
+            break
+        fi
+
+        # 验证端口范围
+        if [[ "$hy_listen_port" =~ ^[1-9][0-9]{0,4}$ && "$hy_listen_port" -le 65535 ]]; then
+            break  # 输入有效，退出循环
+            sleep 1
+        else
+            echo -e "\e[31m无效的端口号，请输入范围在 1-65535 之间的数字。\e[0m"
+        fi
+    done
+
     echo -e "\e[1;3;32m新的 Hysteria2 端口: $hy_listen_port\e[0m"
     sleep 1
+
     # 使用 jq 更新 listen_port
     jq --argjson hy_listen_port "$hy_listen_port" \
         '(.inbounds[] | select(.type == "hysteria2") | .listen_port) = $hy_listen_port' \
@@ -1051,33 +1095,68 @@ modify_hysteria2() {
     if [ $? -eq 0 ]; then
         mv /root/sbox/sbconfig_server.json.tmp /root/sbox/sbconfig_server.json
         echo -e "\e[1;3;32m=== Hysteria2 配置修改完成 ===\e[0m"
-         echo ""
+        echo ""
     else
         echo "修改配置文件时出错。"
         rm /root/sbox/sbconfig_server.json.tmp  # 清理临时文件
         return 1
     fi
 }
+
 # 修改tuic协议
 modify_tuic() {
-    show_notice "开始修改 TUIC 配置" 
+    show_notice "开始修改 TUIC 配置"
     sleep 2
+
+    # 获取当前 TUIC 监听端口
     tuic_current_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
-    
-    printf "\e[1;3;33m请输入想要修改的 TUIC 监听端口 (当前端口为: %s):\e[0m " "$tuic_current_listen_port"
-    read tuic_listen_port_input
-    tuic_listen_port=${tuic_listen_port_input:-$tuic_current_listen_port}
-    echo -e "\e[1;3;32m新的 Tuic 端口: $tuic_listen_port\e[0m"
+
+    if [ -z "$tuic_current_listen_port" ]; then
+        echo "未能获取当前 TUIC 端口，请检查配置文件。"
+        return 1
+    fi
+
+    # 输入新的 TUIC 端口，提示范围
+    while true; do
+        printf "\e[1;3;33m请输入想要修改的 TUIC 监听端口 (当前端口为: %s，范围: 1-65535):\e[0m " "$tuic_current_listen_port"
+        read tuic_listen_port_input
+        
+        # 自动生成随机端口号
+        if [ -z "$tuic_listen_port_input" ]; then
+            tuic_listen_port=$((RANDOM % 64512 + 1024))  # 生成 1024 到 65535 之间的随机端口
+            echo -e "\e[1;3;32m未输入，已自动生成新的 TUIC 端口: $tuic_listen_port\e[0m"
+            break
+        fi
+
+        # 验证端口范围
+        if [[ "$tuic_listen_port_input" =~ ^[1-9][0-9]{0,4}$ && "$tuic_listen_port_input" -le 65535 ]]; then
+            tuic_listen_port="$tuic_listen_port_input"  # 输入有效，使用输入的端口
+            break  # 退出循环
+        else
+            echo -e "\e[31m无效的端口号，请输入范围在 1-65535 之间的数字。\e[0m"
+        fi
+    done
+
+    echo -e "\e[1;3;32m新的 TUIC 端口: $tuic_listen_port\e[0m"
     sleep 1
+
     # 修改配置文件
-   jq --argjson listen_port "$tuic_listen_port" \
-   '(.inbounds[] | select(.type == "tuic") | .listen_port) = $listen_port' \
-   /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
-    # 用临时文件替换原文件
-    mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
-    echo -e "\e[1;3;32m=== TUIC 配置修改完成 ===\e[0m" 
-     echo ""
+    jq --argjson listen_port "$tuic_listen_port" \
+       '(.inbounds[] | select(.type == "tuic") | .listen_port) = $listen_port' \
+       /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+
+    # 确保 jq 成功执行
+    if [ $? -eq 0 ]; then
+        mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
+        echo -e "\e[1;3;32m=== TUIC 配置修改完成 ===\e[0m"
+        echo ""
+    else
+        echo "修改配置文件时出错。"
+        rm /root/sbox/sbconfig_server_tmp.json  # 清理临时文件
+        return 1
+    fi
 }
+
 # 用户交互界面
 while true; do
 clear
