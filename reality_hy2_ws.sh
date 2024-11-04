@@ -1125,7 +1125,6 @@ echo  "==============="
 echo ""
 echo -e -n "\e[1;3;33m输入您的选择 (0-9): \e[0m "
 read choice
-sleep 2
   echo ""
 case $choice in
     1)
@@ -1206,6 +1205,7 @@ fi
         ;;
     *)
         echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m" 
+        sleep 2
         continue  
         ;;
  esac
