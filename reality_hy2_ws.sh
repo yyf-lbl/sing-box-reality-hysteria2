@@ -955,6 +955,7 @@ detect_protocols() {
     # 根据用户选择进行修改
     if [ "$modify_choice" -eq $((i + 2)) ]; then
         echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
+           echo ""
         # 这里添加代码以修改所有协议
         for protocol in "${options[@]}"; do
             echo -e "\e[1;3;32m请按照提示进行修改...\e[0m"
@@ -998,8 +999,8 @@ modify_vless() {
         return 1
     fi
 
-    read -p $'\e[1;3;33m请输入想要修改的 Vless 端口号 (当前端口为 '"$current_listen_port"'):\e[0m' listen_port
-
+    read -p $'\e[1;3;33m请输入想要修改的 Vless 端口号 (当前端口为 '"$current_listen_port"'): \e[0m' listen_port
+   
     listen_port=${listen_port:-$current_listen_port}
     sleep 1
    echo -e "\e[1;3;32m新的 Vless 端口: $listen_port\e[0m"
@@ -1009,7 +1010,7 @@ modify_vless() {
         echo "未能获取当前 VLESS h2 域名，请检查配置文件。"
         return 1
     fi
-    read -p $'\e[1;3;33m请输入Vless想要修改的 h2 域名 (当前域名为 '"$current_server_name"'):\e[0m' server_name
+    read -p $'\e[1;3;33m请输入Vless想要修改的 h2 域名 (当前域名为 '"$current_server_name"'): \e[0m' server_name
     sleep 1
     server_name=${server_name:-$current_server_name}
     echo -e "\e[1;3;32m新的VLESS h2 域名: $server_name\e[0m"
@@ -1034,7 +1035,7 @@ modify_hysteria2() {
         return 1
     fi
     # 提示用户输入新端口
-    read -p $'\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为 '"$hy_current_listen_port"'):\e[0m' hy_listen_port
+    read -p $'\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为 '"$hy_current_listen_port"'): \e[0m' hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
     echo -e "\e[1;3;32m新的 Hysteria2 端口: $hy_listen_port\e[0m"
     sleep 1
