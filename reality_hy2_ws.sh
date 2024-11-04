@@ -873,19 +873,7 @@ reinstall_sing_box() {
 check_services_status() {
     echo -e "\e[1;3;33m正在检查 cloudflared 和 sing-box 服务的当前状态...\e[0m"
     sleep 1
-
-    # 检查 cloudflared 服务状态
-    cloudflared_status=$(systemctl status cloudflared 2>&1)
-    if echo "$cloudflared_status" | grep -q "active (running)"; then
-        echo -e "\e[1;3;32mCloudflare 服务启动正常\e[0m"
-    elif echo "$cloudflared_status" | grep -q "inactive (dead)"; then
-        echo -e "\e[1;3;31mCloudflare 服务未启动。\e[0m"
-    else
-        echo -e "\e[1;3;33mCloudflare 服务状态未知，请检查服务状态。\e[0m"
-    fi
-
-    echo ""  # 输出一个空行，增加可读性
-
+     echo ""
     # 检查 sing-box 服务状态
     singbox_status=$(systemctl status sing-box 2>&1)
     if echo "$singbox_status" | grep -q "active (running)"; then
@@ -894,6 +882,16 @@ check_services_status() {
         echo -e "\e[1;3;31mSing-box 服务未启动。\e[0m"
     else
         echo -e "\e[1;3;33mSing-box 服务状态未知，请检查服务状态。\e[0m"
+    fi
+    
+    # 检查 cloudflared 服务状态
+    cloudflared_status=$(systemctl status cloudflared 2>&1)
+    if echo "$cloudflared_status" | grep -q "active (running)"; then
+        echo -e "\e[1;3;32mCloudflare 服务启动正常\e[0m"
+    elif echo "$cloudflared_status" | grep -q "inactive (dead)"; then
+        echo -e "\e[1;3;31mCloudflare 服务未启动。\e[0m"
+    else
+        echo -e "\e[1;3;33mCloudflare 服务状态未知，请检查服务状态。\e[0m"
     fi
     echo "" 
 }
@@ -1215,7 +1213,7 @@ echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m9. 查看cloudflare启动状况\e[0m"
+echo -e "\e[1;3;32m9. 实时查看系统服务状态\e[0m"
 echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
