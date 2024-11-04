@@ -320,11 +320,13 @@ fi
 #重启cloudflare隧道
 restart_tunnel() {
     echo -e "\e[1;3;32m正在检测隧道类型并重启中...\e[0m"
-     vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
-echo ""
-    # 停止现有的 cloudflared 进程
-    pkill -f cloudflared-linux
+    vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
+    echo ""
 
+    # 停止现有的 cloudflared 进程和服务
+    echo -e "\e[1;3;33m停止现有的 cloudflared 服务...\e[0m"
+    systemctl stop cloudflared
+    pkill -f cloudflared-linux
     sleep 2  # 等待进程完全终止
 
     # 判断是固定隧道还是临时隧道
@@ -335,23 +337,27 @@ echo ""
         echo -e "\e[1;3;32m正在重新启动临时隧道...\e[0m"
         echo ""
         pid=$(pgrep -f cloudflared-linux)
-if [ -n "$pid" ]; then
-    # 终止现有进程
-    pkill -f cloudflared-linux 2>/dev/null
-fi
-    # 启动临时隧道
- /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
-sleep 2
-echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
-echo ""
-sleep 5
-#连接到域名
-argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-echo "$argo" | base64 > /root/sbox/argo.txt.b64
+        if [ -n "$pid" ]; then
+            echo -e "\e[1;3;33m终止现有进程...\e[0m"
+            pkill -f cloudflared-linux 2>/dev/null
+            sleep 2  # 等待进程完全终止
+        fi
+
+        # 启动临时隧道
+        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+        sleep 2
+        echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
+        sleep 5
+
+        # 连接到域名
+        argo=$(grep trycloudflare.com /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+        echo "$argo" | base64 > /root/sbox/argo.txt.b64
     fi
-    echo -e "\e[1;3;32m隧道已重新启动。\e[0m"
-    # 添加隧道开机启动文件
-     cat > /etc/systemd/system/cloudflared.service << EOF
+  
+    # 检查是否存在 cloudflared.service 文件
+    if [ ! -f "/etc/systemd/system/cloudflared.service" ]; then
+        echo -e "\e[1;3;33m添加 cloudflared 服务开机启动配置...\e[0m"
+        cat > /etc/systemd/system/cloudflared.service << EOF
 [Unit]
 Description=Cloudflare Tunnel
 After=network.target
@@ -366,11 +372,17 @@ StandardError=append:/root/sbox/argo_run.log
 [Install]
 WantedBy=multi-user.target
 EOF
+    else
+        echo -e "\e[1;3;32mcloudflared 服务已存在，无需重新创建。\e[0m"
+    fi
 
- systemctl daemon-reload
- systemctl start cloudflared
- systemctl enable cloudflared
+    # 重新加载并启动 cloudflared 服务
+    systemctl daemon-reload
+    systemctl start cloudflared
+    systemctl enable cloudflared
+    echo -e "\e[1;3;32mCloudflare Tunnel 已重新启动！\e[0m"
 }
+
 #卸载sing-box程序
 uninstall_singbox() {
  echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
@@ -897,43 +909,56 @@ check_services_status() {
 
 # 检测隧道状况
 check_tunnel_status() {
-       check_services_status
-       sleep 2
+    check_services_status
+    sleep 2
+    
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         # 检查固定隧道状态
         echo -e "\e[1;3;33m正在检查固定隧道状态...\e[0m"
-          sleep 2
+        sleep 2
         echo ""
-        if [ -f "/root/sbox/argo_run.log" ]; then
-            if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
-                echo -e "\e[1;3;32mCfloudflare 固定隧道正常运行。\e[0m"
-                echo ""
+        
+        # 检查 cloudflared-linux 进程是否在运行
+        if pgrep -f cloudflared-linux > /dev/null; then
+            if [ -f "/root/sbox/argo_run.log" ]; then
+                if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
+                    echo -e "\e[1;3;32mCloudflare 固定隧道正常运行。\e[0m"
+                    echo ""
+                else
+                    echo -e "\e[1;3;31mCloudflare 固定隧道未能成功启动。\e[0m"
+                    restart_tunnel  # 如果需要，可以调用重启函数
+                fi
             else
-                echo -e "\e[1;3;31mCfloudflare 固定隧道未能成功启动。\e[0m"
-                restart_tunnel  # 如果需要，可以调用重启函数
+                echo -e "\e[1;3;31m找不到日志文件，无法检查固定隧道状态。\e[0m"
             fi
         else
-            echo -e "\e[1;3;31m找不到日志文件，无法检查固定隧道状态。\e[0m"
+            echo -e "\e[1;3;31mCloudflare 固定隧道进程未在运行。\e[0m"
         fi
     else
         # 检查临时隧道状态
         echo -e "\e[1;3;33m正在检查临时隧道状态...\e[0m"
         sleep 2
         echo ""
-        if [ -f "/root/sbox/argo.log" ]; then
-            if grep -q "Your quick Tunnel has been created!" /root/sbox/argo.log; then
-                echo -e "\e[1;3;32mCfloudflare 临时隧道正常运行!\e[0m"
-               # grep "Visit it at" /root/sbox/argo.log  # 输出隧道地址
-               echo ""
+
+        # 检查 cloudflared-linux 进程是否在运行
+        if pgrep -f cloudflared-linux > /dev/null; then
+            if [ -f "/root/sbox/argo.log" ]; then
+                if grep -q "Your quick Tunnel has been created!" /root/sbox/argo.log; then
+                    echo -e "\e[1;3;32mCloudflare 临时隧道正常运行!\e[0m"
+                    echo ""
+                else
+                    echo -e "\e[1;3;31mCloudflare 临时隧道未能成功启动。\e[0m"
+                    restart_tunnel  # 如果需要，可以调用重启函数
+                fi
             else
-                echo -e "\e[1;3;31mCfloudflare 临时隧道未能成功启动。\e[0m"
-                restart_tunnel  # 如果需要，可以调用重启函数
+                echo -e "\e[1;3;31m找不到日志文件，无法检查临时隧道状态。\e[0m"
             fi
         else
-            echo -e "\e[1;3;31m找不到日志文件，无法检查临时隧道状态。\e[0m"
+            echo -e "\e[1;3;31mCloudflare 临时隧道进程未在运行。\e[0m"
         fi
     fi
 }
+
 # 检测协议并提供修改选项
 detect_protocols() {
     echo -e "\e[1;3;33m正在检测已安装的协议...\e[0m"
