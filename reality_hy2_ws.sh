@@ -1123,8 +1123,19 @@ echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-echo -e -n "\e[1;3;33m输入您的选择 (0-9): \e[0m "
-read choice
+ while true; do
+        echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m "
+        read choice
+        echo ""
+
+        # 检查输入有效性
+        if [[ "$choice" =~ ^[0-9]$ ]]; then
+            break  # 输入有效，退出内层循环
+        else
+            echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
+            # 清除当前输入，不用再清屏
+        fi
+    done
   echo ""
 case $choice in
     1)
