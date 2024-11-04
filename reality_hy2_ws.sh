@@ -1205,7 +1205,7 @@ fi
         exit 0
         ;;
     *)
-   clear
+   
         echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
         
         continue  
