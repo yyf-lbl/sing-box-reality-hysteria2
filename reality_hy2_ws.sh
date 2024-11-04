@@ -1003,20 +1003,16 @@ modify_vless() {
 
     # 获取当前服务器名
     current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
-
     if [ -z "$current_server_name" ]; then
         echo "未能获取当前 VLESS h2 域名，请检查配置文件。"
         return 1
     fi
-
     read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
     server_name=${server_name:-$current_server_name}
-
     # 修改配置文件，确保只修改 listen_port 和 server_name
     jq --argjson listen_port "$listen_port" --arg server_name "$server_name" \
     '(.inbounds[] | select(.type == "vless")) |= (.listen_port = $listen_port | .tls.server_name = $server_name)' \
     /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
-
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo "VLESS 配置修改完成"
@@ -1024,7 +1020,6 @@ modify_vless() {
 # 修改hysteria2协议
 modify_hysteria2() {
     show_notice "开始修改 Hysteria2 配置"
-
     # 获取当前 Hysteria2 端口
     hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
 
@@ -1032,7 +1027,6 @@ modify_hysteria2() {
         echo "未能获取当前 Hysteria2 端口，请检查配置文件。"
         return 1
     fi
-
     # 提示用户输入新端口
     read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
@@ -1052,33 +1046,27 @@ modify_hysteria2() {
         return 1
     fi
 }
-
 # 修改tuic协议
 modify_tuic() {
-    show_notice "开始修改 TUIC 配置"
-    
+    show_notice "开始修改 TUIC 配置"   
     echo -e "\e[1;3;33m正在自动生成 TUIC 随机密码\e[0m"
     sleep 1
     tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
     echo -e "\e[1;3;32mTUIC 随机密码: $tuic_password\e[0m"
-    sleep 1
-    
+    sleep 1   
     echo -e "\e[1;3;33m正在自动生成 TUIC UUID\e[0m"
     sleep 1
     tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
     echo -e "\e[1;3;32m随机生成 TUIC UUID: $tuic_uuid\e[0m"
     sleep 1
-
     read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080): \e[0m' tuic_listen_port_input
     tuic_listen_port=${tuic_listen_port_input:-8080}
     echo -e "\e[1;3;32mTUIC 端口: $tuic_listen_port\e[0m"
     sleep 1
-
     read -p $'\e[1;3;33m输入 TUIC 自签证书域名 (默认域名: bing.com): \e[0m' tuic_server_name_input
     tuic_server_name=${tuic_server_name_input:-bing.com}
     echo -e "\e[1;3;32mTUIC 域名: $tuic_server_name\e[0m"
     sleep 1
-
     # 修改配置文件
     jq --arg password "$tuic_password" --arg uuid "$tuic_uuid" --argjson listen_port "$tuic_listen_port" --arg server_name "$tuic_server_name" \
     '(.inbounds[] | select(.type == "tuic") | .listen_port) = $listen_port |
@@ -1090,7 +1078,6 @@ modify_tuic() {
     echo "TUIC 配置修改完成"
 }
 # 用户交互界面
-menu(){
 while true; do
 clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
@@ -1122,24 +1109,11 @@ echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-while true; do
-        # 显示输入提示
-        echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m "
-        read -e choice
-        echo ""
-
-        # 检查输入有效性
-        if [[ "$choice" =~ ^[0-9]$ ]]; then
-            echo "$choice"  # 返回有效的选择
-            return 0
-        else
-            echo -e "\033[31m无效的选项,请重新输入!\033[0m"  # 显示错误信息
-        fi
-    done
+echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m " 
+read -e choice
 echo ""
 case $choice in
     1)
-
         echo -e "\e[1;3;32m开始安装sing-box服务，请稍后...\e[0m"
         echo " "
           mkdir -p "/root/sbox/"
@@ -1170,7 +1144,6 @@ case $choice in
            show_client_configuration
         ;;
     4)  
-
         show_client_configuration
         ;;	
     5)
@@ -1178,7 +1151,6 @@ case $choice in
         uninstall_singbox
         ;;
     6)
-
         show_notice "正在更新 Sing-box内核..."
         download_singbox
         if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
@@ -1214,6 +1186,10 @@ fi
         echo -e "\e[1;3;31m已退出脚本\e[0m"
         exit 0
         ;;
+     *)
+   
+        echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
+        ;;
  esac
   # 使用 printf 来输出提示信息
 printf "\e[1;3;33m按任意键返回...\e[0m"
@@ -1221,6 +1197,5 @@ printf "\e[1;3;33m按任意键返回...\e[0m"
 read -n 1 -s -r
     clear
 done
-}
-menu
+
  
