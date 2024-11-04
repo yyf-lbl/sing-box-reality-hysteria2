@@ -1035,7 +1035,6 @@ modify_hysteria2() {
     fi
     # 提示用户输入新端口
     read -p $'\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为 '"$hy_current_listen_port"'): \e[0m ' hy_listen_port
-
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
     echo -e "\e[1;3;32mHysteria2 端口: $hy_listen_port\e[0m"
     sleep 1
