@@ -1058,30 +1058,14 @@ modify_hysteria2() {
 modify_tuic() {
     show_notice "开始修改 TUIC 配置" 
     sleep 2
-    echo -e "\e[1;3;33m正在自动生成 TUIC 随机密码\e[0m"
-    sleep 1
-    tuic_password=$(/root/sbox/sing-box generate rand --hex 8)
-    echo -e "\e[1;3;32mTUIC 随机密码: $tuic_password\e[0m"
-    sleep 1   
-    echo -e "\e[1;3;33m正在自动生成 TUIC UUID\e[0m"
-    sleep 1
-    tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
-    echo -e "\e[1;3;32m随机生成 TUIC UUID: $tuic_uuid\e[0m"
-    sleep 1
     read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080): \e[0m' tuic_listen_port_input
     tuic_listen_port=${tuic_listen_port_input:-8080}
     echo -e "\e[1;3;32mTUIC 端口: $tuic_listen_port\e[0m"
     sleep 1
-    read -p $'\e[1;3;33m输入 TUIC 自签证书域名 (默认域名: bing.com): \e[0m' tuic_server_name_input
-    tuic_server_name=${tuic_server_name_input:-bing.com}
-    echo -e "\e[1;3;32mTUIC 域名: $tuic_server_name\e[0m"
-    sleep 1
     # 修改配置文件
-    jq --arg password "$tuic_password" --arg uuid "$tuic_uuid" --argjson listen_port "$tuic_listen_port" --arg server_name "$tuic_server_name" \
-    '(.inbounds[] | select(.type == "tuic") | .listen_port) = $listen_port |
-     (.inbounds[] | select(.type == "tuic") | .users[0].password) = $password |
-     (.inbounds[] | select(.type == "tuic") | .tls.server_name) = $server_name' \
-    /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
+   jq --argjson listen_port "$tuic_listen_port" \
+   '(.inbounds[] | select(.type == "tuic") | .listen_port) = $listen_port' \
+   /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo -e "\e[1;3;32m=== TUIC 配置修改完成 ===\e[0m" 
