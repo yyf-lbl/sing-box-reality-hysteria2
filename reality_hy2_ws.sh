@@ -1089,11 +1089,10 @@ modify_tuic() {
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo "TUIC 配置修改完成"
 }
-
+clear
 # 用户交互界面
 while true; do
 # Introduction animation
-clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
 echo -e "\e[1;3;31m=== argo隧道配置文件生成网址 \e[1;3;33mhttps://fscarmen.cloudflare.now.cc/\e[1;3;31m ===\e[0m"
 echo -e "\e[1;3;33m=== 脚本支持: VLESS VMESS HY2 协议 ===\e[0m" 
