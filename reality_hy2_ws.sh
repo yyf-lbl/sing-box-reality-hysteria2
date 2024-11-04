@@ -1126,16 +1126,16 @@ echo ""
  while true; do
         # 显示输入提示
         echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m "
-        read choice
+        read -e choice
         echo ""
-
         # 检查输入有效性
         if [[ "$choice" =~ ^[0-9]$ ]]; then
             break  # 输入有效，退出内层循环
         else
-            # 清除当前行
+            # 清除当前行并重新显示提示
             echo -ne "\r\e[K"  # 回到行首并清除当前行
             echo -e "\033[31m无效的选项,请重新输入!\033[0m"  # 显示错误信息
+            echo -ne "\r\e[1;3;33m输入您的选择 (0-9): \e[0m "  # 重新显示提示
         fi
     done
   echo ""
