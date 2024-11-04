@@ -1124,7 +1124,6 @@ echo  "==============="
 echo ""
 while true; do
         # 显示输入提示
-        clear
         echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m "
         read -e choice
         echo ""
