@@ -900,7 +900,7 @@ check_services_status() {
 
 # 检测隧道状况
 check_tunnel_status() {
-       check_cloudflared_status
+       check_services_status
        sleep 2
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         # 检查固定隧道状态
