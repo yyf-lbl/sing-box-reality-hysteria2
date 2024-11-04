@@ -869,8 +869,24 @@ reinstall_sing_box() {
         download_cloudflared
         install_singbox
 }
+
+check_cloudflared_status() {
+    echo "检查 Cloudflare 隧道状态..."
+    sleep 1
+    status_output=$(systemctl status cloudflared 2>&1)  # 捕获输出
+    if echo "$status_output" | grep -q "active (running)"; then
+        echo -e "\e[1;32mCloudflare服务启动正常\e[0m"
+    elif echo "$status_output" | grep -q "inactive (dead)"; then
+        echo -e "\e[31mCloudflare Cloudflare服务未启动。\e[0m"
+    else
+        echo -e "\e[33mCloudflare 隧道状态未知，请检查服务状态。\e[0m"
+    fi
+}
+
 # 检测隧道状况
 check_tunnel_status() {
+       check_cloudflared_status
+       sleep 2
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         # 检查固定隧道状态
         echo -e "\e[1;3;33m正在检查固定隧道状态...\e[0m"
