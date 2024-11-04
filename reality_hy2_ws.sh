@@ -957,7 +957,7 @@ detect_protocols() {
         echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
         # 这里添加代码以修改所有协议
         for protocol in "${options[@]}"; do
-            echo -e "\e[1;3;32m修改 $protocol 协议...\e[0m"
+            echo -e "\e[1;3;32m请按照提示进行修改...\e[0m"
             case $protocol in
                 "Vless")
                     modify_vless
@@ -999,6 +999,7 @@ modify_vless() {
     fi
 
     read -p $'\e[1;3;33m请输入想要修改的 VLESS 端口号 (当前端口为 '"$current_listen_port"'): \e[0m ' listen_port
+
     listen_port=${listen_port:-$current_listen_port}
     sleep 1
    echo -e "\e[1;3;32m新的Vless 端口: $listen_port\e[0m"
@@ -1008,7 +1009,7 @@ modify_vless() {
         echo "未能获取当前 VLESS h2 域名，请检查配置文件。"
         return 1
     fi
-    read -p "请输入想要使用的 VLESS h2 域名 (当前域名为 $current_server_name): " server_name
+    read -p $'\e[1;3;33m请输入想要使用的 VLESS h2 域名 (当前域名为 '"$current_server_name"'): \e[0m ' server_name
     sleep 1
     server_name=${server_name:-$current_server_name}
     echo -e "\e[1;3;32m新的VLESS h2 域名: $server_name\e[0m"
@@ -1019,7 +1020,7 @@ modify_vless() {
     /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
-    echo -e "\e[1;3;32mVess 配置修改完成\e[0m"
+    echo -e "\e[1;3;32m=== Vess 配置修改完成 ===\e[0m"
 }
 # 修改hysteria2协议
 modify_hysteria2() {
@@ -1033,7 +1034,8 @@ modify_hysteria2() {
         return 1
     fi
     # 提示用户输入新端口
-    read -p "请输入想要修改的 Hysteria2 端口 (当前端口为 $hy_current_listen_port): " hy_listen_port
+    read -p $'\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为 '"$hy_current_listen_port"'): \e[0m ' hy_listen_port
+
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
     echo -e "\e[1;3;32mHysteria2 端口: $hy_listen_port\e[0m"
     sleep 1
@@ -1045,7 +1047,7 @@ modify_hysteria2() {
     # 确保 jq 成功执行
     if [ $? -eq 0 ]; then
         mv /root/sbox/sbconfig_server.json.tmp /root/sbox/sbconfig_server.json
-        echo -e "\e[1;3;32mHysteria2 配置修改完成===\e[0m"
+        echo -e "\e[1;3;32m=== Hysteria2 配置修改完成 ===\e[0m"
     else
         echo "修改配置文件时出错。"
         rm /root/sbox/sbconfig_server.json.tmp  # 清理临时文件
@@ -1082,7 +1084,7 @@ modify_tuic() {
     /root/sbox/sbconfig_server.json > /root/sbox/sbconfig_server_tmp.json
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
-    echo -e "\e[1;3;32m===TUIC 配置修改完成===\e[0m" 
+    echo -e "\e[1;3;32m=== TUIC 配置修改完成 ===\e[0m" 
 }
 # 用户交互界面
 while true; do
