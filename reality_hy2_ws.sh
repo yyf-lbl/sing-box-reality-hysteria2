@@ -438,7 +438,7 @@ uninstall_singbox() {
     )
     directories_to_remove=(
         "/root/self-cert/"
-        "/root/.cloudflared/"
+        "/etc/systemd/system/cloudflared.service"
         "/root/sbox/"
     )
     # 删除文件并检查是否成功
