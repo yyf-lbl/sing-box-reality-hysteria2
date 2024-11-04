@@ -900,7 +900,7 @@ check_services_status() {
     if echo "$cloudflared_status" | grep -q "active (running)"; then
         echo -e "\e[1;3;32mCloudflare 服务启动正常\e[0m"
     elif echo "$cloudflared_status" | grep -q "inactive (dead)"; then
-        echo -e "\e[1;3;31mCloudflare 服务未启动。\e[0m"
+        echo -e "\e[1;3;31mCloudflare 服务未启动\e[0m"
     else
         echo -e "\e[1;3;33mCloudflare 服务状态未知，请检查服务状态。\e[0m"
     fi
@@ -932,7 +932,8 @@ check_tunnel_status() {
                 echo -e "\e[1;3;31m找不到日志文件，无法检查固定隧道状态。\e[0m"
             fi
         else
-            echo -e "\e[1;3;31mCloudflare 固定隧道进程未在运行。\e[0m"
+            echo -e "\e[1;3;31mCloudflare 固定隧道服务已停止\e[0m"
+            echo ""
         fi
     else
         # 检查临时隧道状态
@@ -954,7 +955,8 @@ check_tunnel_status() {
                 echo -e "\e[1;3;31m找不到日志文件，无法检查临时隧道状态。\e[0m"
             fi
         else
-            echo -e "\e[1;3;31mCloudflare 临时隧道进程未在运行。\e[0m"
+            echo -e "\e[1;3;31mCloudflare 临时隧道服务已停止\e[0m"
+            echo ""
         fi
     fi
 }
