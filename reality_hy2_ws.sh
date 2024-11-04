@@ -1091,7 +1091,7 @@ modify_tuic() {
 }
 
 # 用户交互界面
-
+while true; do
 # Introduction animation
 clear
 echo -e "\e[1;3;32m===欢迎使用sing-box服务===\e[0m" 
@@ -1123,7 +1123,6 @@ echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-while true; do
 echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m " 
 read -e choice
   echo ""
@@ -1205,9 +1204,7 @@ fi
         exit 0
         ;;
     *)
-   
-        echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
-        
+        echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m" 
         continue  
         ;;
  esac
