@@ -1089,26 +1089,6 @@ modify_tuic() {
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo "TUIC 配置修改完成"
 }
-get_user_choice() {
-    local choice
-    while true; do
-        # 显示输入提示
-        clear
-        echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m "
-        read -e choice
-        echo ""
-
-        # 检查输入有效性
-        if [[ "$choice" =~ ^[0-9]$ ]]; then
-            echo "$choice"  # 返回有效的选择
-            return 0
-        else
-            # 清除当前行并重新显示提示
-            echo -ne "\r\e[K"  # 回到行首并清除当前行
-            echo -e "\033[31m无效的选项,请重新输入!\033[0m"  # 显示错误信息
-        fi
-    done
-}
 # 用户交互界面
 menu(){
 while true; do
@@ -1142,7 +1122,21 @@ echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-choice=$(get_user_choice)  # 调用函数获取用户选择
+while true; do
+        # 显示输入提示
+        clear
+        echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m "
+        read -e choice
+        echo ""
+
+        # 检查输入有效性
+        if [[ "$choice" =~ ^[0-9]$ ]]; then
+            echo "$choice"  # 返回有效的选择
+            return 0
+        else
+            echo -e "\033[31m无效的选项,请重新输入!\033[0m"  # 显示错误信息
+        fi
+    done
 echo ""
 case $choice in
     1)
