@@ -999,8 +999,8 @@ modify_vless() {
         return 1
     fi
 
-    read -p $'\e[1;3;33m请输入想要修改的 Vless 端口号 (当前端口为 '"$current_listen_port"'): \e[0m' listen_port
-   
+    printf "\e[1;3;33m请输入想要修改的 VLESS 端口号 (当前端口为: %s):\e[0m " "$current_listen_port"
+    read listen_port
     listen_port=${listen_port:-$current_listen_port}
     sleep 1
    echo -e "\e[1;3;32m新的 Vless 端口: $listen_port\e[0m"
@@ -1010,7 +1010,8 @@ modify_vless() {
         echo "未能获取当前 VLESS h2 域名，请检查配置文件。"
         return 1
     fi
-    read -p $'\e[1;3;33m请输入Vless想要修改的 h2 域名 (当前域名为 '"$current_server_name"'): \e[0m' server_name
+    printf "\e[1;3;33m请输入想要修改的 VLESS 端口号 (当前域名为: %s):\e[0m " "$current_server_name"
+    read server_name
     sleep 1
     server_name=${server_name:-$current_server_name}
     echo -e "\e[1;3;32m新的VLESS h2 域名: $server_name\e[0m"
@@ -1022,6 +1023,7 @@ modify_vless() {
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo -e "\e[1;3;32m=== Vess 配置修改完成 ===\e[0m"
+    echo ""
 }
 # 修改hysteria2协议
 modify_hysteria2() {
@@ -1035,7 +1037,8 @@ modify_hysteria2() {
         return 1
     fi
     # 提示用户输入新端口
-    read -p $'\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为 '"$hy_current_listen_port"'): \e[0m' hy_listen_port
+    printf "\e[1;3;33m请输入想要修改的 Hysteria2 端口 (当前端口为: %s):\e[0m " "$hy_current_listen_port"
+    read hy_listen_port
     hy_listen_port=${hy_listen_port:-$hy_current_listen_port}  # 如果输入为空则使用当前端口
     echo -e "\e[1;3;32m新的 Hysteria2 端口: $hy_listen_port\e[0m"
     sleep 1
@@ -1048,6 +1051,7 @@ modify_hysteria2() {
     if [ $? -eq 0 ]; then
         mv /root/sbox/sbconfig_server.json.tmp /root/sbox/sbconfig_server.json
         echo -e "\e[1;3;32m=== Hysteria2 配置修改完成 ===\e[0m"
+         echo ""
     else
         echo "修改配置文件时出错。"
         rm /root/sbox/sbconfig_server.json.tmp  # 清理临时文件
@@ -1059,7 +1063,9 @@ modify_tuic() {
     show_notice "开始修改 TUIC 配置" 
     sleep 2
     tuic_current_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
-    read -p $'\e[1;3;33m请输入想要修改的 TUIC 监听端口 (当前端口为 '"$tuic_current_listen_port"'): \e[0m' tuic_listen_port_input
+    
+    printf "\e[1;3;33m请输入想要修改的 TUIC 监听端口 (当前端口为: %s):\e[0m " "$tuic_current_listen_port"
+    read tuic_listen_port_input
     tuic_listen_port=${tuic_listen_port_input:-$tuic_current_listen_port}
     echo -e "\e[1;3;32m新的 Tuic 端口: $tuic_listen_port\e[0m"
     sleep 1
@@ -1070,6 +1076,7 @@ modify_tuic() {
     # 用临时文件替换原文件
     mv /root/sbox/sbconfig_server_tmp.json /root/sbox/sbconfig_server.json
     echo -e "\e[1;3;32m=== TUIC 配置修改完成 ===\e[0m" 
+     echo ""
 }
 # 用户交互界面
 while true; do
