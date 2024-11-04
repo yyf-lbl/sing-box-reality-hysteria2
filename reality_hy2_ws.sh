@@ -324,7 +324,7 @@ restart_tunnel() {
     echo ""
 
     # 停止现有的 cloudflared 进程和服务
-    echo -e "\e[1;3;33m停止现有的 cloudflared 服务...\e[0m"
+    echo -e "\e[1;3;33m正在重启 cloudflared 服务...\e[0m"
     systemctl stop cloudflared
     pkill -f cloudflared-linux
     sleep 2  # 等待进程完全终止
@@ -352,6 +352,7 @@ restart_tunnel() {
         # 连接到域名
         argo=$(grep trycloudflare.com /root/sbox/argo.log | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
         echo "$argo" | base64 > /root/sbox/argo.txt.b64
+        show_client_configuration
     fi
   
     # 检查是否存在 cloudflared.service 文件
@@ -1299,7 +1300,6 @@ case $choice in
         ;;
     7)
         restart_tunnel
-        show_client_configuration
         ;;
     8) 
        # 检查配置并启动服务
