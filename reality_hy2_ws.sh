@@ -626,7 +626,7 @@ while true; do
     echo -e "\e[32;3;1m你的 Argo 域名为: $argo_domain\e[0m"
         break
     else
-        echo -e "\e[1;3;31m输入无效，请输入一个有效的域名（不能为空）。\e[0m"
+        echo -e "\e[1;3;31m输入无效，请输入一个有效的域名(不能为空)!\e[0m"
     fi
 done
 # 确保输入有效的 Argo token 或 json
@@ -649,7 +649,7 @@ while true; do
         break
     else
         # 如果输入无效，显示错误提示，并让“请重新输入”以黄色斜体加粗
-        echo -e "\e[1;3;31m输入无效，请输入有效的 Token 或 JSON 格式的密钥。\n\e[1;3;33m请重新输入：\e[0m"
+        echo -e "\e[1;3;31m输入无效，请重新输入有效的 Token 或 JSON 格式的密钥!\n\e[0m"
     fi
 done
     # 处理 Argo 的配置
