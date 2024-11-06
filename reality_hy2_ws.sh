@@ -107,11 +107,27 @@ done
 
 # 确保输入有效的 Argo 密钥 (token 或 JSON)
 while true; do
-    read -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
-    if [[ -n "$argo_auth" ]] && ( [[ "$argo_auth" =~ ^[a-zA-Z0-9._-]+$ ]] || [[ "$argo_auth" =~ ^\{.*\}$ ]] ); then
+    # 提示用户输入 Argo 密钥，黄色斜体加粗
+    read -s -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
+    
+    # 检查输入是否为空
+    if [[ -z "$argo_auth" ]]; then
+        echo -e "\e[1;3;31m密钥不能为空，请重新输入！\e[0m"
+        continue
+    fi
+    
+    # 检查是否为有效的 Token 格式
+    # Token 格式: 长度通常在 120 到 250 个字符之间，且只包含字母、数字、下划线、短横线、等号和下划线
+    if [[ "$argo_auth" =~ ^[A-Za-z0-9-_=]{120,250}$ ]]; then
+        echo -e "\e[32;3;1m你的 Argo 密钥为 Token 格式: $argo_auth\e[0m"
+        break
+    # 检查是否为有效的 JSON 格式（检查是否以 '{' 开头并包含 '}' 结尾）
+    elif [[ "$argo_auth" =~ ^\{.*\}$ ]]; then
+        echo -e "\e[32;3;1m你的 Argo 密钥为 JSON 格式: $argo_auth\e[0m"
         break
     else
-        echo -e "\e[1;3;31m输入无效，请输入有效的 token（不能为空）或 JSON 格式的密钥。\e[0m"
+        # 如果输入既不是有效的 Token 也不是 JSON 格式，提示输入无效
+        echo -e "\e[1;3;31m输入无效，请输入有效的 Token 或 JSON 格式的密钥。\e[0m"
     fi
 done
 
@@ -624,8 +640,9 @@ while true; do
         continue
     fi
     
-    # 检查是否为有效的 Token 格式（字母、数字、点、下划线、短横线的组合）
-    if [[ "$argo_auth" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+    # 检查是否为有效的 Token 格式
+    # Token 格式: 长度通常在 120 到 250 个字符之间，且只包含字母、数字、下划线、短横线、等号和下划线
+    if [[ "$argo_auth" =~ ^[A-Za-z0-9-_=]{120,250}$ ]]; then
         echo -e "\e[32;3;1m你的 Argo 密钥为 Token 格式: $argo_auth\e[0m"
         break
     # 检查是否为有效的 JSON 格式（检查是否以 '{' 开头并包含 '}' 结尾）
