@@ -630,11 +630,13 @@ done
 while true; do
     # 提示用户输入 Argo 密钥，黄色斜体加粗
     read -s -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
+    echo
     # 检查输入是否为空
     if [[ -z "$argo_auth" ]]; then
-        echo -e "\e[1;3;31m密钥不能为空，请重新输入！\e[0m"
+        echo -e "\e[1;3;31m密钥不能为空！\e[0m"
         continue
-    fi   
+    fi
+    
     # 检查是否为有效的 Token 格式
     if [[ "$argo_auth" =~ ^[A-Za-z0-9-_=]{120,250}$ ]]; then
         echo -e "\e[32;3;1m你的 Argo 密钥为 Token 格式: $argo_auth\e[0m"
@@ -644,10 +646,11 @@ while true; do
         echo -e "\e[32;3;1m你的 Argo 密钥为 JSON 格式: $argo_auth\e[0m"
         break
     else
-        # 如果输入无效，显示错误提示，并让“请重新输入”以黄色斜体加粗
-        echo -e "\e[1;3;31m输入无效，请重新输入有效的 Token 或 JSON 格式的密钥!\n\e[0m"
+        # 如果输入无效，显示错误提示信息
+        echo -e "\e[1;3;31m输入无效，请输入有效的 Token 或 JSON 格式的密钥!\e[0m"
     fi
 done
+
     # 处理 Argo 的配置
     if [[ $argo_auth =~ TunnelSecret ]]; then
         # 创建 JSON 凭据文件
