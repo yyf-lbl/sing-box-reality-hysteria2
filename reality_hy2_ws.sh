@@ -605,7 +605,9 @@ fi
     # 确保输入有效的 Argo 域名
 while true; do
     read -p $'\e[1;3;33m请输入你的 Argo 域名: \e[0m' argo_domain
+    sleep 2
     if [[ -n "$argo_domain" ]] && [[ "$argo_domain" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+    echo -e "\e[32;3;1m你的 Argo 域名为: $argo_domain\e[0m"
         break
     else
         echo -e "\e[1;3;31m输入无效，请输入一个有效的域名（不能为空）。\e[0m"
@@ -614,8 +616,10 @@ done
 
 # 确保输入有效的 Argo 密钥 (token 或 JSON)
 while true; do
-    read -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
+    read -s -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
+    sleep 2
     if [[ -n "$argo_auth" ]] && ( [[ "$argo_auth" =~ ^[a-zA-Z0-9._-]+$ ]] || [[ "$argo_auth" =~ ^\{.*\}$ ]] ); then
+         echo -e "\e[32;3;1m你的 Argo 密钥已成功输入\e[0m"
         break
     else
         echo -e "\e[1;3;31m输入无效，请输入有效的 token（不能为空）或 JSON 格式的密钥。\e[0m"
