@@ -80,61 +80,60 @@ install_base(){
 }
 # 重新配置隧道
 regenarte_cloudflared_argo(){
- vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
-# 提示用户选择使用固定 Argo 隧道或临时隧道
-read -p $'\e[1;3;33mY 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): \e[0m' use_fixed
-use_fixed=${use_fixed:-Y}
+  vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
+  
+  # 提示用户选择使用固定 Argo 隧道或临时隧道
+  read -p $'\e[1;3;33mY 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): \e[0m' use_fixed
+  use_fixed=${use_fixed:-Y}
 
-if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
-   pid=$(pgrep -f cloudflared-linux)
-if [ -n "$pid" ]; then
-    # 终止现有进程
-    pkill -f cloudflared-linux 2>/dev/null
-fi
- echo -e "\033[1;3;33m请访问以下网站生成 Argo 固定隧道所需的Json配置信息。${RESET}"
-        echo ""
-        echo -e "${red}      https://fscarmen.cloudflare.now.cc/ ${reset}"
-        echo ""
-    # 确保输入有效的 Argo 域名
-while true; do
-    read -p $'\e[1;3;33m请输入你的 Argo 域名: \e[0m' argo_domain
-    if [[ -n "$argo_domain" ]] && [[ "$argo_domain" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-        break
-    else
-        echo -e "\e[1;3;31m输入无效，请输入一个有效的域名（不能为空）。\e[0m"
+  if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
+    # 终止现有的 cloudflared 进程
+    pid=$(pgrep -f cloudflared-linux)
+    if [ -n "$pid" ]; then
+      pkill -f cloudflared-linux 2>/dev/null
     fi
-done
 
-# 确保输入有效的 Argo 密钥 (token 或 JSON)
-while true; do
-    # 提示用户输入 Argo 密钥，黄色斜体加粗
-    read -s -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
-    # 检查输入是否为空
-    if [[ -z "$argo_auth" ]]; then
+    # 提示用户生成 Argo 固定隧道配置
+    echo -e "\033[1;3;33m请访问以下网站生成 Argo 固定隧道所需的Json配置信息。${RESET}"
+    echo ""
+    echo -e "${red}      https://fscarmen.cloudflare.now.cc/ ${reset}"
+    echo ""
+
+    # 获取 Argo 域名
+    while true; do
+      read -p $'\e[1;3;33m请输入你的 Argo 域名: \e[0m' argo_domain
+      if [[ -n "$argo_domain" ]] && [[ "$argo_domain" =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+        break
+      else
+        echo -e "\e[1;3;31m输入无效，请输入一个有效的域名（不能为空）。\e[0m"
+      fi
+    done
+
+    # 获取 Argo 密钥
+    while true; do
+      read -s -p $'\e[1;3;33m请输入你的 Argo 密钥 (token 或 json): \e[0m' argo_auth
+      if [[ -z "$argo_auth" ]]; then
         echo -e "\e[1;3;31m密钥不能为空，请重新输入！\e[0m"
         continue
-    fi   
-    # 检查是否为有效的 Token 格式
-    if [[ "$argo_auth" =~ ^[A-Za-z0-9-_=]{120,250}$ ]]; then
+      fi   
+      if [[ "$argo_auth" =~ ^[A-Za-z0-9-_=]{120,250}$ ]]; then
         echo -e "\e[32;3;1m你的 Argo 密钥为 Token 格式: $argo_auth\e[0m"
         break
-    # 检查是否为有效的 JSON 格式
-    elif [[ "$argo_auth" =~ ^\{.*\}$ ]]; then
+      elif [[ "$argo_auth" =~ ^\{.*\}$ ]]; then
         echo -e "\e[32;3;1m你的 Argo 密钥为 JSON 格式: $argo_auth\e[0m"
         break
-    else
-        # 如果输入无效，显示错误提示，并让“请重新输入”以黄色斜体加粗
+      else
         echo -e "\e[1;3;31m输入无效，请重新输入有效的 Token 或 JSON 格式的密钥!\n\e[0m"
-    fi
-done
+      fi
+    done
 
-    # 处理 Argo 的配置
+    # 如果 Argo 密钥包含 TunnelSecret，处理 JSON 格式
     if [[ $argo_auth =~ TunnelSecret ]]; then
-        # 创建 JSON 凭据文件
-        echo "$argo_auth" > /root/sbox/tunnel.json
+      # 创建 JSON 凭据文件
+      echo "$argo_auth" > /root/sbox/tunnel.json
 
-        # 生成 tunnel.yml 文件
- cat > /root/sbox/tunnel.yml << EOF
+      # 生成 tunnel.yml 文件
+      cat > /root/sbox/tunnel.yml << EOF
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 protocol: http2
@@ -147,32 +146,39 @@ ingress:
   - service: "http_status:404"
 EOF
 
-      #  echo "生成的 tunnel.yml 文件内容:"
-      #  cat /root/sbox/tunnel.yml
-        # 启动固定隧道
-       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
-        echo -e "\e[1;3;32m固定隧道功能已启动！\e[0m"
-    
+      # 启动固定隧道
+      if [ -e "/root/sbox/tunnel.yml" ]; then
+        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+      else
+        if [[ -n "$argo_auth" ]]; then
+          echo "正在使用令牌启动Argo隧道..."
+          /root/sbox/cloudflared-linux tunnel --token "$argo_auth" run > /root/sbox/argo_run.log 2>&1 &
+        else
+          echo "你的令牌错误,请提供有效的令牌!"
+        fi
+      fi
+      echo ""
+      echo -e "\e[1;3;32mcloudflare 固定隧道功能已启动！\e[0m"
     fi
-else
+  else
     # 用户选择使用临时隧道
-pid=$(pgrep -f cloudflared-linux)
-if [ -n "$pid" ]; then
-    # 终止现有进程
-    pkill -f cloudflared-linux 2>/dev/null
-fi
+    pid=$(pgrep -f cloudflared-linux)
+    if [ -n "$pid" ]; then
+      pkill -f cloudflared-linux 2>/dev/null
+    fi
 
     # 启动临时隧道
- /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
-sleep 2
-echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
-sleep 5
-#连接到域名
-argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
-echo "$argo" | base64 > /root/sbox/argo.txt.b64
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+    sleep 2
+    echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
+    sleep 5
 
-fi
-  }
+    # 获取生成的 Argo 域名
+    argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
+    echo "$argo" | base64 > /root/sbox/argo.txt.b64
+  fi
+}
+
 # 下载cloudflared文件
 download_cloudflared(){
   arch=$(uname -m)
@@ -674,7 +680,8 @@ EOF
       #  cat /root/sbox/tunnel.yml
         # 启动固定隧道
        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
-        echo -e "\e[1;3;32m固定隧道功能已启动！\e[0m"
+       echo "" 
+        echo -e "\e[1;3;32mCloudflared 固定隧道功能已启动！\e[0m"
     echo ""
     fi
 else
