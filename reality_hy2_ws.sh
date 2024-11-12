@@ -528,7 +528,7 @@ done
     hy_listen_port=8443
     tuic_listen_port=8080
 config="{  
-  \"log\": {
+ \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
     \"timestamp\": true
@@ -536,28 +536,20 @@ config="{
   \"inbounds\": [],
   \"outbounds\": [
     {
-      \"type\": \"direct\",
-      \"tag\": \"direct\",
-      \"rules\": [
-        {
-          \"type\": \"allow\",
-          \"network\": \"tcp\"
-        }
-      ]
-    },
-    {
       \"type\": \"block\",
-      \"tag\": \"block\",
-      \"rules\": [
-        {
-          \"type\": \"deny\",
-          \"network\": \"tcp\"
-        }
-      ]
+      \"tag\": \"block\"
     }
-  ]
+  ],
+  \"route\": {
+    \"rules\": [
+      {
+        \"outbound\": \"block\",
+        \"type\": \"field\",
+        \"network\": \"tcp\"
+      }
+    ]
+  }
 }"
-
     for choice in $choices; do
         case $choice in
             1)
