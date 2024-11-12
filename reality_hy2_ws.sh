@@ -539,15 +539,7 @@ config="{
       \"type\": \"direct\",
       \"tag\": \"direct\"
     }
-  ],
-  \"route\": {
-    \"rules\": [
-      {
-        \"field\": \"blocked_ips\",
-        \"action\": \"reject\"
-      }
-    ]
-  }
+  ]
 }"
     for choice in $choices; do
         case $choice in
