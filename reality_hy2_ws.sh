@@ -538,7 +538,7 @@ config="{
     {
       \"type\": \"direct\",
       \"tag\": \"direct\",
-      \"rules\": [
+      \"outbound_rules\": [
         {
           \"type\": \"allow\",
           \"network\": \"tcp\"
@@ -548,7 +548,7 @@ config="{
     {
       \"type\": \"block\",
       \"tag\": \"block\",
-      \"rules\": [
+      \"outbound_rules\": [
         {
           \"type\": \"deny\",
           \"network\": \"tcp\"
