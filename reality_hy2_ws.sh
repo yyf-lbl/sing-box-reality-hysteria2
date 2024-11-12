@@ -527,7 +527,7 @@ done
     vmess_port=15555
     hy_listen_port=8443
     tuic_listen_port=8080
-  config="{ 
+ config="{  
   \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
@@ -536,6 +536,7 @@ done
   \"inbounds\": [],
   \"outbounds\": [
     {
+      \"type\": \"direct\",
       \"tag\": \"direct\",
       \"rules\": [
         {
@@ -545,6 +546,7 @@ done
       ]
     },
     {
+      \"type\": \"block\",
       \"tag\": \"block\",
       \"rules\": [
         {
@@ -555,6 +557,7 @@ done
     }
   ]
 }"
+
 
     for choice in $choices; do
         case $choice in
