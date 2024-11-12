@@ -527,7 +527,7 @@ done
     vmess_port=15555
     hy_listen_port=8443
     tuic_listen_port=8080
- config="{  
+config="{  
   \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
@@ -538,7 +538,7 @@ done
     {
       \"type\": \"direct\",
       \"tag\": \"direct\",
-      \"rules\": [
+      \"actions\": [
         {
           \"type\": \"allow\",
           \"network\": \"tcp\"
@@ -548,7 +548,7 @@ done
     {
       \"type\": \"block\",
       \"tag\": \"block\",
-      \"rules\": [
+      \"actions\": [
         {
           \"type\": \"deny\",
           \"network\": \"tcp\"
@@ -557,7 +557,6 @@ done
     }
   ]
 }"
-
 
     for choice in $choices; do
         case $choice in
