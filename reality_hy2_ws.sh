@@ -544,7 +544,7 @@ config="{
     \"rules\": [
       {
         \"outbound\": \"block\",
-        \"type\": \"field\",
+        \"type\": \"allow\",
         \"network\": \"tcp\"
       }
     ]
