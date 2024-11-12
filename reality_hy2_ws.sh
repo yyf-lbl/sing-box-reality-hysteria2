@@ -1291,7 +1291,7 @@ case $choice in
     1)
         echo -e "\e[1;3;32m开始安装sing-box服务，请稍后...\e[0m"
         echo " "
-          mkdir -p "/root/sbox/"
+          mkdir -p /root/sbox/
         download_singbox
         download_cloudflared
         install_singbox
