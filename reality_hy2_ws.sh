@@ -528,13 +528,17 @@ done
     hy_listen_port=8443
     tuic_listen_port=8080
 config="{  
- \"log\": {
+\"log\": {
     \"disabled\": false,
     \"level\": \"info\",
     \"timestamp\": true
   },
   \"inbounds\": [],
   \"outbounds\": [
+    {
+      \"type\": \"direct\",
+      \"tag\": \"direct\"
+    },
     {
       \"type\": \"block\",
       \"tag\": \"block\"
@@ -543,8 +547,13 @@ config="{
   \"route\": {
     \"rules\": [
       {
-        \"outbound\": \"block\",
+        \"outbound\": \"direct\",
         \"type\": \"allow\",
+        \"network\": \"tcp\"
+      },
+      {
+        \"outbound\": \"block\",
+        \"type\": \"deny\",
         \"network\": \"tcp\"
       }
     ]
