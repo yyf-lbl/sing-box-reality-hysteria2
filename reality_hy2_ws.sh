@@ -538,7 +538,7 @@ config="{
     {
       \"type\": \"direct\",
       \"tag\": \"direct\",
-      \"actions\": [
+      \"rules\": [
         {
           \"type\": \"allow\",
           \"network\": \"tcp\"
@@ -548,7 +548,7 @@ config="{
     {
       \"type\": \"block\",
       \"tag\": \"block\",
-      \"actions\": [
+      \"rules\": [
         {
           \"type\": \"deny\",
           \"network\": \"tcp\"
