@@ -285,8 +285,6 @@ download_singbox() {
 switch_kernel() {
 # 检测当前使用的 sing-box 版本
 current_link_target=$(readlink /root/sbox/sing-box)
-# 输出当前指向的目标
-echo -e "\e[1;3;32m当前 sing-box 符号链接指向: $current_link_target\e[0m"
 # 判断当前符号链接指向的路径
 if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
     echo -e "\e[1;3;32m当前为最新的 sing-box 正式版\e[0m"
