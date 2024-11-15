@@ -295,11 +295,15 @@ switch_kernel() {
             1)
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
+                systemctl restart sing-box
+                echo -e "\e[1;3;33m已重启sing-box服务，应用测试版内核。\e[0m"
                 break
                 ;;
             2)
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
+                systemctl restart sing-box
+                echo -e "\e[1;3;32m已重启sing-box服务，应用正式版内核。\e[0m"
                 break
                 ;;
             3)
