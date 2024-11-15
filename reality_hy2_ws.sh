@@ -269,35 +269,36 @@ download_singbox() {
         chmod +x "${prerelease_path}/sing-box"
         echo -e "\e[1;3;33m测试版已成功安装到: ${prerelease_path}/sing-box\e[0m"
     fi
+
+    # 设置默认内核为正式版
+    default_kernel="${release_path}/sing-box"
+    current_link="/root/sbox/sing-box"
+    if [ ! -L "$current_link" ]; then
+        ln -sf "$default_kernel" "$current_link"
+        echo -e "\e[1;3;32m默认内核已设置为正式版。\e[0m"
+    else
+        echo -e "\e[1;3;32m当前内核已是正式版，无需更改。\e[0m"
+    fi
 }
+
 #singbox 内核切换
 switch_kernel() {
-    # 默认设置为正式版内核
-    default_kernel="/root/sbox/release/sing-box"
-    current_link="/root/sbox/sing-box"
-    if [ ! -L "$current_link" ] || [ "$(readlink -f "$current_link")" != "$default_kernel" ]; then
-        ln -sf "$default_kernel" "$current_link"
-        echo -e "\e[1;3;32m默认已设置为正式版内核。\e[0m"
-    else
-        echo -e "\e[1;3;32m当前已是正式版内核，无需更改。\e[0m"
-    fi
-
-    # 提供切换选项
+    # 提供切换内核选项
     while true; do
         echo -e "\e[1;3;33m是否需要切换内核？\e[0m"
-        echo -e "1. 切换到测试版"
-        echo -e "2. 切换到正式版"
-        echo -e "3. 不切换，退出"
-        read -p "输入选项 [1/2/3]: " choice
-
+         echo -e "\e[1;3;36m1. \e[1;3;36m切换到测试版\e[0m"
+        echo -e "\e[1;3;32m2. \e[1;3;32m切换到正式版\e[0m"
+        echo -e "\e[1;3;31m3. \e[1;3;31m不切换，退出\e[0m"
+        echo -ne "\e[1;3;34m请输入选项 [1/2/3]:\e[0m"
+        read -p "" choice
         case $choice in
             1)
-                ln -sf /root/sbox/prerelease/sing-box "$current_link"
+                ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
                 break
                 ;;
             2)
-                ln -sf /root/sbox/release/sing-box "$current_link"
+                ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
                 break
                 ;;
