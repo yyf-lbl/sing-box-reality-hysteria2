@@ -198,7 +198,7 @@ download_cloudflared(){
   chmod +x /root/sbox/cloudflared-linux
   echo -e "\e[1;35m======================\e[0m"
 }
-# 下载singbox 
+# 下载singbox最新测试版内核和正式版
 download_singbox() {
     echo -e "\e[1;3;33m正在下载sing-box内核...\e[0m"
     sleep 1
@@ -218,29 +218,58 @@ download_singbox() {
             ;;
     esac
 
-    latest_version_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | grep -Po '"tag_name": "\K.*?(?=")' | sort -V | tail -n 1)
-    latest_version=${latest_version_tag#v}  # Remove 'v' prefix from version number
-    echo -e "\e[1;3;32m当前最新版本: $latest_version\e[0m"
+    # 获取最新正式版的版本号
+    latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
+        jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
+    latest_release_version=${latest_release_tag#v}  # Remove 'v' prefix from version number
+    echo -e "\e[1;3;32m当前最新正式版本: $latest_release_version\e[0m"
 
-    package_name="sing-box-${latest_version}-linux-${arch}"
-    download_path="/root/${package_name}.tar.gz"
+    # 获取最新测试版的版本号
+    latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
+        jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
+    latest_prerelease_version=${latest_prerelease_tag#v}  # Remove 'v' prefix from version number
+    echo -e "\e[1;3;33m当前最新测试版本: $latest_prerelease_version\e[0m"
 
-    # 检查文件是否存在
-    if [ -f "/root/sbox/sing-box" ]; then
-        echo -e "\e[1;3;32m文件已经存在，跳过下载。\e[0m"
+    # 定义下载路径
+    release_package="sing-box-${latest_release_version}-linux-${arch}"
+    prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}"
+
+    release_path="/root/sbox/release"
+    prerelease_path="/root/sbox/prerelease"
+
+    mkdir -p "$release_path" "$prerelease_path"
+
+    # 下载并处理正式版
+    if [ -f "${release_path}/sing-box" ]; then
+        echo -e "\e[1;3;32m正式版文件已经存在，跳过下载。\e[0m"
     else
-        # Download sing-box
-        url="https://github.com/SagerNet/sing-box/releases/download/${latest_version_tag}/${package_name}.tar.gz"
-        curl -sLo "$download_path" "$url"
+        release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}.tar.gz"
+        curl -sLo "/root/${release_package}.tar.gz" "$release_url"
 
-        # 解压和移动文件
-        tar -xzf "$download_path" -C /root
-        mv "/root/${package_name}/sing-box" /root/sbox
-        rm -r "$download_path" "/root/${package_name}"
-        chown root:root /root/sbox/sing-box
-        chmod +x /root/sbox/sing-box
+        tar -xzf "/root/${release_package}.tar.gz" -C /root
+        mv "/root/${release_package}/sing-box" "$release_path"
+        rm -r "/root/${release_package}.tar.gz" "/root/${release_package}"
+        chown root:root "${release_path}/sing-box"
+        chmod +x "${release_path}/sing-box"
+        echo -e "\e[1;3;32m正式版已成功安装到: ${release_path}/sing-box\e[0m"
+    fi
+
+    # 下载并处理测试版
+    if [ -f "${prerelease_path}/sing-box" ]; then
+        echo -e "\e[1;3;32m测试版文件已经存在，跳过下载。\e[0m"
+    else
+        prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}.tar.gz"
+        curl -sLo "/root/${prerelease_package}.tar.gz" "$prerelease_url"
+
+        tar -xzf "/root/${prerelease_package}.tar.gz" -C /root
+        mv "/root/${prerelease_package}/sing-box" "$prerelease_path"
+        rm -r "/root/${prerelease_package}.tar.gz" "/root/${prerelease_package}"
+        chown root:root "${prerelease_path}/sing-box"
+        chmod +x "${prerelease_path}/sing-box"
+        echo -e "\e[1;3;33m测试版已成功安装到: ${prerelease_path}/sing-box\e[0m"
     fi
 }
+
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
