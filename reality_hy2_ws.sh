@@ -285,12 +285,12 @@ download_singbox() {
 switch_kernel() {
 # 检测当前使用的 sing-box 版本
 current_version=$(/root/sbox/sing-box version | grep "sing-box version" | awk '{print $3}')
-echo -e "\e[1;3;32m当前使用的 sing-box 版本: $current_version\e[0m"
+echo -e "\e[1;3;32m当前使用最新的 sing-box 版本: $current_version\e[0m"
 
     # 提供切换内核选项
     while true; do
         echo -e "\e[1;3;33m是否需要切换内核？\e[0m"
-         echo -e "\e[1;3;36m1. \e[1;3;36m切换到测试版\e[0m"
+         echo -e "\e[1;3;36m1. \e[1;3;36m切换到 alpha 测试版\e[0m"
         echo -e "\e[1;3;32m2. \e[1;3;32m切换到正式版\e[0m"
         echo -e "\e[1;3;31m3. \e[1;3;31m不切换，退出\e[0m"
         echo -ne "\e[1;3;34m请输入选项 [1/2/3]:\e[0m"
