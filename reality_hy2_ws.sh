@@ -63,7 +63,7 @@ show_notice() {
 install_base(){
   # Check if jq is installed, and install it if not
   if ! command -v jq &> /dev/null; then
-      echo "jq is not installed. Installing..."
+      echo -e "\033[1;3;33m正在安装所需依赖，请稍后...${RESET}"
       if [ -n "$(command -v apt)" ]; then
           apt update > /dev/null 2>&1
           apt install -y jq > /dev/null 2>&1
