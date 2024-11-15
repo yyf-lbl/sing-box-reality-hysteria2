@@ -1366,7 +1366,9 @@ echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m9. 实时查看系统服务状态\e[0m"
+echo -e "\e[1;3;35m9. 切换sing-box内核\e[0m"
+echo  "==============="
+echo -e "\e[1;3;32m10. 实时查看系统服务状态\e[0m"
 echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
@@ -1441,8 +1443,13 @@ else
 fi
         ;;
     9)
-     check_tunnel_status
+     switch_kernel
       ;;
+      
+    10) 
+      check_tunnel_status
+      ;;
+      
     0)
         echo -e "\e[1;3;31m已退出脚本\e[0m"
         exit 0
