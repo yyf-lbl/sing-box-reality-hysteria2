@@ -284,13 +284,20 @@ download_singbox() {
 #singbox 内核切换
 switch_kernel() {
 # 检测当前使用的 sing-box 版本
-current_version=$(/root/sbox/sing-box version | grep "sing-box version" | awk '{print $3}')
-echo -e "\e[1;3;32m当前使用最新的 sing-box 版本: $current_version\e[0m"
+current_link_target=$(readlink /root/sbox/sing-box)
+# 输出当前指向的目标
+echo -e "\e[1;3;32m当前 sing-box 符号链接指向: $current_link_target\e[0m"
+# 判断当前符号链接指向的路径
+if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
+    echo -e "\e[1;3;32m当前为最新的 sing-box 正式版\e[0m"
+else
+    echo -e "\e[1;3;33m当前为最新的 sing-box 测试版\e[0m"
+fi
 
     # 提供切换内核选项
     while true; do
         echo -e "\e[1;3;33m是否需要切换内核？\e[0m"
-         echo -e "\e[1;3;36m1. \e[1;3;36m切换到 alpha 测试版\e[0m"
+         echo -e "\e[1;3;36m1. \e[1;3;36m切换到测试版\e[0m"
         echo -e "\e[1;3;32m2. \e[1;3;32m切换到正式版\e[0m"
         echo -e "\e[1;3;31m3. \e[1;3;31m不切换，退出\e[0m"
         echo -ne "\e[1;3;34m请输入选项 [1/2/3]:\e[0m"
