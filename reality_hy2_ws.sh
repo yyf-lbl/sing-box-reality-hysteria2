@@ -993,7 +993,6 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                 "uuid": $tuic_uuid,
                 "password": $tuic_password
             }],
-            "congestion_control": "bbr",
             "tls": {
                 "enabled": true,
                 "alpn": ["h3"],
