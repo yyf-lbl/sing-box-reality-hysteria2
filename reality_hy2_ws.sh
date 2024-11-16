@@ -716,8 +716,7 @@ config="{
         \"download_detour\": \"direct\"
       }
     ],
-    \"final\": \"direct\",
-    \"strategy\": \"minimal\"
+    \"final\": \"direct\"
   },
   \"experimental\": {
     \"cache_file\": {
