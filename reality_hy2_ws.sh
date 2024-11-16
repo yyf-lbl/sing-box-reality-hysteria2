@@ -914,24 +914,27 @@ argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | a
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
 # 生成vmess配置文件
- config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
-                    --arg vmess_uuid "$vmess_uuid" \
-                    --arg ws_path "$ws_path" \
-                    '.inbounds += [{
-                        "type": "vmess",
-                        "tag": "vmess-in",
-                        "listen": "::",
-                        "listen_port": ($vmess_port | tonumber),
-                        "users": [{
-                            "uuid": $vmess_uuid,
-                            "alterId": 0
-                        }],
-                        "transport": {
-                            "type": "ws",
-                            "path": $ws_path
-                            "early_data_header_name": "Sec-WebSocket-Protocol"
-                        }
-                    }]')
+config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
+        --arg tuic_password "$tuic_password" \
+        --arg tuic_uuid "$tuic_uuid" \
+        '.inbounds += [{
+            "type": "tuic",
+            "tag": "tuic-in",
+            "listen": "::",
+            "listen_port": ($tuic_listen_port | tonumber),
+            "users": [{
+                "uuid": $tuic_uuid,
+                "password": $tuic_password
+            }],
+            "congestion_control": "bbr",
+            "tls": {
+                "enabled": true,
+                "alpn": ["h3"],
+                "certificate_path": "/root/self-cert/cert.pem",
+                "key_path": "/root/self-cert/private.key"
+            }
+        }]')
+
                 ;;
 
             3)
