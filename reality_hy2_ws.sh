@@ -907,16 +907,14 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         "listen": "::",
                         "listen_port": ($vmess_port | tonumber),
                         "users": [{
-                            "uuid": $vmess_uuid,
-                
+                            "uuid": $vmess_uuid
                         }],
                         "transport": {
                             "type": "ws",
-                            "path": $ws_path
+                            "path": $ws_path,
                             "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
-
                 ;;
 
             3)
