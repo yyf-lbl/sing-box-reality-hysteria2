@@ -1012,7 +1012,7 @@ fi
                 "uuid": $tuic_uuid,
                 "password": $tuic_password
             }],
-              "congestion_control": "bbr",
+            "congestion_control": "bbr",
             "tls": {
                 "enabled": true,
                 "alpn": ["h3"],
@@ -1020,6 +1020,7 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
+
     ;;
 
               *)
