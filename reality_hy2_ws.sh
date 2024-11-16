@@ -334,17 +334,19 @@ show_client_configuration() {
         return 1
     fi
     echo ""
+    
     # 获取所有安装的协议数量
     inbound_count=$(jq '.inbounds | length' /root/sbox/sbconfig_server.json)
     if [[ $inbound_count -eq 0 ]]; then
         echo "没有安装任何协议！"
         return 1
     fi
+    
     # 获取服务器 IP 地址
     server_ip=$(curl -s4m8 ip.sb -k) || server_ip=$(curl -s6m8 ip.sb -k)
+    
     # 生成 Reality 客户端链接
     if jq -e '.inbounds[] | select(.type == "vless")' /root/sbox/sbconfig_server.json > /dev/null; then
-        # 获取 Reality 配置
         current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
         current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
         uuid=$(jq -r '.inbounds[] | select(.type == "vless") | .users[0].uuid' /root/sbox/sbconfig_server.json)
@@ -353,9 +355,10 @@ show_client_configuration() {
 
         server_link="vless://$uuid@$server_ip:$current_listen_port?encryption=none&flow=xtls-rprx-vision&security=reality&sni=$current_server_name&fp=chrome&pbk=$public_key&sid=$short_id&type=tcp&headerType=none#SING-BOX-Reality"
         echo -e "\e[1;3;31mVless-tcp-Reality 客户端通用链接：\e[0m"
-       echo -e "\e[1;3;33m$server_link\e[0m"
+        echo -e "\e[1;3;33m$server_link\e[0m"
         echo ""
     fi
+
     # 生成 Hysteria2 客户端链接
     if jq -e '.inbounds[] | select(.type == "hysteria2")' /root/sbox/sbconfig_server.json > /dev/null; then
         hy_current_listen_port=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .listen_port' /root/sbox/sbconfig_server.json)
@@ -363,64 +366,51 @@ show_client_configuration() {
         hy_password=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .users[0].password' /root/sbox/sbconfig_server.json)
 
         hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
-         echo -e "\e[1;3;31mHysteria2 客户端通用链接：\e[0m"
-         echo -e "\e[1;3;33m$hy2_server_link\e[0m"
-         echo ""
+        echo -e "\e[1;3;31mHysteria2 客户端通用链接：\e[0m"
+        echo -e "\e[1;3;33m$hy2_server_link\e[0m"
+        echo ""
     fi
-   # 判断是否存在固定隧道配置 生成 VMess 客户端链接
-      # 检查是否存在固定隧道
-if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
-    # 使用固定隧道生成链接
+
+    # 生成 TUIC 客户端链接
+    if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
+        tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
+        tuic_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
+        tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
+
+        tuic_server_link="tuic://$tuic_password@$server_ip:$tuic_listen_port?sni=$tuic_server_name"
+        echo -e "\e[1;3;31mTUIC 客户端通用链接：\e[0m"
+        echo -e "\e[1;3;33m$tuic_server_link\e[0m"
+        echo ""
+    fi
+
+    # 判断是否存在固定隧道配置 生成 VMess 客户端链接
+    if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
         echo -e "\e[1;3;31m使用固定隧道生成的Vmess客户端通用链接,替换$argo_domain为cloudflare优选ip或域名,可获得极致速度体验！\e[0m"
-      echo ""
-      echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
-        # 生成固定隧道链接
+        echo ""
+        echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"443","ps":"vmess-tls","tls":"tls","type":"none","sni":""'$argo_domain'","allowInsecure":true,"v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
- echo ""
- echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m"
+        echo ""
+        echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m"
         vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
         echo ""
-else
-    # 不存在固定隧道，生成临时隧道链接
-   if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
-        vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
-        ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
-        argo=$(base64 --decode /root/sbox/argo.txt.b64)
-        echo -e "\e[1;3;31m使用临时隧道生成的Vmess客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
-       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
-        echo ""
-        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","sni":"'$argo'","allowInsecure":true,"v":"2"}' | base64 -w 0)
-        echo -e "\e[1;3;33m$vmess_link_tls\e[0m""allowInsecure":true,"v":"2"}' | base64 -w 0)
-        echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
-        echo ""
-        echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
-        echo ""
-        vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","v":"2"}' | base64 -w 0)
-          echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
-        echo ""
+    else
+        # 生成临时隧道链接
+        if jq -e '.inbounds[] | select(.type == "vmess")' /root/sbox/sbconfig_server.json > /dev/null; then
+            vmess_uuid=$(jq -r '.inbounds[] | select(.type == "vmess") | .users[0].uuid' /root/sbox/sbconfig_server.json)
+            ws_path=$(jq -r '.inbounds[] | select(.type == "vmess") | .transport.path' /root/sbox/sbconfig_server.json)
+            argo=$(base64 --decode /root/sbox/argo.txt.b64)
+            echo -e "\e[1;3;31m使用临时隧道生成的Vmess客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
+            echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
+            echo ""
+            vmess_link_tls='vmess://'$(echo '{"add":"'$argo'","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"443","ps":"vmess-tls","tls":"tls","type":"none","sni":"$argo","allowInsecure":true,"v":"2"}' | base64 -w 0)
+            echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
+            echo ""
+        fi
     fi
-fi    
-   # 生成 TUIC 客户端链接
-if jq -e '.inbounds | map(select(.type == "tuic")) | length > 0' /root/sbox/sbconfig_server.json > /dev/null; then
-    tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
-    tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
-    tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
-    
-    # 设置 SNI 和其他参数
-    sni="www.bing.com"
-    congestion_control="bbr"
-    udp_relay_mode="native"
-    alpn="h3"
-    
-    tuic_link="tuic://${tuic_uuid}:${tuic_password}@${server_ip}:${tuic_listen_port}?sni=${sni}&congestion_control=${congestion_control}&udp_relay_mode=${udp_relay_mode}&alpn=${alpn}&allow_insecure=1#${isp}"
-    
-    echo -e "\e[1;3;31mTUIC 客户端通用链接：\e[0m"
-    echo -e "\e[1;3;33m$tuic_link\e[0m"
-    echo ""
-fi
 }
+
 #重启cloudflare隧道
 restart_tunnel() {
     echo -e "\e[1;3;32m正在检测隧道类型并重启中...\e[0m"
