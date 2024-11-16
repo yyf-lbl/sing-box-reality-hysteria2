@@ -375,11 +375,11 @@ if [[ -f "/root/sbox/tunnel.json" || -f "/root/sbox/tunnel.yml" ]]; then
       echo ""
       echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         # 生成固定隧道链接
-        vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"vmess-tls","tls":"tls","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
+        vmess_link_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"443","ps":"vmess-tls","tls":"tls","type":"none","sni":""'$argo_domain'","allowInsecure":true,"v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
  echo ""
  echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m"
-        vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","v":"2"}' | base64 -w 0)
+        vmess_link_no_tls='vmess://'$(echo '{"add":"'$argo_domain'","aid":"0","host":"'$argo_domain'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
         echo ""
 else
@@ -391,12 +391,13 @@ else
         echo -e "\e[1;3;31m使用临时隧道生成的Vmess客户端通用链接，替换speed.cloudflare.com为自己的优选ip可获得极致体验\e[0m"
        echo -e "\e[1;3;32m以下端口 443 可改为 2053 2083 2087 2096 8443\e[0m"
         echo ""
-        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","allowInsecure":true,"v":"2"}' | base64 -w 0)
+        vmess_link_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"443","ps":"sing-box-vmess-tls","tls":"tls","type":"none","sni":"'$argo'","allowInsecure":true,"v":"2"}' | base64 -w 0)
+        echo -e "\e[1;3;33m$vmess_link_tls\e[0m""allowInsecure":true,"v":"2"}' | base64 -w 0)
         echo -e "\e[1;3;33m$vmess_link_tls\e[0m"
         echo ""
         echo -e "\e[1;3;32m以下端口 80 可改为 8080 8880 2052 2082 2086 2095\e[0m" 
         echo ""
-        vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","net":"ws","path":"'$ws_path'","port":"80","ps":"sing-box-vmess","tls":"","type":"none","v":"2"}' | base64 -w 0)
+        vmess_link_no_tls='vmess://'$(echo '{"add":"speed.cloudflare.com","aid":"0","host":"'$argo'","id":"'$vmess_uuid'","scy":"none","net":"ws","path":"'$ws_path'","port":"80","ps":"vmess-no-tls","tls":"","type":"none","v":"2"}' | base64 -w 0)
           echo -e "\e[1;3;33m$vmess_link_no_tls\e[0m"
         echo ""
     fi
@@ -613,20 +614,126 @@ done
     vmess_port=15555
     hy_listen_port=8443
     tuic_listen_port=8080
+# json配置部分
 config="{
   \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
     \"timestamp\": true
   },
-  \"inbounds\": [ ],
+  \"dns\": {
+    \"servers\": [
+      {
+        \"tag\": \"google\",
+        \"address\": \"tls://8.8.8.8\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      }
+    ],
+    \"rules\": [
+      {
+        \"rule_set\": [\"geosite-openai\"],
+        \"server\": \"wireguard\"
+      },
+      {
+        \"rule_set\": [\"geosite-netflix\"],
+        \"server\": \"wireguard\"
+      },
+      {
+        \"rule_set\": [\"geosite-category-ads-all\"],
+        \"server\": \"block\"
+      }
+    ],
+    \"final\": \"google\",
+    \"strategy\": \"\",
+    \"disable_cache\": false,
+    \"disable_expire\": false
+  },
+  \"inbounds\": [],
   \"outbounds\": [
     {
       \"type\": \"direct\",
       \"tag\": \"direct\"
+    },
+    {
+      \"type\": \"block\",
+      \"tag\": \"block\"
+    },
+    {
+      \"type\": \"dns\",
+      \"tag\": \"dns-out\"
+    },
+    {
+      \"type\": \"wireguard\",
+      \"tag\": \"wireguard-out\",
+      \"server\": \"162.159.195.100\",
+      \"server_port\": 4500,
+      \"local_address\": [
+        \"172.16.0.2/32\",
+        \"2606:4700:110:83c7:b31f:5858:b3a8:c6b1/128\"
+      ],
+      \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
+      \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
+      \"reserved\": [26, 21, 228]
     }
-  ]
+  ],
+  \"route\": {
+    \"rules\": [
+      {
+        \"protocol\": \"dns\",
+        \"outbound\": \"dns-out\"
+      },
+      {
+        \"ip_is_private\": true,
+        \"outbound\": \"direct\"
+      },
+      {
+        \"rule_set\": [\"geosite-openai\"],
+        \"outbound\": \"wireguard-out\"
+      },
+      {
+        \"rule_set\": [\"geosite-netflix\"],
+        \"outbound\": \"wireguard-out\"
+      },
+      {
+        \"rule_set\": [\"geosite-category-ads-all\"],
+        \"outbound\": \"block\"
+      }
+    ],
+    \"rule_set\": [
+      {
+        \"tag\": \"geosite-netflix\",
+        \"type\": \"remote\",
+        \"format\": \"binary\",
+        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-netflix.srs\",
+        \"download_detour\": \"direct\"
+      },
+      {
+        \"tag\": \"geosite-openai\",
+        \"type\": \"remote\",
+        \"format\": \"binary\",
+        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
+        \"download_detour\": \"direct\"
+      },
+      {
+        \"tag\": \"geosite-category-ads-all\",
+        \"type\": \"remote\",
+        \"format\": \"binary\",
+        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
+        \"download_detour\": \"direct\"
+      }
+    ],
+    \"final\": \"direct\"
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"path\": \"cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
+  }
 }"
+
     for choice in $choices; do
         case $choice in
             1)
@@ -817,6 +924,7 @@ fi
                         "transport": {
                             "type": "ws",
                             "path": $ws_path
+                            "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
                 ;;
@@ -899,6 +1007,7 @@ fi
                 "uuid": $tuic_uuid,
                 "password": $tuic_password
             }],
+              "congestion_control": "bbr",
             "tls": {
                 "enabled": true,
                 "alpn": ["h3"],
