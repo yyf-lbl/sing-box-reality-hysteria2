@@ -629,7 +629,7 @@ config="{
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       },
-       {
+      {
         \"tag\": \"ali-dns\",
         \"address\": \"tls://223.5.5.5\",
         \"strategy\": \"prefer_ipv4\",
@@ -643,27 +643,27 @@ config="{
       }
     ],
     \"route\": {
-    \"rules\": [
-      {
-        \"rule_set\": [\"geosite-category-ads-all\"],
-        \"outbound\": \"block\"
-      },
-      {
-        \"rule_set\": [\"geosite-netflix\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"rule_set\": [\"geosite-openai\"],
-         \"outbound\": \"wireguard-out\"
-      },
-      {
-      \"protocol\": \"dns\",
-      \"outbound\": \"dns-out\"
+      \"rules\": [
+        {
+          \"rule_set\": [\"geosite-category-ads-all\"],
+          \"outbound\": \"block\"
+        },
+        {
+          \"rule_set\": [\"geosite-netflix\"],
+          \"outbound\": \"wireguard-out\"
+        },
+        {
+          \"rule_set\": [\"geosite-openai\"],
+          \"outbound\": \"wireguard-out\"
+        },
+        {
+          \"protocol\": \"dns\",
+          \"outbound\": \"dns-out\"
+        }
+      ],
+      \"final\": \"google\",
+      \"disable_cache\": false
     }
-     ]
-    }
-    \"final\": \"google\",
-    \"disable_cache\": false,
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -693,32 +693,6 @@ config="{
       \"reserved\": [26, 21, 228]
     }
   ],
-  \"route\": {
-    \"rules\": [
-      {
-        \"protocol\": \"dns\",
-        \"outbound\": \"dns-out\"
-      },
-      {
-        \"ip_is_private\": true,
-        \"outbound\": \"direct\"
-      },
-      {
-        \"rule_set\": [\"geosite-openai\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"rule_set\": [\"geosite-netflix\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"rule_set\": [\"geosite-category-ads-all\"],
-        \"outbound\": \"block\"
-      }
-    ],
-   
-    \"final\": \"direct\"
-  },
   \"experimental\": {
     \"cache_file\": {
       \"path\": \"cache.db\",
