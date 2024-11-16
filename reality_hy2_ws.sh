@@ -618,12 +618,6 @@ config="{
   \"dns\": {
     \"servers\": [
       {
-        \"tag\": \"local-dns\",
-        \"address\": \"tls://<local-dns-ip>\",
-        \"strategy\": \"ipv4_only\",
-        \"detour\": \"direct\"
-      },
-      {
         \"tag\": \"cloudflare\",
         \"address\": \"tls://1.1.1.1\",
         \"strategy\": \"ipv4_only\",
