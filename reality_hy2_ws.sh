@@ -403,16 +403,10 @@ else
     fi
 fi    
    # 生成 TUIC 客户端链接
-if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json > /dev/null; then
+if jq -e '.inbounds | map(select(.type == "tuic")) | length > 0' /root/sbox/sbconfig_server.json > /dev/null; then
     tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
     tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
     tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
-    
-    # 检查提取的值是否为空
-    if [ -z "$tuic_uuid" ] || [ -z "$tuic_password" ] || [ -z "$tuic_listen_port" ]; then
-        echo "错误: TUIC 配置不完整"
-        exit 1
-    fi
     
     # 设置 SNI 和其他参数
     sni="www.bing.com"
