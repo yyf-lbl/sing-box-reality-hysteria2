@@ -903,7 +903,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($vmess_port | tonumber),
                         "users": [{
                             "uuid": $vmess_uuid
@@ -911,7 +911,6 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         "transport": {
                             "type": "ws",
                             "path": $ws_path,
-                            "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
                 ;;
@@ -942,7 +941,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     '.inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($hy_listen_port | tonumber),
                         "users": [{
                             "password": $hy_password
