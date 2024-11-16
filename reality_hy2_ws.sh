@@ -611,12 +611,24 @@ done
 # json配置部分
 config="{
   \"log\": {
-    \"disabled\": false,
-    \"level\": \"info\",
-    \"timestamp\": true
+    \"disabled\": true,
+    \"level\": \"warn\",
+    \"timestamp\": false
   },
   \"dns\": {
     \"servers\": [
+      {
+        \"tag\": \"local-dns\",
+        \"address\": \"tls://<local-dns-ip>\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"cloudflare\",
+        \"address\": \"tls://1.1.1.1\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      },
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
@@ -624,21 +636,7 @@ config="{
         \"detour\": \"direct\"
       }
     ],
-    \"rules\": [
-      {
-        \"rule_set\": [\"geosite-openai\"],
-        \"server\": \"wireguard\"
-      },
-      {
-        \"rule_set\": [\"geosite-netflix\"],
-        \"server\": \"wireguard\"
-      },
-      {
-        \"rule_set\": [\"geosite-category-ads-all\"],
-        \"server\": \"block\"
-      }
-    ],
-    \"final\": \"google\",
+    \"final\": \"local-dns\",
     \"strategy\": \"\",
     \"disable_cache\": false,
     \"disable_expire\": false
@@ -668,7 +666,8 @@ config="{
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"reserved\": [26, 21, 228]
+      \"mtu\": 1350,
+      \"reserved\": [0, 0, 0]
     }
   ],
   \"route\": {
@@ -717,7 +716,8 @@ config="{
         \"download_detour\": \"direct\"
       }
     ],
-    \"final\": \"direct\"
+    \"final\": \"direct\",
+    \"strategy\": \"minimal\"
   },
   \"experimental\": {
     \"cache_file\": {
