@@ -403,7 +403,23 @@ else
     fi
 fi    
    # 生成 TUIC 客户端链接
-
+if jq -e '.inbounds | map(select(.type == "tuic")) | length > 0' /root/sbox/sbconfig_server.json > /dev/null; then
+    tuic_uuid=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].uuid' /root/sbox/sbconfig_server.json)
+    tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
+    tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
+    
+    # 设置 SNI 和其他参数
+    sni="www.bing.com"
+    congestion_control="bbr"
+    udp_relay_mode="native"
+    alpn="h3"
+    
+    tuic_link="tuic://${tuic_uuid}:${tuic_password}@${server_ip}:${tuic_listen_port}?sni=${sni}&congestion_control=${congestion_control}&udp_relay_mode=${udp_relay_mode}&alpn=${alpn}&allow_insecure=1#${isp}"
+    
+    echo -e "\e[1;3;31mTUIC 客户端通用链接：\e[0m"
+    echo -e "\e[1;3;33m$tuic_link\e[0m"
+    echo ""
+fi
 }
 #重启cloudflare隧道
 restart_tunnel() {
