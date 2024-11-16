@@ -408,7 +408,13 @@ if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json
     tuic_password=$(jq -r '.inbounds[] | select(.type == "tuic") | .users[0].password' /root/sbox/sbconfig_server.json)
     tuic_listen_port=$(jq -r '.inbounds[] | select(.type == "tuic") | .listen_port' /root/sbox/sbconfig_server.json)
     
-    # 这里可以设置 SNI 和其他参数
+    # 检查提取的值是否为空
+    if [ -z "$tuic_uuid" ] || [ -z "$tuic_password" ] || [ -z "$tuic_listen_port" ]; then
+        echo "错误: TUIC 配置不完整"
+        exit 1
+    fi
+    
+    # 设置 SNI 和其他参数
     sni="www.bing.com"
     congestion_control="bbr"
     udp_relay_mode="native"
@@ -420,7 +426,6 @@ if jq -e '.inbounds[] | select(.type == "tuic")' /root/sbox/sbconfig_server.json
     echo -e "\e[1;3;33m$tuic_link\e[0m"
     echo ""
 fi
-
 }
 #重启cloudflare隧道
 restart_tunnel() {
