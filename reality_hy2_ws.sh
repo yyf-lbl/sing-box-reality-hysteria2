@@ -619,7 +619,7 @@ config="{
     \"servers\": [
       {
         \"tag\": \"cloudflare\",
-        \"address\": \"tls://1.1.1.1\",
+        \"address\": \"https://1.1.1.1/dns-query\",
         \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       },
