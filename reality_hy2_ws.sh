@@ -620,28 +620,50 @@ config="{
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
-        \"strategy\": \"ipv4_only\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"cloudflare\",
+        \"address\": \"tls://1.1.1.1\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
+      },
+       {
+        \"tag\": \"ali-dns\",
+        \"address\": \"tls://223.5.5.5\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"quad9\",
+        \"address\": \"tls://9.9.9.9\",
+        \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       }
     ],
+    \"route\": {
     \"rules\": [
       {
-        \"rule_set\": [\"geosite-openai\"],
-        \"server\": \"wireguard\"
+        \"rule_set\": [\"geosite-category-ads-all\"],
+        \"outbound\": \"block\"
       },
       {
         \"rule_set\": [\"geosite-netflix\"],
-        \"server\": \"wireguard\"
+        \"outbound\": \"wireguard-out\"
       },
       {
-        \"rule_set\": [\"geosite-category-ads-all\"],
-        \"server\": \"block\"
-      }
-    ],
+        \"rule_set\": [\"geosite-openai\"],
+         \"outbound\": \"wireguard-out\"
+      },
+      {
+      \"protocol\": \"dns\",
+      \"outbound\": \"dns-out\"
+    }
+     ]
+    }
     \"final\": \"google\",
-    \"strategy\": \"\",
     \"disable_cache\": false,
-    \"disable_expire\": false
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -694,29 +716,7 @@ config="{
         \"outbound\": \"block\"
       }
     ],
-    \"rule_set\": [
-      {
-        \"tag\": \"geosite-netflix\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-netflix.srs\",
-        \"download_detour\": \"direct\"
-      },
-      {
-        \"tag\": \"geosite-openai\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
-        \"download_detour\": \"direct\"
-      },
-      {
-        \"tag\": \"geosite-category-ads-all\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
-        \"download_detour\": \"direct\"
-      }
-    ],
+   
     \"final\": \"direct\"
   },
   \"experimental\": {
