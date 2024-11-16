@@ -628,6 +628,12 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"local-dns\",
+        \"address\": \"127.0.0.1\",  // 添加本地 DNS 服务器
+       \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
       }
     ],
     \"final\": \"local-dns\",
