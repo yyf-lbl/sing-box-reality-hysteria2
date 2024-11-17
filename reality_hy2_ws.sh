@@ -838,6 +838,7 @@ After=network.target nss-lookup.target
 [Service]
 User=root
 WorkingDirectory=/root
+Environment="ENABLE_DEPRECATED_=true"
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
