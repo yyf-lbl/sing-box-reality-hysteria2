@@ -204,7 +204,7 @@ download_singbox() {
     esac
 
     # 指定版本号
-    specified_version="1.11.0-alpha.9"
+    specified_version="1.11.0-alpha.7"
     echo -e "\e[1;3;32m指定版本: $specified_version\e[0m"
 
     # 文件路径与名称
