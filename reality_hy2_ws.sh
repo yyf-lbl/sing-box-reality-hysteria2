@@ -530,7 +530,25 @@ done
     vmess_port=15555
     hy_listen_port=8443
     tuic_listen_port=8080
-    config="{\"log\": {\"disabled\": false, \"level\": \"info\", \"timestamp\": true}, \"inbounds\": [], \"outbounds\": [{\"type\": \"direct\", \"tag\": \"direct\"}, {\"type\": \"block\", \"tag\": \"block\"}]}"
+    config="{
+    \"log\": {
+    \"disabled\": false,
+    \"level\": \"info\",
+    \"timestamp\": true
+  },
+  \"inbounds\": [],
+  \"outbounds\": [
+    {
+      \"type\": \"direct\",
+      \"tag\": \"direct\"
+    },
+    {
+      \"type\": \"block\",
+      \"tag\": \"block\"
+    }
+  ]
+}"
+
     for choice in $choices; do
         case $choice in
             1)
