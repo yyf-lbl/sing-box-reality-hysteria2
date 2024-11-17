@@ -620,28 +620,9 @@ config="{
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
-        \"strategy\": \"ipv4_only\",
-        \"detour\": \"direct\"
+        \"strategy\": \"ipv4_only\"
       }
-    ],
-    \"rules\": [
-      {
-        \"rule_set\": [\"geosite-openai\"],
-        \"server\": \"wireguard\"
-      },
-      {
-        \"rule_set\": [\"geosite-netflix\"],
-        \"server\": \"wireguard\"
-      },
-      {
-        \"rule_set\": [\"geosite-category-ads-all\"],
-        \"server\": \"block\"
-      }
-    ],
-    \"final\": \"google\",
-    \"strategy\": \"\",
-    \"disable_cache\": false,
-    \"disable_expire\": false
+    ]
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -652,10 +633,6 @@ config="{
     {
       \"type\": \"block\",
       \"tag\": \"block\"
-    },
-    {
-      \"type\": \"dns\",
-      \"tag\": \"dns-out\"
     },
     {
       \"type\": \"wireguard\",
@@ -674,20 +651,8 @@ config="{
   \"route\": {
     \"rules\": [
       {
-        \"protocol\": \"dns\",
-        \"outbound\": \"dns-out\"
-      },
-      {
         \"ip_is_private\": true,
         \"outbound\": \"direct\"
-      },
-      {
-        \"rule_set\": [\"geosite-openai\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"rule_set\": [\"geosite-netflix\"],
-        \"outbound\": \"wireguard-out\"
       },
       {
         \"rule_set\": [\"geosite-category-ads-all\"],
@@ -696,36 +661,15 @@ config="{
     ],
     \"rule_set\": [
       {
-        \"tag\": \"geosite-netflix\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-netflix.srs\",
-        \"download_detour\": \"direct\"
-      },
-      {
-        \"tag\": \"geosite-openai\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
-        \"download_detour\": \"direct\"
-      },
-      {
         \"tag\": \"geosite-category-ads-all\",
         \"type\": \"remote\",
         \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
-        \"download_detour\": \"direct\"
+        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\"
       }
     ],
-    \"final\": \"direct\"
+    \"final\": \"wireguard-out\"
   },
-  \"experimental\": {
-    \"cache_file\": {
-      \"path\": \"cache.db\",
-      \"cache_id\": \"mycacheid\",
-      \"store_fakeip\": true
-    }
-  }
+  \"experimental\": {}
 }"
 
     for choice in $choices; do
