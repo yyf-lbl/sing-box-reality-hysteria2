@@ -656,6 +656,20 @@ done
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
       \"mtu\": 1350
+    },
+    {
+      \"type\": \"dns\",
+      \"tag\": \"cloudflare-out\",
+      \"address\": \"https://1.1.1.1/dns-query\",
+      \"strategy\": \"ipv4_only\",
+      \"detour\": \"direct\"
+    },
+    {
+      \"type\": \"dns\",
+      \"tag\": \"google-out\",
+      \"address\": \"tls://8.8.8.8\",
+      \"strategy\": \"ipv4_only\",
+      \"detour\": \"direct\"
     }
   ],
   \"route\": {
@@ -707,6 +721,7 @@ done
     ]
   }
 }"
+
     for choice in $choices; do
         case $choice in
             1)
