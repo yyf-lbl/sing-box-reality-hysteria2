@@ -538,18 +538,6 @@ done
   \"inbounds\": [],
   \"outbounds\": [
     {
-      \"type\": \"direct\",
-      \"tag\": \"direct\"
-    },
-    {
-      \"type\": \"block\",
-      \"tag\": \"block\"
-    },
-    {
-      \"type\": \"dns\",
-      \"tag\": \"dns-out\"
-    },
-    {
       \"type\": \"wireguard\",
       \"tag\": \"wireguard-out\",
       \"server\": \"162.159.195.100\",
@@ -587,7 +575,6 @@ done
         \"outbound\": \"block\"
       }
     ],
-    \"final\": \"google\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
@@ -611,7 +598,39 @@ done
         \"download_detour\": \"direct\"
       }
     ]
-  }
+  },
+  \"rule_actions\": [
+    {
+      \"outbound\": \"direct\",
+      \"when\": {
+        \"ip_is_private\": true
+      }
+    },
+    {
+      \"outbound\": \"dns-out\",
+      \"when\": {
+        \"protocol\": \"dns\"
+      }
+    },
+    {
+      \"outbound\": \"wireguard-out\",
+      \"when\": {
+        \"rule_set\": [\"geosite-openai\"]
+      }
+    },
+    {
+      \"outbound\": \"wireguard-out\",
+      \"when\": {
+        \"rule_set\": [\"geosite-netflix\"]
+      }
+    },
+    {
+      \"outbound\": \"block\",
+      \"when\": {
+        \"rule_set\": [\"geosite-category-ads-all\"]
+      }
+    }
+  ]
 }"
 
     for choice in $choices; do
