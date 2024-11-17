@@ -609,10 +609,10 @@ done
     hy_listen_port=8443
     tuic_listen_port=8080
 # json配置部分
-config="{
+ config="{
   \"log\": {
     \"disabled\": true,
-    \"level\": \"error\",
+    \"level\": \"warn\",
     \"timestamp\": false
   },
   \"dns\": {
@@ -620,18 +620,17 @@ config="{
       {
         \"tag\": \"cloudflare\",
         \"address\": \"https://1.1.1.1/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
+        \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       },
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
-        \"strategy\": \"prefer_ipv4\",
+        \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       }
     ],
     \"final\": \"cloudflare\",
-    \"strategy\": \"prefer_ipv4\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
@@ -660,7 +659,7 @@ config="{
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"mtu\": 1280,
+      \"mtu\": 1350,
       \"reserved\": [0, 0, 0]
     }
   ],
@@ -687,7 +686,7 @@ config="{
         \"outbound\": \"block\"
       }
     ],
-    \"final\": \"direct\",
+    \"final\": \"google\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
@@ -711,16 +710,8 @@ config="{
         \"download_detour\": \"direct\"
       }
     ]
-  },
-  \"experimental\": {
-    \"cache_file\": {
-      \"path\": \"cache.db\",
-      \"cache_id\": \"mycacheid\",
-      \"store_fakeip\": true
-    }
   }
-}
-"
+}"
 
     for choice in $choices; do
         case $choice in
