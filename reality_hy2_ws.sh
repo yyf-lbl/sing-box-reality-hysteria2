@@ -555,24 +555,39 @@ done
   \"route\": {
     \"rules\": [
       {
-        \"protocol\": \"dns\",
-        \"outbound\": \"dns-out\"
+        \"action\": \"route\",
+        \"outbound\": \"dns-out\",
+        \"when\": {
+          \"protocol\": \"dns\"
+        }
       },
       {
-        \"ip_is_private\": true,
-        \"outbound\": \"direct\"
+        \"action\": \"route\",
+        \"outbound\": \"direct\",
+        \"when\": {
+          \"ip_is_private\": true
+        }
       },
       {
-        \"rule_set\": [\"geosite-openai\"],
-        \"outbound\": \"wireguard-out\"
+        \"action\": \"route\",
+        \"outbound\": \"wireguard-out\",
+        \"when\": {
+          \"rule_set\": [\"geosite-openai\"]
+        }
       },
       {
-        \"rule_set\": [\"geosite-netflix\"],
-        \"outbound\": \"wireguard-out\"
+        \"action\": \"route\",
+        \"outbound\": \"wireguard-out\",
+        \"when\": {
+          \"rule_set\": [\"geosite-netflix\"]
+        }
       },
       {
-        \"rule_set\": [\"geosite-category-ads-all\"],
-        \"outbound\": \"block\"
+        \"action\": \"block\",
+        \"outbound\": \"block\",
+        \"when\": {
+          \"rule_set\": [\"geosite-category-ads-all\"]
+        }
       }
     ],
     \"rule_set\": [
@@ -598,39 +613,7 @@ done
         \"download_detour\": \"direct\"
       }
     ]
-  },
-  \"rule_actions\": [
-    {
-      \"outbound\": \"direct\",
-      \"when\": {
-        \"ip_is_private\": true
-      }
-    },
-    {
-      \"outbound\": \"dns-out\",
-      \"when\": {
-        \"protocol\": \"dns\"
-      }
-    },
-    {
-      \"outbound\": \"wireguard-out\",
-      \"when\": {
-        \"rule_set\": [\"geosite-openai\"]
-      }
-    },
-    {
-      \"outbound\": \"wireguard-out\",
-      \"when\": {
-        \"rule_set\": [\"geosite-netflix\"]
-      }
-    },
-    {
-      \"outbound\": \"block\",
-      \"when\": {
-        \"rule_set\": [\"geosite-category-ads-all\"]
-      }
-    }
-  ]
+  }
 }"
 
     for choice in $choices; do
