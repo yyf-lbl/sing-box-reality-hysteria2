@@ -507,15 +507,17 @@ done
     listen_port=443
     vmess_port=15555
     hy_listen_port=8443
-    tuic_listen_port=8080
-    config="{
-      \"log\": {
-     \"disabled\": true，
-     \"level\": \"info\",
+   tuic_listen_port=8080
+  
+   #入站出站规则
+   config="{
+  \"log\": {
+    \"disabled\": true,
+    \"level\": \"info\",
     \"timestamp\": true
-   },
-     \"dns\": {
-     \"servers\": [
+  },
+  \"dns\": {
+    \"servers\": [
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
@@ -545,6 +547,7 @@ done
     }
   ]
 }"
+
     for choice in $choices; do
         case $choice in
             1)
