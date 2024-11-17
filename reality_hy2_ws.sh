@@ -609,10 +609,10 @@ done
     hy_listen_port=8443
     tuic_listen_port=8080
 # json配置部分
- config="{
+config="{
   \"log\": {
     \"disabled\": true,
-    \"level\": \"warn\",
+    \"level\": \"error\",
     \"timestamp\": false
   },
   \"dns\": {
@@ -620,17 +620,18 @@ done
       {
         \"tag\": \"cloudflare\",
         \"address\": \"https://1.1.1.1/dns-query\",
-        \"strategy\": \"ipv4_only\",
-        \"detour\": \"cloudflare-out\"
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
       },
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
-        \"strategy\": \"ipv4_only\",
-        \"detour\": \"google-out\"
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
       }
     ],
     \"final\": \"cloudflare\",
+    \"strategy\": \"prefer_ipv4\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
@@ -639,6 +640,10 @@ done
     {
       \"type\": \"direct\",
       \"tag\": \"direct\"
+    },
+    {
+      \"type\": \"block\",
+      \"tag\": \"block\"
     },
     {
       \"type\": \"dns\",
@@ -655,21 +660,8 @@ done
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"mtu\": 1350
-    },
-    {
-      \"type\": \"dns\",
-      \"tag\": \"cloudflare-out\",
-      \"address\": \"https://1.1.1.1/dns-query\",
-      \"strategy\": \"ipv4_only\",
-      \"detour\": \"direct\"
-    },
-    {
-      \"type\": \"dns\",
-      \"tag\": \"google-out\",
-      \"address\": \"tls://8.8.8.8\",
-      \"strategy\": \"ipv4_only\",
-      \"detour\": \"direct\"
+      \"mtu\": 1280,
+      \"reserved\": [0, 0, 0]
     }
   ],
   \"route\": {
@@ -692,10 +684,10 @@ done
       },
       {
         \"rule_set\": [\"geosite-category-ads-all\"],
-        \"outbound\": \"direct\"
+        \"outbound\": \"block\"
       }
     ],
-    \"final\": \"cloudflare\",
+    \"final\": \"direct\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
@@ -719,8 +711,16 @@ done
         \"download_detour\": \"direct\"
       }
     ]
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"path\": \"cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
   }
-}"
+}
+"
 
     for choice in $choices; do
         case $choice in
