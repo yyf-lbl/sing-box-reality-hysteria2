@@ -556,38 +556,23 @@ done
     \"rules\": [
       {
         \"action\": \"route\",
-        \"outbound\": \"dns-out\",
-        \"when\": {
-          \"protocol\": \"dns\"
-        }
+        \"outbound\": \"dns-out\"
       },
       {
         \"action\": \"route\",
-        \"outbound\": \"direct\",
-        \"when\": {
-          \"ip_is_private\": true
-        }
+        \"outbound\": \"direct\"
       },
       {
         \"action\": \"route\",
-        \"outbound\": \"wireguard-out\",
-        \"when\": {
-          \"rule_set\": [\"geosite-openai\"]
-        }
+        \"outbound\": \"wireguard-out\"
       },
       {
         \"action\": \"route\",
-        \"outbound\": \"wireguard-out\",
-        \"when\": {
-          \"rule_set\": [\"geosite-netflix\"]
-        }
+        \"outbound\": \"wireguard-out\"
       },
       {
         \"action\": \"block\",
-        \"outbound\": \"block\",
-        \"when\": {
-          \"rule_set\": [\"geosite-category-ads-all\"]
-        }
+        \"outbound\": \"block\"
       }
     ],
     \"rule_set\": [
