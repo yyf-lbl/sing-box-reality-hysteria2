@@ -569,10 +569,6 @@ done
       {
         \"action\": \"route\",
         \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"action\": \"block\",
-        \"outbound\": \"block\"
       }
     ],
     \"rule_set\": [
