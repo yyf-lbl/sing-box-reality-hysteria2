@@ -444,7 +444,7 @@ restart_tunnel() {
         fi
 
         # 启动临时隧道
-        nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+     /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
         sleep 2
         echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
         sleep 5
@@ -464,7 +464,11 @@ Description=Cloudflare Tunnel
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; fi'
+ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then \
+    $CLOUDFLARED_PATH tunnel --config "$CONFIG_PATH" run; \
+else \
+    $CLOUDFLARED_PATH tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; \
+fi'
 Restart=always
 User=root
 StandardOutput=append:/root/sbox/argo_run.log
@@ -1075,14 +1079,18 @@ WantedBy=multi-user.target
 EOF
 
     # 如果存在 vmess 类型的配置，则创建 Cloudflare 服务文件
-    if [ -n "$vmess_port" ]; then
-        cat > /etc/systemd/system/cloudflared.service <<EOF
+   if [ -n "$vmess_port" ]; then
+    cat > /etc/systemd/system/cloudflared.service <<EOF
 [Unit]
 Description=Cloudflare Tunnel
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then $CLOUDFLARED_PATH tunnel --config "$CONFIG_PATH" run; else $CLOUDFLARED_PATH tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; fi'
+ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then \
+    $CLOUDFLARED_PATH tunnel --config "$CONFIG_PATH" run; \
+else \
+    $CLOUDFLARED_PATH tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; \
+fi'
 Restart=always
 User=root
 StandardOutput=append:$LOG_PATH
@@ -1091,8 +1099,7 @@ StandardError=append:$LOG_PATH
 [Install]
 WantedBy=multi-user.target
 EOF
-    fi
-
+fi
     # 检查配置并启动服务
     if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
         echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
