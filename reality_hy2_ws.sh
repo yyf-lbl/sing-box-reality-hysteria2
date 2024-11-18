@@ -706,8 +706,7 @@ config="{
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
       \"mtu\": 1400,
-      \"reserved\": [0, 0, 0],
-      \"keepalive\": 25
+      \"reserved\": [0, 0, 0]
     }
   ],
   \"route\": {
@@ -738,10 +737,6 @@ config="{
       },
       {
         \"domain_suffix\": [\"cdn\", \"akamai\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"type\": \"field\",
         \"outbound\": \"wireguard-out\"
       }
     ],
