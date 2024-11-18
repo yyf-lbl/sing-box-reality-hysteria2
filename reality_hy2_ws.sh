@@ -276,9 +276,9 @@ download_singbox() {
     current_link="/root/sbox/sing-box"
     if [ ! -L "$current_link" ]; then
         ln -sf "$default_kernel" "$current_link"
-        echo -e "\e[1;3;32m默认内核已设置为正式版。\e[0m"
+        echo -e "\e[1;3;32m默认内核已设置为正式版\e[0m"
     else
-        echo -e "\e[1;3;32m当前内核已是正式版，无需更改。\e[0m"
+        echo -e "\e[1;3;32m当前内核已是正式版，无需更改\e[0m"
     fi
 }
 
@@ -611,8 +611,8 @@ done
     tuic_listen_port=8080
 # json配置部分
 # 定义要测试的 DNS
-dns_servers=("1.1.1.1" "8.8.8.8")
-dns_names=("cloudflare" "google")
+dns_servers=("1.1.1.1" "8.8.8.8" "223.5.5.5" "114.114.114.114" "208.67.222.222" "180.76.76.76")
+dns_names=("cloudflare" "google" "aliyun" "baidu" "openDNS" "tencent")
 
 # 初始化变量
 latencies=()
@@ -648,6 +648,7 @@ if [[ -n $fastest_dns ]]; then
 else
     echo "No reachable DNS found."
 fi
+
 # 动态生成配置文件
 config="{
   \"log\": {
@@ -666,6 +667,30 @@ config="{
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"aliyun\",
+        \"address\": \"https://223.5.5.5/dns-query\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"baidu\",
+        \"address\": \"https://114.114.114.114/dns-query\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"openDNS\",
+        \"address\": \"https://208.67.222.222/dns-query\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"tencent\",
+        \"address\": \"https://180.76.76.76/dns-query\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       }
@@ -753,6 +778,11 @@ config="{
     ]
   }
 }"
+
+# 输出生成的配置文件
+echo "$config" > "$HOME/sbox/singbox_config.json"
+echo "Configuration file generated successfully at $HOME/sbox/singbox_config.json"
+
 
     for choice in $choices; do
         case $choice in
