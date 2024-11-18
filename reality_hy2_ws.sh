@@ -78,6 +78,7 @@ install_base(){
       fi
   fi
 }
+  install_base
 # 重新配置隧道
 regenarte_cloudflared_argo(){
   vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
@@ -567,7 +568,7 @@ echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
 }
 # 安装sing-box
 install_singbox() { 
-    install_base
+  
   while true; do
     echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
     echo -e "\e[1;3;33m1) vless-Reality\e[0m"
