@@ -611,7 +611,6 @@ done
     tuic_listen_port=8080
 # json配置部分
 # 定义要测试的 DNS
-# 定义 DNS 服务器
 dns_servers=("1.1.1.1" "8.8.8.8")
 dns_names=("cloudflare" "google")
 
@@ -622,9 +621,10 @@ fastest_dns=""
 
 # 测试每个 DNS 的延迟
 for i in "${!dns_servers[@]}"; do
-    latency=$(ping -c 1 "${dns_servers[i]}" | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
+    # 使用 ping 测试延迟
+    latency=$(ping -c 1 -W 1 "${dns_servers[i]}" 2>/dev/null | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
     
-    # 确保延迟为数字
+    # 检查是否成功获取延迟值
     if [[ $latency =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
         latencies[i]=$latency
         echo "${dns_names[i]} DNS latency: ${latency}ms"
@@ -643,8 +643,11 @@ for i in "${!latencies[@]}"; do
 done
 
 # 输出结果
-echo "Fastest DNS is ${fastest_dns} with ${min_latency}ms latency."
-
+if [[ -n $fastest_dns ]]; then
+    echo "Fastest DNS is ${fastest_dns} with ${min_latency}ms latency."
+else
+    echo "No reachable DNS found."
+fi
 # 动态生成配置文件
 config="{
   \"log\": {
