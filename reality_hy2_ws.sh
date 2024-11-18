@@ -464,11 +464,7 @@ Description=Cloudflare Tunnel
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then \
-    $CLOUDFLARED_PATH tunnel --config "$CONFIG_PATH" run; \
-else \
-    $CLOUDFLARED_PATH tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; \
-fi'
+ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
 Restart=always
 User=root
 StandardOutput=append:/root/sbox/argo_run.log
