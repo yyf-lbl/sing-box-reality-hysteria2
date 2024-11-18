@@ -628,17 +628,11 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"quad9\",
-        \"address\": \"https://9.9.9.9/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
-        \"detour\": \"direct\"
       }
     ],
     \"final\": \"cloudflare\",
     \"strategy\": \"prefer_ipv4\",
-    \"disable_cache\": true,
+    \"disable_cache\": false,
     \"disable_expire\": true
   },
   \"inbounds\": [],
@@ -666,7 +660,7 @@ config="{
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"mtu\": 1200,
+      \"mtu\": 1420,
       \"reserved\": [0, 0, 0]
     }
   ],
@@ -717,6 +711,13 @@ config="{
         \"download_detour\": \"direct\"
       }
     ]
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"path\": \"cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
   }
 }"
 
