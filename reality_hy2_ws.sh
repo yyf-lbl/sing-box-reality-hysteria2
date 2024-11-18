@@ -711,13 +711,6 @@ config="{
         \"download_detour\": \"direct\"
       }
     ]
-  },
-  \"experimental\": {
-    \"cache_file\": {
-      \"path\": \"cache.db\",
-      \"cache_id\": \"mycacheid\",
-      \"store_fakeip\": true
-    }
   }
 }"
 
