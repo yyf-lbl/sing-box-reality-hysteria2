@@ -626,7 +626,7 @@ for i in "${!dns_servers[@]}"; do
     # 检查是否成功获取延迟值
     if [[ $latency =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
         latencies[i]=$latency
-        echo "${dns_names[i]} DNS latency: ${latency}ms"
+      echo -e "\033[1;3;35m${dns_names[i]} DNS 延迟: ${latency}ms\033[0m"
     else
         latencies[i]=9999
         echo "${dns_names[i]} DNS latency: Unreachable"
@@ -643,7 +643,7 @@ done
 
 # 输出结果
 if [[ -n $fastest_dns ]]; then
-   echo -e "\033[1;33m最快的 DNS 是 ${fastest_dns}，延迟为 ${min_latency} 毫秒。\033[0m"
+   echo -e "\033[1;3;33m最快的 DNS 是 ${fastest_dns}，延迟为 ${min_latency} 毫秒。\033[0m"
 else
     echo -e "\033[1;3;31m找不到可访问的DNS。\033[0m"
 
