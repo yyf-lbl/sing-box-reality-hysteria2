@@ -667,6 +667,12 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"quad9\",
+        \"address\": \"https://9.9.9.9/dns-query\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
       }
     ],
         \"final\": \"$fastest_dns\",  
