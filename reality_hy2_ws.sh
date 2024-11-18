@@ -667,18 +667,12 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"quad9\",
-        \"address\": \"https://9.9.9.9/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
-        \"detour\": \"direct\"
       }
     ],
-    \"final\": \"$fastest_dns\",
-    \"disable_cache\": false,
-    \"disable_expire\": false,
-    \"strategy\": \"prefer_ipv4\"
+        \"final\": \"$fastest_dns\",  
+        \"strategy\": \"prefer_ipv4\",
+        \"disable_cache\": false,
+        \"disable_expire\": false
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -705,7 +699,7 @@ config="{
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"mtu\": 1400,
+      \"mtu\": 1350,
       \"reserved\": [0, 0, 0]
     }
   ],
@@ -720,24 +714,16 @@ config="{
         \"outbound\": \"direct\"
       },
       {
-        \"geoip\": \"cn\",
-        \"outbound\": \"direct\"
+        \"rule_set\": [\"geosite-openai\"],
+        \"outbound\": \"wireguard-out\"
+      },
+      {
+        \"rule_set\": [\"geosite-netflix\"],
+        \"outbound\": \"wireguard-out\"
       },
       {
         \"rule_set\": [\"geosite-category-ads-all\"],
         \"outbound\": \"block\"
-      },
-      {
-        \"rule_set\": [\"geosite-netflix\", \"geosite-openai\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"domain\": [\"speedtest.net\", \"fast.com\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"domain_suffix\": [\"cdn\", \"akamai\"],
-        \"outbound\": \"wireguard-out\"
       }
     ],
     \"rule_set\": [
@@ -745,21 +731,21 @@ config="{
         \"tag\": \"geosite-netflix\",
         \"type\": \"remote\",
         \"format\": \"binary\",
-        \"url\": \"https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite/rule-set/geosite-netflix.srs\",
+        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-netflix.srs\",
         \"download_detour\": \"direct\"
       },
       {
         \"tag\": \"geosite-openai\",
         \"type\": \"remote\",
         \"format\": \"binary\",
-        \"url\": \"https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
+        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
         \"download_detour\": \"direct\"
       },
       {
         \"tag\": \"geosite-category-ads-all\",
         \"type\": \"remote\",
         \"format\": \"binary\",
-        \"url\": \"https://fastly.jsdelivr.net/gh/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
+        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
         \"download_detour\": \"direct\"
       }
     ]
