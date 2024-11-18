@@ -277,7 +277,7 @@ download_singbox() {
         ln -sf "$default_kernel" "$current_link"
         echo -e "\e[1;3;32m默认使用正式版内核\e[0m"
     else
-        echo -e "\e[1;3;36m当前已启用正式版内涵\e[0m"
+        echo -e "\e[1;3;36m当前已启用正式版内核\e[0m"
     fi
 }
 
