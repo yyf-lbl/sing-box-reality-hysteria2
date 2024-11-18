@@ -650,9 +650,10 @@ else
 fi
 config="{
   \"log\": {
-    \"disabled\": true,
-    \"level\": \"error\",
-    \"timestamp\": false
+    \"disabled\": false,
+    \"level\": \"info\",
+    \"output\": \"/root/sbox/sb.log\",
+    \"timestamp\": true
   },
   \"dns\": {
     \"servers\": [
@@ -681,80 +682,128 @@ config="{
         \"disable_expire\": false
   },
   \"inbounds\": [],
-  \"outbounds\": [
+ \"outbounds\": [
     {
       \"type\": \"direct\",
       \"tag\": \"direct\"
     },
     {
-      \"type\": \"block\",
-      \"tag\": \"block\"
+      \"type\": \"direct\",
+      \"tag\": \"direct-ipv4-prefer-out\",
+      \"domain_strategy\": \"prefer_ipv4\"
     },
     {
-      \"type\": \"dns\",
-      \"tag\": \"dns-out\"
+      \"type\": \"direct\",
+      \"tag\": \"direct-ipv4-only-out\",
+      \"domain_strategy\": \"ipv4_only\"
     },
     {
       \"type\": \"wireguard\",
       \"tag\": \"wireguard-out\",
-      \"server\": \"162.159.195.100\",
-      \"server_port\": 4500,
+      \"server\": \"engage.cloudflareclient.com\",
+      \"server_port\": 2408,
       \"local_address\": [
         \"172.16.0.2/32\",
-        \"2606:4700:110:83c7:b31f:5858:b3a8:c6b1/128\"
+        \"2606:4700:110:812a:4929:7d2a:af62:351c/128\"
       ],
-      \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
+      \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"mtu\": 1350,
-      \"reserved\": [0, 0, 0]
+      \"reserved\": [
+        6,
+        146,
+        6
+      ]
+    },
+    {
+      \"type\": \"direct\",
+      \"tag\": \"wireguard-ipv4-prefer-out\",
+      \"detour\": \"wireguard-out\",
+      \"domain_strategy\": \"prefer_ipv4\"
+    },
+    {
+      \"type\": \"direct\",
+      \"tag\": \"wireguard-ipv4-only-out\",
+      \"detour\": \"wireguard-out\",
+      \"domain_strategy\": \"ipv4_only\"
     }
   ],
   \"route\": {
-    \"rules\": [
-      {
-        \"protocol\": \"dns\",
-        \"outbound\": \"dns-out\"
-      },
-      {
-        \"ip_is_private\": true,
-        \"outbound\": \"direct\"
-      },
-      {
-        \"rule_set\": [\"geosite-openai\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"rule_set\": [\"geosite-netflix\"],
-        \"outbound\": \"wireguard-out\"
-      },
-      {
-        \"rule_set\": [\"geosite-category-ads-all\"],
-        \"outbound\": \"block\"
-      }
-    ],
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
         \"type\": \"remote\",
         \"format\": \"binary\",
         \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-netflix.srs\",
-        \"download_detour\": \"direct\"
+        \"update_interval\": \"1d\"
       },
       {
         \"tag\": \"geosite-openai\",
         \"type\": \"remote\",
         \"format\": \"binary\",
         \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
-        \"download_detour\": \"direct\"
+        \"update_interval\": \"1d\"
+      }
+    ],
+    \"rules\": [
+      {
+        \"rule_set\": [
+          \"geosite-netflix\"
+        ],
+        \"outbound\": \"wireguard-ipv4-only-out\"
       },
       {
-        \"tag\": \"geosite-category-ads-all\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
-        \"download_detour\": \"direct\"
+        \"domain\": [
+          \"api.statsig.com\",
+          \"browser-intake-datadoghq.com\",
+          \"cdn.openai.com\",
+          \"chat.openai.com\",
+          \"auth.openai.com\",
+          \"chat.openai.com.cdn.cloudflare.net\",
+          \"ios.chat.openai.com\",
+          \"o33249.ingest.sentry.io\",
+          \"openai-api.arkoselabs.com\",
+          \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
+          \"openaicomproductionae4b.blob.core.windows.net\",
+          \"production-openaicom-storage.azureedge.net\",
+          \"static.cloudflareinsights.com\"
+        ],
+        \"domain_suffix\": [
+          \".algolia.net\",
+          \".auth0.com\",
+          \".chatgpt.com\",
+          \".challenges.cloudflare.com\",
+          \".client-api.arkoselabs.com\",
+          \".events.statsigapi.net\",
+          \".featuregates.org\",
+          \".identrust.com\",
+          \".intercom.io\",
+          \".intercomcdn.com\",
+          \".launchdarkly.com\",
+          \".oaistatic.com\",
+          \".oaiusercontent.com\",
+          \".observeit.net\",
+          \".openai.com\",
+          \".openaiapi-site.azureedge.net\",
+          \".openaicom.imgix.net\",
+          \".segment.io\",
+          \".sentry.io\",
+          \".stripe.com\"
+        ],
+        \"domain_keyword\": [
+          \"openaicom-api\"
+        ],
+        \"outbound\": \"wireguard-ipv4-prefer-out\"
       }
-    ]
+    ],
+    \"final\": \"direct\"
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"enabled\": true,
+      \"path\": \"/root/sbox/cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
   }
 }"
 
