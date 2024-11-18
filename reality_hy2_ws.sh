@@ -432,7 +432,7 @@ restart_tunnel() {
     # 判断是固定隧道还是临时隧道
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         echo -e "\e[1;3;32m启动固定隧道...\e[0m"
-        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
     else
         echo -e "\e[1;3;32m正在重新启动临时隧道...\e[0m"
         echo ""
@@ -444,7 +444,7 @@ restart_tunnel() {
         fi
 
         # 启动临时隧道
-        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+        nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
         sleep 2
         echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
         sleep 5
@@ -919,7 +919,7 @@ if [ -n "$pid" ]; then
 fi
 
     # 启动临时隧道
- /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+ nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
 sleep 2
 echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
 sleep 5
