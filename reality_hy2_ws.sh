@@ -726,7 +726,6 @@ config="{
         \"outbound\": \"block\"
       }
     ],
-    \"final\": \"google\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
