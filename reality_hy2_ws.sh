@@ -611,30 +611,39 @@ done
     tuic_listen_port=8080
 # json配置部分
 # 定义要测试的 DNS
-declare -A dns_servers=(
-  ["cloudflare"]="1.1.1.1"
-  ["google"]="8.8.8.8"
-)
+# 定义 DNS 服务器
+dns_servers=("1.1.1.1" "8.8.8.8")
+dns_names=("cloudflare" "google")
 
-# 存储延迟的变量
-fastest_dns=""
+# 初始化变量
+latencies=()
 min_latency=9999
+fastest_dns=""
 
 # 测试每个 DNS 的延迟
-echo "Testing DNS latency..."
-for name in "${!dns_servers[@]}"; do
-  server="${dns_servers[$name]}"
-  latency=$(ping -c 3 -q "$server" | awk -F'/' 'END{print $5}' | grep -oE '[0-9]+')
-  
-  if [[ -n $latency && $latency -lt $min_latency ]]; then
-    min_latency=$latency
-    fastest_dns=$name
-  fi
-  echo "$name DNS latency: ${latency}ms"
+for i in "${!dns_servers[@]}"; do
+    latency=$(ping -c 1 "${dns_servers[i]}" | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
+    
+    # 确保延迟为数字
+    if [[ $latency =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        latencies[i]=$latency
+        echo "${dns_names[i]} DNS latency: ${latency}ms"
+    else
+        latencies[i]=9999
+        echo "${dns_names[i]} DNS latency: Unreachable"
+    fi
 done
 
-# 输出最快的 DNS
-echo "Fastest DNS is $fastest_dns (${dns_servers[$fastest_dns]}) with ${min_latency}ms latency."
+# 找出最快的 DNS
+for i in "${!latencies[@]}"; do
+    if (( $(echo "${latencies[i]} < $min_latency" | bc -l) )); then
+        min_latency=${latencies[i]}
+        fastest_dns=${dns_names[i]}
+    fi
+done
+
+# 输出结果
+echo "Fastest DNS is ${fastest_dns} with ${min_latency}ms latency."
 
 # 动态生成配置文件
 config="{
