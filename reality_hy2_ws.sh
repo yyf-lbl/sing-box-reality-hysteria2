@@ -628,12 +628,18 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"quad9\",
+        \"address\": \"https://9.9.9.9/dns-query\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
       }
     ],
     \"final\": \"cloudflare\",
     \"strategy\": \"prefer_ipv4\",
-    \"disable_cache\": false,
-    \"disable_expire\": false
+    \"disable_cache\": true,
+    \"disable_expire\": true
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -660,7 +666,7 @@ config="{
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"mtu\": 1280,
+      \"mtu\": 1200,
       \"reserved\": [0, 0, 0]
     }
   ],
@@ -687,7 +693,7 @@ config="{
         \"outbound\": \"block\"
       }
     ],
-    \"final\": \"direct\",
+    \"final\": \"wireguard-out\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
@@ -712,8 +718,8 @@ config="{
       }
     ]
   }
-}
-"
+}"
+
 
     for choice in $choices; do
         case $choice in
