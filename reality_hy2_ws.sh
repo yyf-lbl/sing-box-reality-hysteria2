@@ -275,9 +275,9 @@ download_singbox() {
     current_link="/root/sbox/sing-box"
     if [ ! -L "$current_link" ]; then
         ln -sf "$default_kernel" "$current_link"
-        echo -e "\e[1;3;32m默认内核已设置为正式版。\e[0m"
+        echo -e "\e[1;3;32m默认使用正式版内核\e[0m"
     else
-        echo -e "\e[1;3;32m当前内核已是正式版，无需更改。\e[0m"
+        echo -e "\e[1;3;36m当前已启用正式版内涵\e[0m"
     fi
 }
 
