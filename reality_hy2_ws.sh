@@ -78,7 +78,6 @@ install_base(){
       fi
   fi
 }
-  install_base
 # 重新配置隧道
 regenarte_cloudflared_argo(){
   vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
@@ -276,9 +275,9 @@ download_singbox() {
     current_link="/root/sbox/sing-box"
     if [ ! -L "$current_link" ]; then
         ln -sf "$default_kernel" "$current_link"
-        echo -e "\e[1;3;32m默认内核已设置为正式版\e[0m"
+        echo -e "\e[1;3;32m默认内核已设置为正式版。\e[0m"
     else
-        echo -e "\e[1;3;32m当前内核已是正式版，无需更改\e[0m"
+        echo -e "\e[1;3;32m当前内核已是正式版，无需更改。\e[0m"
     fi
 }
 
@@ -432,7 +431,7 @@ restart_tunnel() {
     # 判断是固定隧道还是临时隧道
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         echo -e "\e[1;3;32m启动固定隧道...\e[0m"
-       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
     else
         echo -e "\e[1;3;32m正在重新启动临时隧道...\e[0m"
         echo ""
@@ -444,7 +443,7 @@ restart_tunnel() {
         fi
 
         # 启动临时隧道
-     /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
         sleep 2
         echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
         sleep 5
@@ -464,7 +463,7 @@ Description=Cloudflare Tunnel
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; fi'
 Restart=always
 User=root
 StandardOutput=append:/root/sbox/argo_run.log
@@ -568,7 +567,7 @@ echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
 }
 # 安装sing-box
 install_singbox() { 
-  
+    install_base
   while true; do
     echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
     echo -e "\e[1;3;33m1) vless-Reality\e[0m"
@@ -611,8 +610,8 @@ done
     tuic_listen_port=8080
 # json配置部分
 # 定义要测试的 DNS
-dns_servers=("1.1.1.1" "8.8.8.8" "223.5.5.5" "114.114.114.114" "208.67.222.222" "180.76.76.76")
-dns_names=("cloudflare" "google" "aliyun" "baidu" "openDNS" "tencent")
+dns_servers=("1.1.1.1" "8.8.8.8")
+dns_names=("cloudflare" "google")
 
 # 初始化变量
 latencies=()
@@ -644,12 +643,11 @@ done
 
 # 输出结果
 if [[ -n $fastest_dns ]]; then
-    echo "Fastest DNS is ${fastest_dns} with ${min_latency}ms latency."
+   echo -e "\033[1;33m最快的 DNS 是 ${fastest_dns}，延迟为 ${min_latency} 毫秒。\033[0m"
 else
-    echo "No reachable DNS found."
-fi
+    echo -e "\033[1;3;31m找不到可访问的DNS。\033[0m"
 
-# 动态生成配置文件
+fi
 config="{
   \"log\": {
     \"disabled\": true,
@@ -669,36 +667,12 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"aliyun\",
-        \"address\": \"https://223.5.5.5/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
-        \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"baidu\",
-        \"address\": \"https://114.114.114.114/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
-        \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"openDNS\",
-        \"address\": \"https://208.67.222.222/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
-        \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"tencent\",
-        \"address\": \"https://180.76.76.76/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
-        \"detour\": \"direct\"
       }
     ],
-    \"final\": \"$fastest_dns\",
-    \"strategy\": \"prefer_ipv4\",
-    \"disable_cache\": false,
-    \"disable_expire\": false
+        \"final\": \"$fastest_dns\",  
+        \"strategy\": \"prefer_ipv4\",
+        \"disable_cache\": false,
+        \"disable_expire\": false
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -752,7 +726,7 @@ config="{
         \"outbound\": \"block\"
       }
     ],
-    \"final\": \"direct\",
+    \"final\": \"google\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
@@ -775,14 +749,17 @@ config="{
         \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
         \"download_detour\": \"direct\"
       }
-    ]
+    ],
+    \"final\": \"direct\"
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"path\": \"cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
   }
 }"
-
-# 输出生成的配置文件
-echo "$config" > "$HOME/sbox/singbox_config.json"
-echo "Configuration file generated successfully at $HOME/sbox/singbox_config.json"
-
 
     for choice in $choices; do
         case $choice in
@@ -949,7 +926,7 @@ if [ -n "$pid" ]; then
 fi
 
     # 启动临时隧道
- nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+ /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
 sleep 2
 echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
 sleep 5
@@ -1105,23 +1082,24 @@ WantedBy=multi-user.target
 EOF
 
     # 如果存在 vmess 类型的配置，则创建 Cloudflare 服务文件
-   if [ -n "$vmess_port" ]; then
-    cat > /etc/systemd/system/cloudflared.service <<EOF
+    if [ -n "$vmess_port" ]; then
+        cat > /etc/systemd/system/cloudflared.service <<EOF
 [Unit]
 Description=Cloudflare Tunnel
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then $CLOUDFLARED_PATH tunnel --config "$CONFIG_PATH" run; else $CLOUDFLARED_PATH tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2; fi'
 Restart=always
 User=root
-StandardOutput=append:/root/sbox/argo_run.log
-StandardError=append:/root/sbox/argo_run.log
+StandardOutput=append:$LOG_PATH
+StandardError=append:$LOG_PATH
 
 [Install]
 WantedBy=multi-user.target
 EOF
-fi
+    fi
+
     # 检查配置并启动服务
     if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
         echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
