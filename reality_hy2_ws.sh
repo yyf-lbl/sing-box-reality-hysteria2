@@ -609,6 +609,33 @@ done
     hy_listen_port=8443
     tuic_listen_port=8080
 # json配置部分
+# 定义要测试的 DNS
+declare -A dns_servers=(
+  ["cloudflare"]="1.1.1.1"
+  ["google"]="8.8.8.8"
+)
+
+# 存储延迟的变量
+fastest_dns=""
+min_latency=9999
+
+# 测试每个 DNS 的延迟
+echo "Testing DNS latency..."
+for name in "${!dns_servers[@]}"; do
+  server="${dns_servers[$name]}"
+  latency=$(ping -c 3 -q "$server" | awk -F'/' 'END{print $5}' | grep -oE '[0-9]+')
+  
+  if [[ -n $latency && $latency -lt $min_latency ]]; then
+    min_latency=$latency
+    fastest_dns=$name
+  fi
+  echo "$name DNS latency: ${latency}ms"
+done
+
+# 输出最快的 DNS
+echo "Fastest DNS is $fastest_dns (${dns_servers[$fastest_dns]}) with ${min_latency}ms latency."
+
+# 动态生成配置文件
 config="{
   \"log\": {
     \"disabled\": true,
@@ -630,10 +657,10 @@ config="{
         \"detour\": \"direct\"
       }
     ],
-        \"final\": \"cloudflare\",  
-        \"strategy\": \"\",
-        \"disable_cache\": false,
-        \"disable_expire\": false
+    \"final\": \"$fastest_dns\",
+    \"strategy\": \"\",
+    \"disable_cache\": false,
+    \"disable_expire\": false
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -687,7 +714,7 @@ config="{
         \"outbound\": \"block\"
       }
     ],
-    \"final\": \"google\",
+    \"final\": \"direct\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
@@ -710,8 +737,7 @@ config="{
         \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
         \"download_detour\": \"direct\"
       }
-    ],
-    \"final\": \"direct\"
+    ]
   },
   \"experimental\": {
     \"cache_file\": {
