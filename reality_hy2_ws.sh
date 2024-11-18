@@ -595,7 +595,7 @@ install_singbox() {
     done
 
     if [ "$valid" = false ]; then
-        echo "选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。"
+        echo -e "\033[1;3;31m选择的协议无效，请选择 1 到 4 之间的数字，且不能为空。\033[0m"
     else
         echo -e "\e[1;3;32m正在根据所选协议正在进行配置...\e[0m"
         sleep 2
