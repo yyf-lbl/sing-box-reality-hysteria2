@@ -652,7 +652,7 @@ fi
 config="{
   \"log\": {
     \"disabled\": true,
-    \"level\": \"warn\",
+    \"level\": \"error\",
     \"timestamp\": false
   },
   \"dns\": {
@@ -660,18 +660,18 @@ config="{
       {
         \"tag\": \"cloudflare\",
         \"address\": \"https://1.1.1.1/dns-query\",
-        \"strategy\": \"ipv4_only\",
+        \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       },
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
-        \"strategy\": \"ipv4_only\",
+        \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       }
     ],
     \"final\": \"$fastest_dns\",
-    \"strategy\": \"\",
+    \"strategy\": \"prefer_ipv4\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
