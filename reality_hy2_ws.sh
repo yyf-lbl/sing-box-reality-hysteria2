@@ -749,15 +749,7 @@ config="{
         \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
         \"download_detour\": \"direct\"
       }
-    ],
-    \"final\": \"direct\"
-  },
-  \"experimental\": {
-    \"cache_file\": {
-      \"path\": \"cache.db\",
-      \"cache_id\": \"mycacheid\",
-      \"store_fakeip\": true
-    }
+    ]
   }
 }"
 
