@@ -612,7 +612,7 @@ done
 config="{
   \"log\": {
     \"disabled\": true,
-    \"level\": \"error\",
+    \"level\": \"warn\",
     \"timestamp\": false
   },
   \"dns\": {
@@ -620,20 +620,20 @@ config="{
       {
         \"tag\": \"cloudflare\",
         \"address\": \"https://1.1.1.1/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
+        \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       },
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
-        \"strategy\": \"prefer_ipv4\",
+        \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       }
     ],
-    \"final\": \"cloudflare\",
-    \"strategy\": \"prefer_ipv4\",
-    \"disable_cache\": false,
-    \"disable_expire\": true
+        \"final\": \"cloudflare\",  
+        \"strategy\": \"\",
+        \"disable_cache\": false,
+        \"disable_expire\": false
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -660,7 +660,7 @@ config="{
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"mtu\": 1420,
+      \"mtu\": 1350,
       \"reserved\": [0, 0, 0]
     }
   ],
@@ -687,7 +687,7 @@ config="{
         \"outbound\": \"block\"
       }
     ],
-    \"final\": \"wireguard-out\",
+    \"final\": \"google\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-netflix\",
@@ -710,10 +710,17 @@ config="{
         \"url\": \"https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-category-ads-all.srs\",
         \"download_detour\": \"direct\"
       }
-    ]
+    ],
+    \"final\": \"direct\"
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"path\": \"cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
   }
 }"
-
 
     for choice in $choices; do
         case $choice in
@@ -896,7 +903,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
-                        "listen": "0.0.0.0",
+                        "listen": "::",
                         "listen_port": ($vmess_port | tonumber),
                         "users": [{
                             "uuid": $vmess_uuid
@@ -904,6 +911,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         "transport": {
                             "type": "ws",
                             "path": $ws_path,
+                            "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
                 ;;
@@ -934,7 +942,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     '.inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
-                        "listen": "0.0.0.0",
+                        "listen": "::",
                         "listen_port": ($hy_listen_port | tonumber),
                         "users": [{
                             "password": $hy_password
@@ -986,6 +994,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                 "uuid": $tuic_uuid,
                 "password": $tuic_password
             }],
+            "congestion_control": "bbr",
             "tls": {
                 "enabled": true,
                 "alpn": ["h3"],
