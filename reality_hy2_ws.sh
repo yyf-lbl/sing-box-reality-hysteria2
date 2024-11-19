@@ -901,14 +901,14 @@ read -p $'\e[1;3;33m请输入 vmess 端口(默认端口: 15555)，或输入 y �
 if [[ "$user_input" == "y" || "$user_input" == "Y" ]]; then
     # 随机生成端口范围（10000 到 65535）
     vmess_port=$((RANDOM % 55536 + 10000))
-    echo -e "\e[1;3;32m自动生成的 vmess 端口: '$vmess_port\e[0m"
+    echo -e "\e[1;3;32m自动生成的 vmess 端口: $vmess_port\e[0m"
 # 如果用户输入了自定义端口且输入有效，使用自定义端口
 elif [[ "$user_input" =~ ^[0-9]+$ ]] && [ "$user_input" -ge 10000 ] && [ "$user_input" -le 65535 ]; then
     vmess_port=$user_input
-   echo -e "\e[1;3;32m使用自定义的 vmess 端口: '$vmess_port\e[0m"
+   echo -e "\e[1;3;32m使用自定义的 vmess 端口: $vmess_port\e[0m"
 else
     # 否则使用已设置的默认端口
-    echo -e "\e[1;3;32m使用默认的 vmess 端口: '$vmess_port\e[0m"
+    echo -e "\e[1;3;32m使用默认的 vmess 端口: $vmess_port\e[0m"
 fi
            sleep 1
            read -p $'\e[1;3;33mws 路径 (默认随机生成): \e[0m' ws_path
