@@ -365,7 +365,7 @@ show_client_configuration() {
         hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
         hy_password=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .users[0].password' /root/sbox/sbconfig_server.json)
 
-        hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
+        hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name&alpn=h3"
         echo -e "\e[1;3;31mHysteria2 客户端通用链接：\e[0m"
         echo -e "\e[1;3;33m$hy2_server_link\e[0m"
         echo ""
@@ -834,9 +834,22 @@ config="{
                 echo -e "\e[1;3;32mUUID为: $uuid\e[0m"
                 echo -e "\e[1;3;32m短UUID为: $short_id\e[0m"
                 sleep 1
-                read -p $'\e[1;3;33m请输入 Reality 端口 (默认端口: 443): \e[0m' listen_port_input
-                listen_port=${listen_port_input:-443}
-                echo -e "\e[1;3;32mvless端口: $listen_port\e[0m"
+                # 提示用户输入自定义端口，或者选择随机生成端口
+read -p $'\e[1;3;33m请输入 VLESS 监听端口 (默认端口: 443)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' vless_listen_port_input
+sleep 1
+
+# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
+if [[ "$vless_listen_port_input" == "y" || "$vless_listen_port_input" == "Y" ]]; then
+    vless_listen_port=$((RANDOM % 55536 + 10000))
+    echo -e "\e[1;3;32m自动生成的 VLESS 端口: $vless_listen_port\e[0m"
+# 如果用户输入了自定义端口且输入有效，使用自定义端口
+elif [[ "$vless_listen_port_input" =~ ^[0-9]+$ ]] && [ "$vless_listen_port_input" -ge 10000 ] && [ "$vless_listen_port_input" -le 65535 ]; then
+    vless_listen_port=$vless_listen_port_input
+    echo -e "\e[1;3;32m使用自定义的 VLESS 端口: $vless_listen_port\e[0m"
+else
+    # 否则使用默认的已设置端口
+    echo -e "\e[1;3;32m使用默认的 VLESS 端口: $vless_listen_port\e[0m"
+fi
                 sleep 1
                 read -p $'\e[1;3;33m请输入想要使用的域名 (默认域名: itunes.apple.com): \e[0m' server_name_input
                 server_name=${server_name_input:-itunes.apple.com}
@@ -880,9 +893,22 @@ config="{
            vmess_uuid=$(/root/sbox/sing-box generate uuid)
            echo -e "\e[1;3;32mvmess UUID为: $vmess_uuid\e[0m"
            sleep 1
-           read -p $'\e[1;3;33m请输入 vmess 端口(默认端口:15555): \e[0m' vmess_port
-           vmess_port=${vmess_port:-15555}
-           echo -e "\e[1;3;32mvmess端口: $vmess_port\e[0m"
+# 提示用户输入自定义端口，或者选择随机生成端口
+read -p $'\e[1;3;33m请输入 vmess 端口(默认端口: 15555)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' user_input
+
+# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
+if [[ "$user_input" == "y" || "$user_input" == "Y" ]]; then
+    # 随机生成端口范围（10000 到 65535）
+    vmess_port=$((RANDOM % 55536 + 10000))
+    echo $'\e[1;3;33m自动生成的 vmess 端口: \e[0m'$vmess_port
+# 如果用户输入了自定义端口且输入有效，使用自定义端口
+elif [[ "$user_input" =~ ^[0-9]+$ ]] && [ "$user_input" -ge 10000 ] && [ "$user_input" -le 65535 ]; then
+    vmess_port=$user_input
+    echo $'\e[1;3;33m使用自定义的 vmess 端口: \e[0m'$vmess_port
+else
+    # 否则使用已设置的默认端口
+    echo $'\e[1;3;33m使用默认的 vmess 端口: \e[0m'$vmess_port
+fi
            sleep 1
            read -p $'\e[1;3;33mws 路径 (默认随机生成): \e[0m' ws_path
            sleep 1
@@ -1011,10 +1037,22 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
                 echo -e "\e[1;3;32m随机生成的hy2密码: $hy_password\e[0m"
                 sleep 1
-                read -p $'\e[1;3;33m请输入 Hysteria2 监听端口 (default: 8443): \e[0m' hy_listen_port_input
-                sleep 1
-                hy_listen_port=${hy_listen_port_input:-8443}
-                echo -e "\e[1;3;32mHysteria2端口: $hy_listen_port\e[0m"
+                # 提示用户输入自定义端口，或者选择随机生成端口
+read -p $'\e[1;3;33m请输入 Hysteria2 监听端口 (默认端口: 8443)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' hy_listen_port_input
+sleep 1
+
+# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
+if [[ "$hy_listen_port_input" == "y" || "$hy_listen_port_input" == "Y" ]]; then
+    hy_listen_port=$((RANDOM % 55536 + 10000))
+    echo -e "\e[1;3;32m自动生成的 Hysteria2 端口: $hy_listen_port\e[0m"
+# 如果用户输入了自定义端口且输入有效，使用自定义端口
+elif [[ "$hy_listen_port_input" =~ ^[0-9]+$ ]] && [ "$hy_listen_port_input" -ge 10000 ] && [ "$hy_listen_port_input" -le 65535 ]; then
+    hy_listen_port=$hy_listen_port_input
+    echo -e "\e[1;3;32m使用自定义的 Hysteria2 端口: $hy_listen_port\e[0m"
+else
+    # 否则使用默认的已设置端口
+    echo -e "\e[1;3;32m使用默认的 Hysteria2 端口: $hy_listen_port\e[0m"
+fi
                 sleep 1
                 read -p $'\e[1;3;33m请输入自签证书域名 (默认域名: bing.com): \e[0m' hy_server_name_input
                 sleep 1
@@ -1055,10 +1093,22 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
     tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
     echo -e "\e[1;3;33m随机生成Tuic-UUID：$tuic_uuid\e[0m"
     sleep 1
-    read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080): \e[0m' tuic_listen_port_input
-    sleep 1
-    tuic_listen_port=${tuic_listen_port_input:-8080}
-    echo -e "\e[1;3;32mTuic端口：$tuic_listen_port\e[0m"
+    # 提示用户输入自定义端口，或者选择随机生成端口
+read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' tuic_listen_port_input
+sleep 1
+
+# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
+if [[ "$tuic_listen_port_input" == "y" || "$tuic_listen_port_input" == "Y" ]]; then
+    tuic_listen_port=$((RANDOM % 55536 + 10000))
+    echo -e "\e[1;3;32m自动生成的 TUIC 端口: $tuic_listen_port\e[0m"
+# 如果用户输入了自定义端口且输入有效，使用自定义端口
+elif [[ "$tuic_listen_port_input" =~ ^[0-9]+$ ]] && [ "$tuic_listen_port_input" -ge 10000 ] && [ "$tuic_listen_port_input" -le 65535 ]; then
+    tuic_listen_port=$tuic_listen_port_input
+    echo -e "\e[1;3;32m使用自定义的 TUIC 端口: $tuic_listen_port\e[0m"
+else
+    # 否则使用默认的已设置端口
+    echo -e "\e[1;3;32m使用默认的 TUIC 端口: $tuic_listen_port\e[0m"
+fi
     sleep 1
     read -p $'\e[1;3;33m输入 TUIC 自签证书域名 (默认域名: bing.com): \e[0m' tuic_server_name_input
     sleep 1
