@@ -67,7 +67,7 @@ regenarte_cloudflared_argo(){
 # download singbox and cloudflared
 download_singbox() {
   local arch=$(uname -m)
-  local version="1.6.0-RC.3" # 指定版本
+  local version="1.7.0-alpha.3" # 指定版本
 
   echo "Downloading sing-box version: $version"
   echo "Detected architecture: $arch"
