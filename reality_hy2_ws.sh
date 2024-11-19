@@ -365,7 +365,7 @@ show_client_configuration() {
         hy_current_server_name=$(openssl x509 -in /root/self-cert/cert.pem -noout -subject -nameopt RFC2253 | awk -F'=' '{print $NF}')
         hy_password=$(jq -r '.inbounds[] | select(.type == "hysteria2") | .users[0].password' /root/sbox/sbconfig_server.json)
 
-        hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&sni=$hy_current_server_name"
+        hy2_server_link="hysteria2://$hy_password@$server_ip:$hy_current_listen_port?insecure=1&alpn=h3&sni=$hy_current_server_name"
         echo -e "\e[1;3;31mHysteria2 客户端通用链接：\e[0m"
         echo -e "\e[1;3;33m$hy2_server_link\e[0m"
         echo ""
@@ -955,6 +955,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         "users": [{
                             "password": $hy_password
                         }],
+                       "masquerade": $hy_server_name,
                         "tls": {
                             "enabled": true,
                             "alpn": ["h3"],
