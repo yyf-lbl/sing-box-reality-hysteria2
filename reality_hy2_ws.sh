@@ -618,7 +618,7 @@ config="{
     \"timestamp\": true
   },
   \"dns\": {
-    \"servers\": [  
+    \"servers\": [
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
@@ -626,7 +626,7 @@ config="{
         \"detour\": \"direct\"
       }
     ],
-      \"rules\": [
+    \"rules\": [
       {
         \"rule_set\": [\"geosite-openai\"],
         \"server\": \"wireguard\"
@@ -639,25 +639,25 @@ config="{
         \"rule_set\": [\"geosite-category-ads-all\"],
         \"server\": \"block\"
       }
-    ]
-        \"final\": \"google\",
-        \"strategy\":\"\",
-        \"disable_cache\": false,
-        \"disable_expire\": false
+    ],
+    \"final\": \"google\",
+    \"strategy\": \"\",
+    \"disable_cache\": false,
+    \"disable_expire\": false
   },
   \"inbounds\": [],
- \"outbounds\": [
+  \"outbounds\": [
     {
       \"type\": \"direct\",
       \"tag\": \"direct\"
     },
     {
       \"type\": \"block\",
-      \"tag\": \"block\",
+      \"tag\": \"block\"
     },
     {
       \"type\": \"dns\",
-      \"tag\": \"dns-out\",
+      \"tag\": \"dns-out\"
     },
     {
       \"type\": \"wireguard\",
@@ -670,10 +670,10 @@ config="{
       ],
       \"private_key\": \"mPZo+V9qlrMGCZ7+E6z2NI6NOV34PD++TpAR09PtCWI=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"reserved\": [26,21,228]
-     }
-    ],
-    \"route\": {
+      \"reserved\": [26, 21, 228]
+    }
+  ],
+  \"route\": {
     \"rules\": [
       {
         \"protocol\": \"dns\",
@@ -708,7 +708,7 @@ config="{
         \"tag\": \"geosite-openai\",
         \"type\": \"remote\",
         \"format\": \"binary\",
-       \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
+        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
         \"download_detour\": \"direct\"
       },
       {
@@ -721,7 +721,7 @@ config="{
     ],
     \"final\": \"direct\"
   },
-    \"experimental\": {
+  \"experimental\": {
     \"cache_file\": {
       \"path\": \"cache.db\",
       \"cache_id\": \"mycacheid\",
@@ -729,7 +729,6 @@ config="{
     }
   }
 }"
-
     for choice in $choices; do
         case $choice in
             1)
@@ -955,7 +954,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         "users": [{
                             "password": $hy_password
                         }],
-                       "masquerade": $hy_server_name,
+                       "masquerade": "https://bing.com",
                         "tls": {
                             "enabled": true,
                             "alpn": ["h3"],
