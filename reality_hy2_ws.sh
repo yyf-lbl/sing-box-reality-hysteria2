@@ -1,6 +1,5 @@
 #!/bin/bash
 # 创建快捷指令
-install_base
 add_alias() {
     config_file=$1
     alias_names=("a" "5")
@@ -79,6 +78,7 @@ install_base(){
       fi
   fi
 }
+install_base
 # 重新配置隧道
 regenarte_cloudflared_argo(){
   vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
