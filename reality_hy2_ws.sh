@@ -613,8 +613,8 @@ done
     tuic_listen_port=8080
 # json配置部分
 # 定义要测试的 DNS
-dns_servers=("1.1.1.1" "8.8.8.8" "9.9.9.9")
-dns_names=("cloudflare" "google" "quad9")
+dns_servers=("1.1.1.1" "8.8.8.8" )
+dns_names=("cloudflare" "google" )
 
 # 初始化变量
 latencies=()
@@ -671,19 +671,12 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"quad9\",
-        \"address\": \"https://9.9.9.9/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
-        \"detour\": \"direct\"
       }
     ],
     \"final\": \"$fastest_dns\",
     \"strategy\": \"prefer_ipv4\",
     \"disable_cache\": false,
     \"disable_expire\": false,
-    \"load_balance\": true,
     \"dynamic_selection\": true
   },
   \"inbounds\": [],
