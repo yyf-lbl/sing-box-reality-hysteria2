@@ -203,7 +203,7 @@ download_cloudflared(){
   # 下载 bot13 并重命名为 argo
   argo_url="https://github.com/eooce/test/releases/download/${cf_arch}/bot13"
   curl -sLo "/root/sbox/cloudflared-linux" "$argo_url"
-  chmod +x /root/sbox/argo
+  chmod +x /root/sbox/cloudflared-linux
   
   echo -e "\e[1;35m======================\e[0m"
 }
