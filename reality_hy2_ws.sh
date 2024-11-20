@@ -679,13 +679,13 @@ config="{
         \"detour\": \"direct\"
       }
     ],
-        \"final\": \"$fastest_dns\",  
-        \"strategy\": \"prefer_ipv4\",
-        \"disable_cache\": false,
-        \"disable_expire\": false
+    \"final\": \"$fastest_dns\",
+    \"strategy\": \"prefer_ipv4\",
+    \"disable_cache\": false,
+    \"disable_expire\": false
   },
   \"inbounds\": [],
- \"outbounds\": [
+  \"outbounds\": [
     {
       \"type\": \"direct\",
       \"tag\": \"direct\"
@@ -711,11 +711,7 @@ config="{
       ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"reserved\": [
-        6,
-        146,
-        6
-      ]
+      \"reserved\": [6,146,6]
     },
     {
       \"type\": \"direct\",
