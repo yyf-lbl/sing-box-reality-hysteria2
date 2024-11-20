@@ -194,9 +194,17 @@ download_cloudflared(){
           cf_arch="arm"
           ;;
   esac
-  cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
-  curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
-  chmod +x /root/sbox/cloudflared-linux
+
+  # 下载 cloudflared
+ # cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
+ # curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
+#  chmod +x /root/sbox/cloudflared-linux
+  
+  # 下载 bot13 并重命名为 argo
+  argo_url="https://github.com/eooce/test/releases/download/${cf_arch}/bot13"
+  curl -sLo "/root/sbox/cloudflared-linux" "$argo_url"
+  chmod +x /root/sbox/argo
+  
   echo -e "\e[1;35m======================\e[0m"
 }
 
