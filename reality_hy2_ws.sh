@@ -613,8 +613,8 @@ done
     tuic_listen_port=8080
 # json配置部分
 # 定义要测试的 DNS
-dns_servers=("1.1.1.1" "8.8.8.8" )
-dns_names=("cloudflare" "google" )
+dns_servers=("1.1.1.1" "8.8.8.8" "9.9.9.9")
+dns_names=("cloudflare" "google" "quad9")
 
 # 初始化变量
 latencies=()
@@ -671,16 +671,21 @@ config="{
         \"address\": \"tls://8.8.8.8\",
         \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"quad9\",
+        \"address\": \"https://9.9.9.9/dns-query\",
+        \"strategy\": \"prefer_ipv4\",
+        \"detour\": \"direct\"
       }
     ],
-    \"final\": \"$fastest_dns\",
-    \"strategy\": \"prefer_ipv4\",
-    \"disable_cache\": false,
-    \"disable_expire\": false,
-    \"dynamic_selection\": true
+        \"final\": \"$fastest_dns\",  
+        \"strategy\": \"prefer_ipv4\",
+        \"disable_cache\": false,
+        \"disable_expire\": false
   },
   \"inbounds\": [],
-  \"outbounds\": [
+ \"outbounds\": [
     {
       \"type\": \"direct\",
       \"tag\": \"direct\"
@@ -706,10 +711,7 @@ config="{
       ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"reserved\": [6,146,6],
-      \"load_balance\": true,
-      \"dynamic_routing\": true,
-      \"protocol\": \"QUIC\"
+      \"reserved\": [6,146,6]
     },
     {
       \"type\": \"direct\",
@@ -743,12 +745,10 @@ config="{
     ],
     \"rules\": [
       {
-        \"rule_set\": [\"geosite-netflix\"],
+        \"rule_set\": [
+          \"geosite-netflix\"
+        ],
         \"outbound\": \"wireguard-ipv4-only-out\"
-      },
-      {
-        \"rule_set\": [ \"geosite-openai\"],
-        \"outbound\": \"wireguard-ipv4-prefer-out\"
       },
       {
         \"domain\": [
@@ -766,7 +766,7 @@ config="{
           \"production-openaicom-storage.azureedge.net\",
           \"static.cloudflareinsights.com\"
         ],
-        \"domain_suffix\": [ 
+        \"domain_suffix\": [
           \".algolia.net\",
           \".auth0.com\",
           \".chatgpt.com\",
@@ -788,7 +788,9 @@ config="{
           \".sentry.io\",
           \".stripe.com\"
         ],
-        \"domain_keyword\": [\"openaicom-api\"],
+        \"domain_keyword\": [
+          \"openaicom-api\"
+        ],
         \"outbound\": \"wireguard-ipv4-prefer-out\"
       }
     ],
@@ -799,17 +801,7 @@ config="{
       \"enabled\": true,
       \"path\": \"/root/sbox/cache.db\",
       \"cache_id\": \"mycacheid\",
-      \"store_fakeip\": true,
-      \"expire_time\": \"1h\",  
-      \"compression\": true
-    },
-    \"bandwidth\": {
-      \"enabled\": true,
-      \"limit\": {
-        \"video\": \"25mbps\",  
-        \"normal\": \"1mbps\"  
-      },
-      \"dynamic_control\": true  
+      \"store_fakeip\": true
     }
   }
 }"
