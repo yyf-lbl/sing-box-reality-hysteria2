@@ -711,6 +711,7 @@ config="{
       ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
+      \"mtu\": 1420,
       \"reserved\": [6,146,6]
     },
     {
