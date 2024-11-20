@@ -682,7 +682,9 @@ config="{
     \"final\": \"$fastest_dns\",
     \"strategy\": \"prefer_ipv4\",
     \"disable_cache\": false,
-    \"disable_expire\": false
+    \"disable_expire\": false,
+    \"load_balance\": true,
+    \"dynamic_selection\": true
   },
   \"inbounds\": [],
   \"outbounds\": [
@@ -711,7 +713,10 @@ config="{
       ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"reserved\": [6,146,6]
+      \"reserved\": [6,146,6],
+      \"load_balance\": true,
+      \"dynamic_routing\": true,
+      \"protocol\": \"QUIC\"
     },
     {
       \"type\": \"direct\",
@@ -745,10 +750,12 @@ config="{
     ],
     \"rules\": [
       {
-        \"rule_set\": [
-          \"geosite-netflix\"
-        ],
+        \"rule_set\": [\"geosite-netflix\"],
         \"outbound\": \"wireguard-ipv4-only-out\"
+      },
+      {
+        \"rule_set\": [ \"geosite-openai\"],
+        \"outbound\": \"wireguard-ipv4-prefer-out\"
       },
       {
         \"domain\": [
@@ -766,7 +773,7 @@ config="{
           \"production-openaicom-storage.azureedge.net\",
           \"static.cloudflareinsights.com\"
         ],
-        \"domain_suffix\": [
+        \"domain_suffix\": [ 
           \".algolia.net\",
           \".auth0.com\",
           \".chatgpt.com\",
@@ -788,9 +795,7 @@ config="{
           \".sentry.io\",
           \".stripe.com\"
         ],
-        \"domain_keyword\": [
-          \"openaicom-api\"
-        ],
+        \"domain_keyword\": [\"openaicom-api\"],
         \"outbound\": \"wireguard-ipv4-prefer-out\"
       }
     ],
@@ -801,7 +806,17 @@ config="{
       \"enabled\": true,
       \"path\": \"/root/sbox/cache.db\",
       \"cache_id\": \"mycacheid\",
-      \"store_fakeip\": true
+      \"store_fakeip\": true,
+      \"expire_time\": \"1h\",  
+      \"compression\": true
+    },
+    \"bandwidth\": {
+      \"enabled\": true,
+      \"limit\": {
+        \"video\": \"25mbps\",  
+        \"normal\": \"1mbps\"  
+      },
+      \"dynamic_control\": true  
     }
   }
 }"
