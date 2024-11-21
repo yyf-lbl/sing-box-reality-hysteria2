@@ -392,7 +392,7 @@ switch_version() {
         echo -e "\e[1;33;3m2) 仅切换 SingBox 内核\e[0m"
         echo -e "\e[1;33;3m3) 同时切换 cloudflared 版本和 SingBox 内核\e[0m"
         echo -e "\e[1;33;3m0) 退出\e[0m"
-        echo -e "\e[1;33;3m输入选项 [0/1/2/3]: \e[0m"
+        echo -ne "\e[1;33;3m输入选项 [0/1/2/3]: \e[0m"
         read -p "" choice
 
         case $choice in
