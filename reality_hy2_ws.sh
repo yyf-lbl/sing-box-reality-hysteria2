@@ -237,11 +237,23 @@ switch_cloudflared_version() {
             1)
                 ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择官方版 cloudflared-linux\e[0m"
+                systemctl restart cloudflared
+                 if systemctl is-active --quiet cloudflared; then
+        echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31mcloudflared 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
             2)
                 ln -sf "${modified_dir}/argo" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择修改版 cloudflared-linux\e[0m"
+                systemctl restart cloudflared
+                 if systemctl is-active --quiet cloudflared; then
+        echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31mcloudflared 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
             0)
@@ -363,14 +375,22 @@ fi
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
                 systemctl restart sing-box
-                echo -e "\e[1;3;33m已重启sing-box服务，应用测试版内核。\e[0m"
+                if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
             2)
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
                 systemctl restart sing-box
-                echo -e "\e[1;3;32m已重启sing-box服务，应用正式版内核。\e[0m"
+                if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
             3)
