@@ -257,6 +257,7 @@ switch_cloudflared_version() {
                 ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择官方版 cloudflared-linux\e[0m"
                 systemctl stop cloudflared
+                pkill -f cloudflared-linux
                 sleep 2
                 systemctl restart cloudflared
                  if systemctl is-active --quiet cloudflared; then
@@ -270,6 +271,7 @@ switch_cloudflared_version() {
                 ln -sf "${modified_dir}/argo" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择修改版 cloudflared-linux\e[0m"
                 systemctl stop cloudflared
+                pkill -f cloudflared-linux
                 sleep 2
                 systemctl restart cloudflared
                  if systemctl is-active --quiet cloudflared; then
@@ -408,6 +410,7 @@ fi
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
                 systemctl stop sing-box
+                pkill -f sing-box
                 sleep 2
                 systemctl restart sing-box
                 if systemctl is-active --quiet sing-box; then
@@ -421,6 +424,7 @@ fi
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
                 systemctl stop sing-box
+                pkill -f sing-box
                 sleep 2
                 systemctl restart sing-box
                 if systemctl is-active --quiet sing-box; then
@@ -593,7 +597,7 @@ restart_tunnel() {
         pid=$(pgrep -f cloudflared-linux)
         if [ -n "$pid" ]; then
             echo -e "\e[1;3;33m终止现有进程...\e[0m"
-            pkill -f cloudflared-linux 2>/dev/null
+            pkill -f cloudflared 2>/dev/null
             sleep 2  # 等待进程完全终止
         fi
 
@@ -668,7 +672,7 @@ uninstall_singbox() {
                 ;;
         esac
     done
-    # 停止 Cloudflare 隧道服务
+    # 停止并禁用 Cloudflare 隧道服务
     if systemctl is-active --quiet cloudflared; then
         echo -e "\e[1;3;33m正在停止 Cloudflare 隧道服务...\e[0m"
         systemctl stop cloudflared 2>/dev/null
@@ -1392,17 +1396,20 @@ reinstall_sing_box() {
     show_notice "将重新安装中..."
     # 停止和禁用 sing-box 服务
     systemctl stop sing-box
+    pkill -f sing-box
     systemctl stop cloudflared
+    pgrep -f cloudflared
     systemctl disable sing-box > /dev/null 2>&1
     systemctl disable cloudflared > /dev/null 2>&1
     # 删除服务文件和配置文件，先检查是否存在
-    [ -f /etc/systemd/system/sing-box.service ] && rm /etc/systemd/system/sing-box.service
+    [ -f /etc/systemd/system/cloudflared.service ] && rm /etc/systemd/system/cloudflared.service
+    [ -f /etc/systemd/system/sing-box.service ] && rm /etc/systemd/system/sing-box.service   
     [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig_server.json
-    [ -f /root/sbox/sing-box ] && rm /root/sbox/sing-box
     [ -f /root/sbox/cloudflared-linux ] && rm /root/sbox/cloudflared-linux
-    [ -f /root/sbox/argo.txt.b64 ] && rm /root/sbox/argo.txt.b64
     [ -f /root/sbox/public.key.b64 ] && rm /root/sbox/public.key.b64
-
+    [ -f /root/sbox/argo.txt.b64 ] && rm /root/sbox/argo.txt.b64
+    [ -f /root/sbox/sing-box ] && rm /root/sbox/sing-box
+    
     # 删除证书和 sbox 目录
     rm -rf /root/self-cert/
     rm -rf /root/sbox/
@@ -1411,6 +1418,7 @@ reinstall_sing_box() {
         download_singbox
         download_cloudflared
         install_singbox
+        setup_services
 }
 
 check_services_status() {
