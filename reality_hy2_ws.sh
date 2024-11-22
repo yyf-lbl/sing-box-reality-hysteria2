@@ -619,19 +619,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c 'start_cloudflared'
-ExecStart=/bin/bash -c '
-start_cloudflared() {
-  if ! pgrep -x "cloudflared-linux" > /dev/null; then
-    echo -e "\e[32m\e[3mCloudflared is already running\e[0m"
-  else
-    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
-    echo "Cloudflared has started."
-  fi
-}
-# 调用函数
-start_cloudflared
-'
+ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo -e "\e[32m\e[3mCloudflared is already running\e[0m"; exit 0; fi'
+ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
 Restart=always
 RestartSec=5s
 User=root
@@ -640,6 +629,7 @@ StandardError=append:/root/sbox/argo_run.log
 
 [Install]
 WantedBy=multi-user.target
+
 EOF
     else
         echo -e "\e[1;3;32mcloudflared 服务已存在，无需重新创建。\e[0m"
@@ -1351,13 +1341,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c '
-   if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then
-    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1
-  else
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1
-  fi'
-ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo "Cloudflared is already running"; exit 0; fi'
+ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo -e "\e[32m\e[3mCloudflared is already running\e[0m"; exit 0; fi'
+ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
 Restart=always
 RestartSec=5s
 User=root
