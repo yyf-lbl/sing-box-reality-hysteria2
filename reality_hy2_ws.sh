@@ -1859,7 +1859,7 @@ case $choice in
         uninstall_singbox
         ;;
     6)
-        show_notice "正在更新服务文件..."
+        show_notice "正在更新服务..."
         download_singbox
         download_cloudflared
         sbcf_services
