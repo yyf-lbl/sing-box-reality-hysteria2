@@ -245,8 +245,8 @@ switch_cloudflared_version() {
     # 用户选择使用哪个文件
     while true; do
         echo -e "\e[1;3;38;2;228;76;228m切换cloudflared版本\e[0m"
-        echo -e "\e[1;32;3m1) 官方版 cloudflared-linux\e[0m"
-        echo -e "\e[1;36;3m2) 修改版 cloudflared-linux\e[0m"
+        echo -e "\e[1;32;3m1) 官方版Cloudflared-linux\e[0m"
+        echo -e "\e[1;36;3m2) 修改版Cloudflared-linux\e[0m"
         echo -e "\e[1;31;3m0) 不切换退出\e[0m"
         echo -ne "\e[1;33;3m输入选项: \e[0m"
         read -p "" choice
