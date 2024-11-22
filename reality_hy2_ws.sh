@@ -379,13 +379,13 @@ current_link_target=$(readlink /root/sbox/sing-box)
 if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
     echo ""
     echo -e "\e[1;3;31m=================\e[0m"
-    echo -e "\e[1;3;32m当前为最新的 sing-box 正式版\e[0m"
+    echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
     echo -e "\e[1;3;31m=================\e[0m"
     echo ""
 else
     echo ""
     echo -e "\e[1;3;31m=================\e[0m"
-    echo -e "\e[1;3;33m当前为最新的 sing-box 测试版\e[0m"
+    echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
     echo -e "\e[1;3;31m=================\e[0m"
     echo ""
 fi
