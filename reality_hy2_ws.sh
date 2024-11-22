@@ -1411,17 +1411,17 @@ sbcf_services() {
     systemctl daemon-reload  # 重新加载 systemd 配置
     systemctl enable cloudflared > /dev/null 2>&1  # 设置 cloudflared 服务开机启动
     systemctl start cloudflared  # 启动 cloudflared 服务
+    pkill -f cloudflared  # 杀掉现有的 cloudflared 进程
+systemctl daemon-reload  # 重新加载 systemd 配置
+systemctl enable cloudflared > /dev/null 2>&1  # 设置 cloudflared 服务开机启动
+systemctl start cloudflared  # 启动 cloudflared 服务
 
-    # 判断是启动固定隧道还是临时隧道
-    if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then
-        # 启动固定隧道
-      /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1
-        echo -e "\e[1;3;32mCloudflare固定隧道启动成功！\e[0m"
-    else
-        # 启动临时隧道
-   nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
-        echo -e "\e[1;3;32mCloudflare临时隧道启动成功！\e[0m"
-    fi
+# 检查服务是否启动成功
+if systemctl is-active --quiet cloudflared; then
+    echo -e "\e[1;3;32mCloudflare隧道服务启动成功！\e[0m"  # 启动成功提示，绿色加粗斜体
+else
+    echo -e "\e[1;3;31mCloudflare隧道服务启动失败！\e[0m"  # 启动失败提示，红色加粗斜体
+fi
 }
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
