@@ -240,7 +240,7 @@ switch_cloudflared_version() {
     fi
     # 用户选择使用哪个文件
     while true; do
-        echo -e "\e[1;3;34m切换cloudflared版本\e[0m"
+        echo -e "\e[1;3;38;2;228;76;228m切换cloudflared版本\e[0m"
         echo -e "\e[1;33;3m1) 官方版 cloudflared-linux\e[0m"
         echo -e "\e[1;33;3m2) 修改版 cloudflared-linux\e[0m"
         echo -e "\e[1;33;3m0) 不切换退出\e[0m"
@@ -382,7 +382,7 @@ fi
 
     # 提供切换内核选项
     while true; do
-        echo -e "\e[1;3;34m是否需要切换内核？\e[0m"
+        echo -e "\e[1;3;38;2;228;76;228m是否需要切换内核？\e[0m"
          echo -e "\e[1;3;36m1. \e[1;3;36m切换到测试版\e[0m"
         echo -e "\e[1;3;32m2. \e[1;3;32m切换到正式版\e[0m"
         echo -e "\e[1;3;31m3. \e[1;3;31m不切换，退出\e[0m"
@@ -425,7 +425,7 @@ fi
 switch_version() {
     # 提示用户选择操作
     while true; do
-        echo -e "\e[1;3;34m请选择您要执行的操作：\e[0m"
+        echo -e "\e[1;3;38;2;228;76;228m请选择您要执行的操作：\e[0m"
         echo -e "\e[1;33;3m1) 仅切换 cloudflared 版本\e[0m"
         echo -e "\e[1;33;3m2) 仅切换 SingBox 内核\e[0m"
         echo -e "\e[1;33;3m3) 同时切换 cloudflared 版本和 SingBox 内核\e[0m"
