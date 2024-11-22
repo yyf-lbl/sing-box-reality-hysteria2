@@ -1,4 +1,7 @@
 #!/bin/bash
+    official_dir="/root/sbox/official"
+    modified_dir="/root/sbox/modified"
+    mkdir -p "$official_dir" "$modified_dir"
 # 创建快捷指令
 add_alias() {
     config_file=$1
@@ -199,12 +202,6 @@ download_cloudflared() {
             return 1
             ;;
     esac
-
-    # 定义下载目录
-    official_dir="/root/sbox/official"
-    modified_dir="/root/sbox/modified"
-    mkdir -p "$official_dir" "$modified_dir"
-
     # 下载 cloudflared 官方版
     cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
     curl -sLo "${official_dir}/cloudflared-linux" "$cf_url"
