@@ -1804,7 +1804,7 @@ echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;31m5. 卸载Sing-box\e[0m"  # 红色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m6. 更新SingBox内核\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;32m6. 更新Sing-box和cloudflared服务文件\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
@@ -1859,7 +1859,7 @@ case $choice in
         uninstall_singbox
         ;;
     6)
-        show_notice "正在更新Sing-box和cloudflared服务文件..."
+        show_notice "正在更新服务文件..."
         download_singbox
         download_cloudflared
         sbcf_services
