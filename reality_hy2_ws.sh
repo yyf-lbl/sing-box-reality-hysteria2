@@ -271,7 +271,8 @@ switch_cloudflared_version() {
                 break
                 ;;
             0)
-                echo -e "\e[1;3;31m退出操作。\e[0m"
+                echo -e "\e[1;3;31m未进行任何更改退出\e[0m"
+                switch_version
                 break
                 ;;  
             *)
@@ -412,7 +413,8 @@ fi
                 break
                 ;;
             0)
-                echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
+                echo -e "\e[1;3;36m未进行任何更改退出\e[0m"
+                switch_version
                 break
                 ;;
             *)
