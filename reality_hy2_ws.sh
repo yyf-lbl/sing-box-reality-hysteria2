@@ -272,6 +272,7 @@ switch_cloudflared_version() {
                 ;;
             0)
                 echo -e "\e[1;3;31m未进行任何更改退出\e[0m"
+                 echo ""
                 switch_version
                 break
                 ;;  
@@ -414,6 +415,7 @@ fi
                 ;;
             0)
                 echo -e "\e[1;3;36m未进行任何更改退出\e[0m"
+                 echo ""
                 switch_version
                 break
                 ;;
@@ -428,10 +430,10 @@ switch_version() {
     # 提示用户选择操作
     while true; do
         echo -e "\e[1;3;38;2;228;76;228m请选择您要执行的操作：\e[0m"
-        echo -e "\e[1;33;3m1) 仅切换 cloudflared 版本\e[0m"
-        echo -e "\e[1;33;3m2) 仅切换 SingBox 内核\e[0m"
-        echo -e "\e[1;33;3m3) 同时切换 cloudflared 版本和 SingBox 内核\e[0m"
-        echo -e "\e[1;33;3m0) 退出\e[0m"
+        echo -e "\e[1;3;38;2;255;99;71m1) 仅切换 cloudflared 版本\e[0m" 
+        echo -e "\e[1;3;38;2;50;205;50m2) 仅切换 SingBox 内核\e[0m"     
+        echo -e "\e[1;3;38;2;30;144;255m3) 同时切换 cloudflared 版本和 SingBox 内核\e[0m"  
+        echo -e "\e[1;31;3m0) 退出\e[0m"
         echo -ne "\e[1;33;3m输入选项: \e[0m"
         read -p "" choice
 
@@ -455,6 +457,7 @@ switch_version() {
                 ;;
             *)
                 echo -e "\e[1;3;31m无效选项，请重新选择。\e[0m"
+                echo ""
                 ;;
         esac
     done
