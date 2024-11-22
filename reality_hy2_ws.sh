@@ -1370,7 +1370,7 @@ check_tunnel_status() {
         echo ""
         
         # 检查 cloudflared-linux 进程是否在运行
-        if pgrep -f cloudflared-linux > /dev/null; then
+        if pgrep -f cloudflared > /dev/null; then
             if [ -f "/root/sbox/argo_run.log" ]; then
                 if grep -q "Starting tunnel" /root/sbox/argo_run.log && grep -q "Registered tunnel connection" /root/sbox/argo_run.log; then
                     echo -e "\e[1;3;32mCloudflare 固定隧道正常运行。\e[0m"
@@ -1393,7 +1393,7 @@ check_tunnel_status() {
         echo ""
 
         # 检查 cloudflared-linux 进程是否在运行
-        if pgrep -f cloudflared-linux > /dev/null; then
+        if pgrep -f cloudflared > /dev/null; then
             if [ -f "/root/sbox/argo.log" ]; then
                 if grep -q "Your quick Tunnel has been created!" /root/sbox/argo.log; then
                     echo -e "\e[1;3;32mCloudflare 临时隧道正常运行!\e[0m"
