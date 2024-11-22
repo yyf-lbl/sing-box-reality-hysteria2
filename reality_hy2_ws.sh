@@ -1,7 +1,5 @@
 #!/bin/bash
-    official_dir="/root/sbox/official"
-    modified_dir="/root/sbox/modified"
-    mkdir -p "$official_dir" "$modified_dir"
+   
 # 创建快捷指令
 add_alias() {
     config_file=$1
@@ -154,11 +152,11 @@ EOF
 
       # 启动固定隧道
       if [ -e "/root/sbox/tunnel.yml" ]; then
-        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+        /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
       else
         if [[ -n "$argo_auth" ]]; then
           echo "正在使用令牌启动Argo隧道..."
-          /root/sbox/cloudflared-linux tunnel --token "$argo_auth" run > /root/sbox/argo_run.log 2>&1 &
+          /root/sbox/cloudflared tunnel --token "$argo_auth" run > /root/sbox/argo_run.log 2>&1 &
         else
           echo "你的令牌错误,请提供有效的令牌!"
         fi
@@ -174,7 +172,7 @@ EOF
     fi
 
     # 启动临时隧道
-  nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+  nohup /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
     sleep 2
     echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
     sleep 5
@@ -185,8 +183,11 @@ EOF
   fi
 }
 
-# 下载 cloudflared 官方版和修改版
+# 下载 cloudflared 官方版
 download_cloudflared() {
+    official_dir="/root/sbox/"
+    mkdir -p "$official_dir" 
+    
     # 检测系统架构
     arch=$(uname -m)
     case ${arch} in
@@ -204,95 +205,26 @@ download_cloudflared() {
             return 1
             ;;
     esac
-    # 下载 cloudflared 官方版
+
+    # cloudflared 下载 URL
     cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
-    curl -sLo "${official_dir}/cloudflared-linux" "$cf_url"
-    chmod +x "${official_dir}/cloudflared-linux"
-
-    # 下载 argo 修改版
-    argo_url="https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/argo"
-    curl -sLo "${modified_dir}/argo" "$argo_url"
-    chmod +x "${modified_dir}/argo"
-
-    # 默认选择官方版
-    ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
-    echo -e "\e[1;3;32m默认选择官方版 cloudflared-linux\e[0m"
-
-    echo -e "\e[1;35m======================\e[0m"
-}
-
-# 切换 cloudflared 版本
-switch_cloudflared_version() {
-   # 检查当前使用的是哪个版本（官方版或修改版）
-    if [ -L /root/sbox/cloudflared-linux ]; then
-        current_version=$(readlink -f /root/sbox/cloudflared-linux)
-        if [[ "$current_version" == *"official/cloudflared-linux"* ]]; then
-            echo ""
-            echo -e "\e[1;3;31m=================\e[0m"
-            echo -e "\e[1;3;32m当前正在使用官方版 cloudflared-linux\e[0m"
-            echo -e "\e[1;3;31m=================\e[0m"
-            echo ""
-        elif [[ "$current_version" == *"modified/argo"* ]]; then
-            echo ""
-            echo -e "\e[1;3;31m=================\e[0m"
-            echo -e "\e[1;3;32m当前正在使用修改版 cloudflared-linux\e[0m"
-            echo -e "\e[1;3;31m=================\e[0m"
-            echo ""
-        else
-            echo -e "\e[1;3;31m当前版本不明\e[0m"
-        fi
-    else
-        echo -e "\e[1;3;31m未检测到 cloudflared-linux 链接。\e[0m"
+    
+    # 下载 cloudflared 官方版并保存到指定目录
+    curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
+    
+    if [[ $? -ne 0 ]]; then
+        echo -e "\e[1;31mFailed to download cloudflared.\e[0m"
+        return 1
     fi
-    # 用户选择使用哪个文件
-    while true; do
-        echo -e "\e[1;3;38;2;228;76;228m切换cloudflared版本\e[0m"
-        echo -e "\e[1;32;3m1) 官方版Cloudflared-linux\e[0m"
-        echo -e "\e[1;36;3m2) 修改版Cloudflared-linux\e[0m"
-        echo -e "\e[1;31;3m0) 不切换退出\e[0m"
-        echo -ne "\e[1;33;3m输入选项: \e[0m"
-        read -p "" choice
 
-        case $choice in
-            1)
-                ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
-                echo -e "\e[1;3;32m已选择官方版 cloudflared-linux\e[0m"
-                systemctl stop cloudflared
-                pkill -f cloudflared
-                sleep 2
-                systemctl restart cloudflared
-                 if systemctl is-active --quiet cloudflared; then
-        echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
-    else
-        echo -e "\e[1;3;31mcloudflared 服务重启失败。\e[0m"
-    fi
-                break
-                ;;
-            2)
-                ln -sf "${modified_dir}/argo" /root/sbox/cloudflared-linux
-                echo -e "\e[1;3;32m已选择修改版 cloudflared-linux\e[0m"
-                systemctl stop cloudflared
-                pkill -f cloudflared
-                sleep 2
-                systemctl restart cloudflared
-                 if systemctl is-active --quiet cloudflared; then
-        echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
-    else
-        echo -e "\e[1;3;31mcloudflared 服务重启失败。\e[0m"
-    fi
-                break
-                ;;
-            0)
-                echo -e "\e[1;3;31m未进行任何更改退出\e[0m"
-                 echo ""
-                switch_version
-                break
-                ;;  
-            *)
-                echo -e "\e[1;3;31m无效选项，请重新选择。\e[0m"
-                ;;
-        esac
-    done
+    # 为下载的文件设置可执行权限
+    chmod +x "/root/sbox/cloudflared-linux" 
+    
+    # 重命名文件为 cloudflared
+    mv "/root/sbox/cloudflared-linux" "/root/sbox/cloudflared"
+
+    # 安装成功提示
+    echo -e "\e[1;3:32mcloudflared安装成功\e[0m"
 
     echo -e "\e[1;35m======================\e[0m"
 }
@@ -448,44 +380,7 @@ fi
     done
     echo -e "\e[1;35m======================\e[0m"
 }
-# 切换cloudflared和SingBox版本
-switch_version() {
-    # 提示用户选择操作
-    while true; do
-        echo -e "\e[1;3;38;2;228;76;228m请选择您要执行的操作：\e[0m"
-        echo -e "\e[1;3;38;2;255;99;71m1) 仅切换 cloudflared 版本\e[0m" 
-        echo -e "\e[1;3;38;2;50;205;50m2) 仅切换 SingBox 内核\e[0m"     
-        echo -e "\e[1;3;38;2;30;144;255m3) 同时切换 cloudflared 版本和 SingBox 内核\e[0m"  
-        echo -e "\e[1;31;3m0) 退出\e[0m"
-        echo -ne "\e[1;33;3m输入选项: \e[0m"
-        read -p "" choice
 
-        case $choice in
-            1)
-                switch_cloudflared_version
-                break
-                ;;
-            2)
-                switch_kernel
-                break
-                ;;
-            3)
-                switch_cloudflared_version
-                switch_kernel
-                break
-                ;;
-            0)
-                echo -e "\e[1;3;31m退出操作。\e[0m"
-                break
-                echo ""
-                ;;
-            *)
-                echo -e "\e[1;3;31m无效选项，请重新选择。\e[0m"
-                echo ""
-                ;;
-        esac
-    done
-}
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
@@ -591,7 +486,7 @@ restart_tunnel() {
     # 判断是固定隧道还是临时隧道
     if [ -f "/root/sbox/tunnel.json" ] || [ -f "/root/sbox/tunnel.yml" ]; then
         echo -e "\e[1;3;32m启动固定隧道...\e[0m"
-        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+        /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
     else
         echo -e "\e[1;3;32m正在重新启动临时隧道...\e[0m"
         echo ""
@@ -603,7 +498,7 @@ restart_tunnel() {
         fi
 
         # 启动临时隧道
-       nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+       nohup /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
         sleep 2
         echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
         sleep 5
@@ -625,7 +520,7 @@ After=network.target
 [Service]
 Type=simple
 ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo -e "\e[32m\e[3mCloudflared is already running\e[0m"; exit 0; fi'
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
 Restart=always
 RestartSec=5s
 User=root
@@ -1145,21 +1040,21 @@ EOF
       #  echo "生成的 tunnel.yml 文件内容:"
       #  cat /root/sbox/tunnel.yml
         # 启动固定隧道
-       /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+       /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
        echo "" 
         echo -e "\e[1;3;32mCloudflared 固定隧道功能已启动！\e[0m"
     echo ""
     fi
 else
     # 用户选择使用临时隧道
-pid=$(pgrep -f cloudflared-linux)
+pid=$(pgrep -f cloudflared)
 if [ -n "$pid" ]; then
     # 终止现有进程
-    pkill -f cloudflared-linux 2>/dev/null
+    pkill -f cloudflared 2>/dev/null
 fi
 
     # 启动临时隧道
-nohup /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
+nohup /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
 sleep 2
 echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
 sleep 5
@@ -1347,8 +1242,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo -e "\e[32m\e[3mCloudflared is already running\e[0m"; exit 0; fi'
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared" > /dev/null; then echo -e "\e[32m\e[3mCloudflared is already running\e[0m"; exit 0; fi'
+ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
 Restart=always
 RestartSec=5s
 User=root
@@ -1802,13 +1697,13 @@ echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;31m5. 卸载Sing-box\e[0m"  # 红色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m6. 更新Sing-box和cloudflared服务文件\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;32m6. 更新Sing-box内核\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;35m9. 切换sing-box和cloudflared版本\e[0m"
+echo -e "\e[1;3;35m9. 切换sing-box内核\e[0m"
 echo  "==============="
 echo -e "\e[1;3;32m10. 实时查看系统服务状态\e[0m"
 echo  "==============="
@@ -1857,9 +1752,8 @@ case $choice in
         uninstall_singbox
         ;;
     6)
-        show_notice "正在更新服务..."
+        show_notice "正在更新内核..."
         download_singbox
-        download_cloudflared
         sbcf_services
         ;;
     7)
@@ -1879,7 +1773,7 @@ case $choice in
     fi
         ;;
     9)
-     switch_version
+     switch_kernel
       ;;
       
     10) 
