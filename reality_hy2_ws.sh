@@ -209,7 +209,7 @@ download_cloudflared() {
     chmod +x "${official_dir}/cloudflared-linux"
 
     # 下载 argo 修改版
-    argo_url="https://github.com/eooce/test/releases/download/$ARCH/bot13"
+    argo_url="https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/argo"
     curl -sLo "${modified_dir}/argo" "$argo_url"
     chmod +x "${modified_dir}/argo"
 
