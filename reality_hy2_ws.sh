@@ -630,7 +630,7 @@ install_singbox() {
     echo -e "\e[1;3;33m3) Hysteria2\e[0m"
     echo -e "\e[1;3;33m4) Tuic\e[0m"
     echo -ne "\e[1;3;33m请输入你的选择: \e[0m"
-    read choices
+    read -p " " choices
     echo ""  
     # 检查输入是否为空
     if [[ -z "$choices" ]]; then
