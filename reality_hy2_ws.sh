@@ -225,9 +225,13 @@ switch_cloudflared_version() {
     if [ -L /root/sbox/cloudflared-linux ]; then
         current_version=$(readlink -f /root/sbox/cloudflared-linux)
         if [[ "$current_version" == *"official/cloudflared-linux"* ]]; then
+            echo -e "\e[1;3;31m=================\e[0m"
             echo -e "\e[1;3;32m当前正在使用官方版 cloudflared-linux\e[0m"
+            echo -e "\e[1;3;31m=================\e[0m"
         elif [[ "$current_version" == *"modified/argo"* ]]; then
+            echo -e "\e[1;3;31m=================\e[0m"
             echo -e "\e[1;3;32m当前正在使用修改版 cloudflared-linux\e[0m"
+            echo -e "\e[1;3;31m=================\e[0m"
         else
             echo -e "\e[1;3;31m当前版本不明\e[0m"
         fi
@@ -367,9 +371,13 @@ switch_kernel() {
 current_link_target=$(readlink /root/sbox/sing-box)
 # 判断当前符号链接指向的路径
 if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
+    echo -e "\e[1;3;31m=================\e[0m"
     echo -e "\e[1;3;32m当前为最新的 sing-box 正式版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
 else
+    echo -e "\e[1;3;31m=================\e[0m"
     echo -e "\e[1;3;33m当前为最新的 sing-box 测试版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
 fi
 
     # 提供切换内核选项
