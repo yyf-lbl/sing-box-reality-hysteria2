@@ -1411,11 +1411,6 @@ sbcf_services() {
     systemctl daemon-reload  # 重新加载 systemd 配置
     systemctl enable cloudflared > /dev/null 2>&1  # 设置 cloudflared 服务开机启动
     systemctl start cloudflared  # 启动 cloudflared 服务
-    pkill -f cloudflared  # 杀掉现有的 cloudflared 进程
-systemctl daemon-reload  # 重新加载 systemd 配置
-systemctl enable cloudflared > /dev/null 2>&1  # 设置 cloudflared 服务开机启动
-systemctl start cloudflared  # 启动 cloudflared 服务
-
 # 检查服务是否启动成功
 if systemctl is-active --quiet cloudflared; then
     echo -e "\e[1;3;32mCloudflare隧道服务启动成功！\e[0m"  # 启动成功提示，绿色加粗斜体
