@@ -1,4 +1,7 @@
 #!/bin/bash
+    official_dir="/root/sbox/official"
+    modified_dir="/root/sbox/modified"
+    mkdir -p "$official_dir" "$modified_dir"
 # 创建快捷指令
 add_alias() {
     config_file=$1
@@ -180,24 +183,110 @@ EOF
   fi
 }
 
-# 下载cloudflared文件
-download_cloudflared(){
-  arch=$(uname -m)
-  case ${arch} in
-      x86_64)
-          cf_arch="amd64"
-          ;;
-      aarch64)
-          cf_arch="arm64"
-          ;;
-      armv7l)
-          cf_arch="arm"
-          ;;
-  esac
-  cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
-  curl -sLo "/root/sbox/cloudflared-linux" "$cf_url"
-  chmod +x /root/sbox/cloudflared-linux
-  echo -e "\e[1;35m======================\e[0m"
+# 下载 cloudflared 官方版和修改版
+download_cloudflared() {
+    # 检测系统架构
+    arch=$(uname -m)
+    case ${arch} in
+        x86_64)
+            cf_arch="amd64"
+            ;;
+        aarch64)
+            cf_arch="arm64"
+            ;;
+        armv7l)
+            cf_arch="arm"
+            ;;
+        *)
+            echo -e "\e[1;31mUnsupported architecture: ${arch}\e[0m"
+            return 1
+            ;;
+    esac
+    # 下载 cloudflared 官方版
+    cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
+    curl -sLo "${official_dir}/cloudflared-linux" "$cf_url"
+    chmod +x "${official_dir}/cloudflared-linux"
+
+    # 下载 argo 修改版
+    argo_url="https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/argo"
+    curl -sLo "${modified_dir}/argo" "$argo_url"
+    chmod +x "${modified_dir}/argo"
+
+    # 默认选择官方版
+    ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
+    echo -e "\e[1;3;32m默认选择官方版 cloudflared-linux\e[0m"
+
+    echo -e "\e[1;35m======================\e[0m"
+}
+
+# 切换 cloudflared 版本
+switch_cloudflared_version() {
+   # 检查当前使用的是哪个版本（官方版或修改版）
+    if [ -L /root/sbox/cloudflared-linux ]; then
+        current_version=$(readlink -f /root/sbox/cloudflared-linux)
+        if [[ "$current_version" == *"official/cloudflared-linux"* ]]; then
+            echo ""
+            echo -e "\e[1;3;31m=================\e[0m"
+            echo -e "\e[1;3;32m当前正在使用官方版 cloudflared-linux\e[0m"
+            echo -e "\e[1;3;31m=================\e[0m"
+            echo ""
+        elif [[ "$current_version" == *"modified/argo"* ]]; then
+            echo ""
+            echo -e "\e[1;3;31m=================\e[0m"
+            echo -e "\e[1;3;32m当前正在使用修改版 cloudflared-linux\e[0m"
+            echo -e "\e[1;3;31m=================\e[0m"
+            echo ""
+        else
+            echo -e "\e[1;3;31m当前版本不明\e[0m"
+        fi
+    else
+        echo -e "\e[1;3;31m未检测到 cloudflared-linux 链接。\e[0m"
+    fi
+    # 用户选择使用哪个文件
+    while true; do
+        echo -e "\e[1;3;38;2;228;76;228m切换cloudflared版本\e[0m"
+        echo -e "\e[1;32;3m1) 官方版Cloudflared-linux\e[0m"
+        echo -e "\e[1;36;3m2) 修改版Cloudflared-linux\e[0m"
+        echo -e "\e[1;31;3m0) 不切换退出\e[0m"
+        echo -ne "\e[1;33;3m输入选项: \e[0m"
+        read -p "" choice
+
+        case $choice in
+            1)
+                ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
+                echo -e "\e[1;3;32m已选择官方版 cloudflared-linux\e[0m"
+                systemctl restart cloudflared
+                 if systemctl is-active --quiet cloudflared; then
+        echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31mcloudflared 服务重启失败。\e[0m"
+    fi
+                break
+                ;;
+            2)
+                ln -sf "${modified_dir}/argo" /root/sbox/cloudflared-linux
+                echo -e "\e[1;3;32m已选择修改版 cloudflared-linux\e[0m"
+                systemctl restart cloudflared
+                 if systemctl is-active --quiet cloudflared; then
+        echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31mcloudflared 服务重启失败。\e[0m"
+    fi
+                break
+                ;;
+            0)
+                echo -e "\e[1;3;31m未进行任何更改退出\e[0m"
+                 echo ""
+                switch_version
+                break
+                ;;  
+            *)
+                echo -e "\e[1;3;31m无效选项，请重新选择。\e[0m"
+                ;;
+        esac
+    done
+
+    echo -e "\e[1;35m======================\e[0m"
 }
 
 # 下载singbox最新测试版内核和正式版
@@ -288,36 +377,54 @@ switch_kernel() {
 current_link_target=$(readlink /root/sbox/sing-box)
 # 判断当前符号链接指向的路径
 if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
-    echo -e "\e[1;3;32m当前为最新的 sing-box 正式版\e[0m"
+    echo ""
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo ""
 else
-    echo -e "\e[1;3;33m当前为最新的 sing-box 测试版\e[0m"
+    echo ""
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo ""
 fi
 
     # 提供切换内核选项
     while true; do
-        echo -e "\e[1;3;33m是否需要切换内核？\e[0m"
-         echo -e "\e[1;3;36m1. \e[1;3;36m切换到测试版\e[0m"
-        echo -e "\e[1;3;32m2. \e[1;3;32m切换到正式版\e[0m"
-        echo -e "\e[1;3;31m3. \e[1;3;31m不切换，退出\e[0m"
-        echo -ne "\e[1;3;34m请输入选项 [1/2/3]:\e[0m"
-        read -p "" choice
+        echo -e "\e[1;3;38;2;228;76;228m是否需要切换内核？\e[0m"
+         echo -e "\e[1;3;36m1) \e[1;3;36m切换到测试版\e[0m"
+        echo -e "\e[1;3;32m2) \e[1;3;32m切换到正式版\e[0m"
+        echo -e "\e[1;3;31m0) \e[1;3;31m不切换退出\e[0m"
+        echo -ne "\e[1;3;33m请输入选项:\e[0m"
+        read -p " " choice
         case $choice in
             1)
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
                 systemctl restart sing-box
-                echo -e "\e[1;3;33m已重启sing-box服务，应用测试版内核。\e[0m"
+                if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
             2)
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
                 systemctl restart sing-box
-                echo -e "\e[1;3;32m已重启sing-box服务，应用正式版内核。\e[0m"
+                if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
-            3)
-                echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
+            0)
+                echo -e "\e[1;3;36m未进行任何更改退出\e[0m"
+                 echo ""
+                switch_version
                 break
                 ;;
             *)
@@ -325,8 +432,46 @@ fi
                 ;;
         esac
     done
+    echo -e "\e[1;35m======================\e[0m"
 }
+# 切换cloudflared和SingBox版本
+switch_version() {
+    # 提示用户选择操作
+    while true; do
+        echo -e "\e[1;3;38;2;228;76;228m请选择您要执行的操作：\e[0m"
+        echo -e "\e[1;3;38;2;255;99;71m1) 仅切换 cloudflared 版本\e[0m" 
+        echo -e "\e[1;3;38;2;50;205;50m2) 仅切换 SingBox 内核\e[0m"     
+        echo -e "\e[1;3;38;2;30;144;255m3) 同时切换 cloudflared 版本和 SingBox 内核\e[0m"  
+        echo -e "\e[1;31;3m0) 退出\e[0m"
+        echo -ne "\e[1;33;3m输入选项: \e[0m"
+        read -p "" choice
 
+        case $choice in
+            1)
+                switch_cloudflared_version
+                break
+                ;;
+            2)
+                switch_kernel
+                break
+                ;;
+            3)
+                switch_cloudflared_version
+                switch_kernel
+                break
+                ;;
+            0)
+                echo -e "\e[1;3;31m退出操作。\e[0m"
+                break
+                echo ""
+                ;;
+            *)
+                echo -e "\e[1;3;31m无效选项，请重新选择。\e[0m"
+                echo ""
+                ;;
+        esac
+    done
+}
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
@@ -711,11 +856,8 @@ config="{
       ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peer_public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-      \"reserved\": [
-        6,
-        146,
-        6
-      ]
+      \"mtu\": 1420,
+      \"reserved\": [6,146,6]
     },
     {
       \"type\": \"direct\",
@@ -1615,7 +1757,7 @@ echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;35m9. 切换sing-box内核\e[0m"
+echo -e "\e[1;3;35m9. 切换sing-box和cloudflared版本\e[0m"
 echo  "==============="
 echo -e "\e[1;3;32m10. 实时查看系统服务状态\e[0m"
 echo  "==============="
@@ -1692,7 +1834,7 @@ else
 fi
         ;;
     9)
-     switch_kernel
+     switch_version
       ;;
       
     10) 
