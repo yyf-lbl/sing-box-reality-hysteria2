@@ -95,7 +95,7 @@ regenarte_cloudflared_argo(){
     # 终止现有的 cloudflared 进程
     pid=$(pgrep -f cloudflared-linux)
     if [ -n "$pid" ]; then
-      pkill -f cloudflared-linux 2>/dev/null
+      pkill -f cloudflared 2>/dev/null
     fi
 
     # 提示用户生成 Argo 固定隧道配置
@@ -169,7 +169,7 @@ EOF
     # 用户选择使用临时隧道
     pid=$(pgrep -f cloudflared-linux)
     if [ -n "$pid" ]; then
-      pkill -f cloudflared-linux 2>/dev/null
+      pkill -f cloudflared 2>/dev/null
     fi
 
     # 启动临时隧道
