@@ -82,14 +82,6 @@ install_base(){
   fi
 }
 install_base
-# 判断cloudfalre服务启动临时隧道还是固定隧道
-start_cloudflared() {
-  if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then
-    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1
-  else
-    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1
-  fi
-}
 
 # 重新配置隧道
 regenarte_cloudflared_argo(){
@@ -624,8 +616,18 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/bin/bash -c 'start_cloudflared'
-ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo "Cloudflared is already running"; exit 0; fi'
-
+ExecStart=/bin/bash -c '
+start_cloudflared() {
+  if ! pgrep -x "cloudflared-linux" > /dev/null; then
+    echo -e "\e[32m\e[3mCloudflared is already running\e[0m"
+  else
+    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+    echo "Cloudflared has started."
+  fi
+}
+# 调用函数
+start_cloudflared
+'
 Restart=always
 RestartSec=5s
 User=root
