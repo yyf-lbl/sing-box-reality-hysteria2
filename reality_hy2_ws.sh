@@ -82,6 +82,15 @@ install_base(){
   fi
 }
 install_base
+# 判断cloudfalre服务启动临时隧道还是固定隧道
+start_cloudflared() {
+  if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then
+    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1
+  else
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1
+  fi
+}
+
 # 重新配置隧道
 regenarte_cloudflared_argo(){
   vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
@@ -255,6 +264,8 @@ switch_cloudflared_version() {
             1)
                 ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择官方版 cloudflared-linux\e[0m"
+                systemctl stop cloudflared
+                sleep 2
                 systemctl restart cloudflared
                  if systemctl is-active --quiet cloudflared; then
         echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
@@ -266,6 +277,8 @@ switch_cloudflared_version() {
             2)
                 ln -sf "${modified_dir}/argo" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择修改版 cloudflared-linux\e[0m"
+                systemctl stop cloudflared
+                sleep 2
                 systemctl restart cloudflared
                  if systemctl is-active --quiet cloudflared; then
         echo -e "\e[1;3;32mcloudflared 服务已成功重启。\e[0m"
@@ -610,7 +623,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStart=/bin/bash -c 'start_cloudflared'
+ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo "Cloudflared is already running"; exit 0; fi'
+
 Restart=always
 RestartSec=5s
 User=root
@@ -686,7 +701,6 @@ uninstall_singbox() {
     )
     directories_to_remove=(
         "/root/self-cert/"
-        "/etc/systemd/system/cloudflared.service"
         "/root/sbox/"
     )
     # 删除文件并检查是否成功
@@ -1331,7 +1345,9 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStart=/bin/bash -c 'start_cloudflared'
+ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo -e "\e[1;3;32mCloudflared服务正在运行！\e[0m"; exit 0; fi'
+
 Restart=always
 RestartSec=5s
 User=root
@@ -1340,6 +1356,7 @@ StandardError=append:/root/sbox/argo_run.log
 
 [Install]
 WantedBy=multi-user.target
+
 EOF
     fi
 
@@ -1380,8 +1397,9 @@ reinstall_sing_box() {
     show_notice "将重新安装中..."
     # 停止和禁用 sing-box 服务
     systemctl stop sing-box
+    systemctl stop cloudflared
     systemctl disable sing-box > /dev/null 2>&1
-
+    systemctl disable cloudflared > /dev/null 2>&1
     # 删除服务文件和配置文件，先检查是否存在
     [ -f /etc/systemd/system/sing-box.service ] && rm /etc/systemd/system/sing-box.service
     [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig_server.json
