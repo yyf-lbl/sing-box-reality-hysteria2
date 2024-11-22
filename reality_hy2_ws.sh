@@ -244,7 +244,7 @@ switch_cloudflared_version() {
         echo -e "\e[1;32;3m1) 官方版 cloudflared-linux\e[0m"
         echo -e "\e[1;36;3m2) 修改版 cloudflared-linux\e[0m"
         echo -e "\e[1;31;3m0) 不切换退出\e[0m"
-        echo -ne "\e[1;33;3m输入选项 [0/1/2]: \e[0m"
+        echo -ne "\e[1;33;3m输入选项: \e[0m"
         read -p "" choice
 
         case $choice in
@@ -386,7 +386,7 @@ fi
          echo -e "\e[1;3;36m1) \e[1;3;36m切换到测试版\e[0m"
         echo -e "\e[1;3;32m2) \e[1;3;32m切换到正式版\e[0m"
         echo -e "\e[1;3;31m0) \e[1;3;31m不切换退出\e[0m"
-        echo -ne "\e[1;3;33m请输入选项 [1/2/3]:\e[0m"
+        echo -ne "\e[1;3;33m请输入选项:\e[0m"
         read -p "" choice
         case $choice in
             1)
@@ -430,7 +430,7 @@ switch_version() {
         echo -e "\e[1;33;3m2) 仅切换 SingBox 内核\e[0m"
         echo -e "\e[1;33;3m3) 同时切换 cloudflared 版本和 SingBox 内核\e[0m"
         echo -e "\e[1;33;3m0) 退出\e[0m"
-        echo -ne "\e[1;33;3m输入选项 [0/1/2/3]: \e[0m"
+        echo -ne "\e[1;33;3m输入选项: \e[0m"
         read -p "" choice
 
         case $choice in
