@@ -1694,7 +1694,7 @@ echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m"
+echo -ne "\e[1;3;33m输入您的选择 (0-10):\e[0m"
 read -p " " choice
 echo ""
 case $choice in
