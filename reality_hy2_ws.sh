@@ -1352,18 +1352,12 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=/bin/bash -c '
-start_cloudflared() {
-  if ! pgrep -x "cloudflared-linux" > /dev/null; then
-    echo -e "\e[32m\e[3mCloudflared is already running\e[0m"
+   if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then
+    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1
   else
-    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
-    echo "Cloudflared has started."
-  fi
-}
-
-# 调用函数
-start_cloudflared
-'
+    /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1
+  fi'
+ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo "Cloudflared is already running"; exit 0; fi'
 Restart=always
 RestartSec=5s
 User=root
