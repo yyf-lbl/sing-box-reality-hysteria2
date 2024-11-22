@@ -397,7 +397,7 @@ fi
         echo -e "\e[1;3;32m2) \e[1;3;32m切换到正式版\e[0m"
         echo -e "\e[1;3;31m0) \e[1;3;31m不切换退出\e[0m"
         echo -ne "\e[1;3;33m请输入选项:\e[0m"
-        read -p "" choice
+        read -p " " choice
         case $choice in
             1)
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
