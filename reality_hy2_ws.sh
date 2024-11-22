@@ -1391,6 +1391,38 @@ EOF
         echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
     fi
 }
+# 重启服务
+sbcf_services() {
+    # 启动 sing-box 服务
+    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+        pkill -f sing-box  # 杀掉现有的 sing-box 进程
+        systemctl daemon-reload  # 重新加载 systemd 配置
+        systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
+        systemctl start sing-box  # 启动 sing-box 服务
+        # 打印成功信息，绿色加粗斜体
+        echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
+    else
+        echo "Error in configuration. Aborting"
+        return 1  # 返回错误状态
+    fi
+
+    # 停止并重启 cloudflared 隧道服务
+    pkill -f cloudflared  # 杀掉现有的 cloudflared 进程
+    systemctl daemon-reload  # 重新加载 systemd 配置
+    systemctl enable cloudflared > /dev/null 2>&1  # 设置 cloudflared 服务开机启动
+    systemctl start cloudflared  # 启动 cloudflared 服务
+
+    # 判断是启动固定隧道还是临时隧道
+    if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then
+        # 启动固定隧道
+        /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run | tee -a /root/sbox/argo_run.log
+        echo -e "\e[1;3;32mCloudflare固定隧道启动成功！\e[0m"
+    else
+        # 启动临时隧道
+        /root/sbox/cloudflared-linux tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 | tee -a /root/sbox/argo_run.log
+        echo -e "\e[1;3;32mCloudflare临时隧道启动成功！\e[0m"
+    fi
+}
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
     show_notice "将重新安装中..."
@@ -1827,33 +1859,16 @@ case $choice in
         uninstall_singbox
         ;;
     6)
-        show_notice "正在更新 Sing-box内核..."
+        show_notice "正在更新Sing-box和cloudflared服务文件..."
         download_singbox
-        if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-            echo -e "\e[1;3;32m配置检查成功，启动sing-box服务...\e[0m"
-            systemctl daemon-reload
-            systemctl enable sing-box > /dev/null 2>&1
-            systemctl start sing-box
-            systemctl restart sing-box
-        fi
-        echo ""
+        download_cloudflared
+        sbcf_services
         ;;
     7)
         restart_tunnel
         ;;
     8) 
-       # 检查配置并启动服务
-if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-        pkill -f sing-box
-    systemctl daemon-reload
-    systemctl enable sing-box > /dev/null 2>&1
-    systemctl start sing-box
-    systemctl restart sing-box
-    # 打印成功信息，绿色加粗斜体
-    echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
-else
-    echo "Error in configuration. Aborting"
-fi
+        sbcf_services
         ;;
     9)
      switch_version
