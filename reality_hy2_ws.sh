@@ -1417,6 +1417,7 @@ if systemctl is-active --quiet cloudflared; then
 else
     echo -e "\e[1;3;31mCloudflare隧道服务启动失败！\e[0m"  # 启动失败提示，红色加粗斜体
 fi
+  echo -e "\e[1;35m======================\e[0m"
 }
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
