@@ -257,7 +257,7 @@ switch_cloudflared_version() {
                 ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择官方版 cloudflared-linux\e[0m"
                 systemctl stop cloudflared
-                pkill -f cloudflared-linux
+                pkill -f cloudflared
                 sleep 2
                 systemctl restart cloudflared
                  if systemctl is-active --quiet cloudflared; then
@@ -271,7 +271,7 @@ switch_cloudflared_version() {
                 ln -sf "${modified_dir}/argo" /root/sbox/cloudflared-linux
                 echo -e "\e[1;3;32m已选择修改版 cloudflared-linux\e[0m"
                 systemctl stop cloudflared
-                pkill -f cloudflared-linux
+                pkill -f cloudflared
                 sleep 2
                 systemctl restart cloudflared
                  if systemctl is-active --quiet cloudflared; then
@@ -584,7 +584,7 @@ restart_tunnel() {
     # 停止现有的 cloudflared 进程和服务
     echo -e "\e[1;3;33m正在重启 cloudflared 服务...\e[0m"
     systemctl stop cloudflared
-    pkill -f cloudflared-linux
+    pkill -f cloudflared
     sleep 2  # 等待进程完全终止
 
     # 判断是固定隧道还是临时隧道
@@ -1844,6 +1844,7 @@ case $choice in
     8) 
        # 检查配置并启动服务
 if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+        pkill -f sing-box
     systemctl daemon-reload
     systemctl enable sing-box > /dev/null 2>&1
     systemctl start sing-box
