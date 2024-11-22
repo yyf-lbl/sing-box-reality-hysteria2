@@ -407,6 +407,8 @@ fi
             1)
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
+                systemctl stop sing-box
+                sleep 2
                 systemctl restart sing-box
                 if systemctl is-active --quiet sing-box; then
         echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
@@ -418,6 +420,8 @@ fi
             2)
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
+                systemctl stop sing-box
+                sleep 2
                 systemctl restart sing-box
                 if systemctl is-active --quiet sing-box; then
         echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
@@ -1347,9 +1351,19 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/bin/bash -c 'start_cloudflared'
-ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared-linux" > /dev/null; then echo -e "\e[1;3;32mCloudflared服务正在运行！\e[0m"; exit 0; fi'
+ExecStart=/bin/bash -c '
+start_cloudflared() {
+  if ! pgrep -x "cloudflared-linux" > /dev/null; then
+    echo -e "\e[32m\e[3mCloudflared is already running\e[0m"
+  else
+    /root/sbox/cloudflared-linux tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
+    echo "Cloudflared has started."
+  fi
+}
 
+# 调用函数
+start_cloudflared
+'
 Restart=always
 RestartSec=5s
 User=root
