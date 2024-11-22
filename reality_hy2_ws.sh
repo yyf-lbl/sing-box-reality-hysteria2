@@ -317,7 +317,6 @@ switch_kernel() {
 current_link_target=$(readlink /root/sbox/sing-box)
 # 判断当前符号链接指向的路径
 if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
-    echo ""
     echo -e "\e[1;3;31m=================\e[0m"
     echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
     echo -e "\e[1;3;31m=================\e[0m"
