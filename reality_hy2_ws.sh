@@ -139,6 +139,7 @@ regenarte_cloudflared_argo(){
 
       # 生成 tunnel.yml 文件
       cat > /root/sbox/tunnel.yml << EOF
+autoupdate: false
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 protocol: http2
@@ -204,9 +205,9 @@ download_cloudflared() {
             ;;
     esac
     # 下载 cloudflared 官方版
-   # cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
-  #  curl -sLo "${official_dir}/cloudflared-linux" "$cf_url"
-  #  chmod +x "${official_dir}/cloudflared-linux"
+    cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
+    curl -sLo "${official_dir}/cloudflared-linux" "$cf_url"
+    chmod +x "${official_dir}/cloudflared-linux"
 
     # 下载 argo 修改版
     argo_url="https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/argo"
@@ -214,7 +215,7 @@ download_cloudflared() {
     chmod +x "${modified_dir}/argo"
 
     # 默认选择官方版
-    ln -sf "${modified_dir}/argo" /root/sbox/cloudflared-linux
+    ln -sf "${official_dir}/cloudflared-linux" /root/sbox/cloudflared-linux
     echo -e "\e[1;3;32m默认选择官方版 cloudflared-linux\e[0m"
 
     echo -e "\e[1;35m======================\e[0m"
@@ -1128,6 +1129,7 @@ done
 
         # 生成 tunnel.yml 文件
  cat > /root/sbox/tunnel.yml << EOF
+autoupdate: false
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 protocol: http2
