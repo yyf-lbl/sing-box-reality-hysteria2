@@ -1289,7 +1289,7 @@ EOF
     fi
 }
 # 重启服务
-sbcf_services() {
+sbox_services() {
     # 启动 sing-box 服务
     if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
         pkill -f sing-box  # 杀掉现有的 sing-box 进程
@@ -1302,19 +1302,6 @@ sbcf_services() {
         echo "Error in configuration. Aborting"
         return 1  # 返回错误状态
     fi
-
-    # 停止并重启 cloudflared 隧道服务
-    pkill -f cloudflared  # 杀掉现有的 cloudflared 进程
-    systemctl daemon-reload  # 重新加载 systemd 配置
-    systemctl enable cloudflared > /dev/null 2>&1  # 设置 cloudflared 服务开机启动
-    systemctl start cloudflared  # 启动 cloudflared 服务
-# 检查服务是否启动成功
-if systemctl is-active --quiet cloudflared; then
-    echo -e "\e[1;3;32mCloudflare隧道服务启动成功！\e[0m"  # 启动成功提示，绿色加粗斜体
-else
-    echo -e "\e[1;3;31mCloudflare隧道服务启动失败！\e[0m"  # 启动失败提示，红色加粗斜体
-fi
-  echo -e "\e[1;35m======================\e[0m"
 }
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
@@ -1754,7 +1741,7 @@ case $choice in
     6)
         show_notice "正在更新内核..."
         download_singbox
-        sbcf_services
+        sbox_services
         ;;
     7)
         restart_tunnel
