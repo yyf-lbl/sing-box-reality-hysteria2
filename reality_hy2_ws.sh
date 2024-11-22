@@ -224,7 +224,7 @@ download_cloudflared() {
     mv "/root/sbox/cloudflared-linux" "/root/sbox/cloudflared"
 
     # 安装成功提示
-    echo -e "\e[1;3:32mcloudflared安装成功\e[0m"
+    echo -e "\e[1;3;32mcloudflared安装成功\e[0m"
 
     echo -e "\e[1;35m======================\e[0m"
 }
