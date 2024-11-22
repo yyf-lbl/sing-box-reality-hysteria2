@@ -368,9 +368,8 @@ fi
                 break
                 ;;
             0)
+                echo ""
                 echo -e "\e[1;3;36m未进行任何更改退出\e[0m"
-                 echo ""
-                switch_version
                 break
                 ;;
             *)
@@ -1697,7 +1696,7 @@ echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
 echo ""
-echo -ne "\e[1;3;33m输入您的选择 (0-9): \e[0m " 
+echo -ne "\e[1;3;33m输入您的选择 (0-10): \e[0m " 
 read -e choice
 echo ""
 case $choice in
