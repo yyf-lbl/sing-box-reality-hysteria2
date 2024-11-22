@@ -204,9 +204,9 @@ download_cloudflared() {
             ;;
     esac
     # 下载 cloudflared 官方版
-    cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
-    curl -sLo "${official_dir}/cloudflared-linux" "$cf_url"
-    chmod +x "${official_dir}/cloudflared-linux"
+   # cf_url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}"
+  #  curl -sLo "${official_dir}/cloudflared-linux" "$cf_url"
+  #  chmod +x "${official_dir}/cloudflared-linux"
 
     # 下载 argo 修改版
     argo_url="https://github.com/yyfalbl/singbox-2/releases/download/v1.0.0/argo"
