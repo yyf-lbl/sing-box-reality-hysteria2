@@ -243,7 +243,7 @@ switch_cloudflared_version() {
         echo -e "\e[1;3;38;2;228;76;228m切换cloudflared版本\e[0m"
         echo -e "\e[1;32;3m1) 官方版 cloudflared-linux\e[0m"
         echo -e "\e[1;36;3m2) 修改版 cloudflared-linux\e[0m"
-        echo -e "\e[1;33;3m0) 不切换退出\e[0m"
+        echo -e "\e[1;31;3m0) 不切换退出\e[0m"
         echo -ne "\e[1;33;3m输入选项 [0/1/2]: \e[0m"
         read -p "" choice
 
@@ -411,7 +411,7 @@ fi
     fi
                 break
                 ;;
-            3)
+            0)
                 echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
                 break
                 ;;
