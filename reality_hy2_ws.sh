@@ -224,6 +224,8 @@ download_cloudflared() {
 
 # 切换 cloudflared 版本
 switch_cloudflared_version() {
+      echo -e "\e[1;33;3mofficial_dir: ${official_dir}\e[0m"
+    echo -e "\e[1;33;3mmodified_dir: ${modified_dir}\e[0m"
     # 用户选择使用哪个文件
     while true; do
         echo -e "\e[1;3;34m切换cloudflared版本\e[0m"
