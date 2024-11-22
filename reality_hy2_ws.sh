@@ -454,6 +454,7 @@ switch_version() {
             0)
                 echo -e "\e[1;3;31m退出操作。\e[0m"
                 break
+                echo ""
                 ;;
             *)
                 echo -e "\e[1;3;31m无效选项，请重新选择。\e[0m"
