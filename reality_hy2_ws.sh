@@ -221,8 +221,19 @@ download_cloudflared() {
 
 # 切换 cloudflared 版本
 switch_cloudflared_version() {
-      echo -e "\e[1;33;3mofficial_dir: ${official_dir}\e[0m"
-    echo -e "\e[1;33;3mmodified_dir: ${modified_dir}\e[0m"
+   # 检查当前使用的是哪个版本（官方版或修改版）
+    if [ -L /root/sbox/cloudflared-linux ]; then
+        current_version=$(readlink -f /root/sbox/cloudflared-linux)
+        if [[ "$current_version" == *"official/cloudflared-linux"* ]]; then
+            echo -e "\e[1;3;32m当前正在使用官方版 cloudflared-linux\e[0m"
+        elif [[ "$current_version" == *"modified/argo"* ]]; then
+            echo -e "\e[1;3;32m当前正在使用修改版 cloudflared-linux\e[0m"
+        else
+            echo -e "\e[1;3;31m当前版本不明\e[0m"
+        fi
+    else
+        echo -e "\e[1;3;31m未检测到 cloudflared-linux 链接。\e[0m"
+    fi
     # 用户选择使用哪个文件
     while true; do
         echo -e "\e[1;3;34m切换cloudflared版本\e[0m"
