@@ -292,7 +292,7 @@ download_singbox() {
     elif [ "$version_choice" == "2" ]; then
         # 旧版信息
         old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2"
-        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.110-alpha.19"
+        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19"
 
         # 下载旧的正式版
         echo -e "\e[1;3;32m***正在下载旧的正式版 (1.10.2)...***\e[0m"
