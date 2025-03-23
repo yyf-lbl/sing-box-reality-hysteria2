@@ -231,12 +231,15 @@ download_cloudflared() {
 
 # 下载singbox最新测试版内核和正式版
 download_singbox() {
-    echo -e "\e[1;3;33m正在下载sing-box内核...\e[0m"
-    sleep 1
-    arch=$(uname -m)
-    echo -e "\e[1;3;32m本机系统架构: $arch（ amd64，64-bit 架构）\e[0m"
+    echo -e "\e[1;3;33m***请选择要下载的版本:***\e[0m"
+    echo -e "\e[1;3;36m***1. 下载最新版本 (正式版 + 测试版)***\e[0m"
+    echo -e "\e[1;3;36m***2. 下载旧版本 (正式版 + 测试版)***\e[0m"
+    read -p $'\e[1;3;33m***请输入选项 (1-2):*** \e[0m' version_choice
 
-    # 系统架构名称
+    arch=$(uname -m)
+    echo -e "\e[1;3;32m***本机系统架构: $arch（ amd64，64-bit 架构）***\e[0m"
+
+    # 系统架构映射
     case ${arch} in
         x86_64)
             arch="amd64"
@@ -249,66 +252,66 @@ download_singbox() {
             ;;
     esac
 
-    # 获取最新正式版的版本号
-    latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
-        jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
-    latest_release_version=${latest_release_tag#v}  # Remove 'v' prefix from version number
-    echo -e "\e[1;3;32m当前最新正式版本: $latest_release_version\e[0m"
-
-    # 获取最新测试版的版本号
-    latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
-        jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
-    latest_prerelease_version=${latest_prerelease_tag#v}  # Remove 'v' prefix from version number
-    echo -e "\e[1;3;33m当前最新测试版本: $latest_prerelease_version\e[0m"
-
-    # 定义下载路径
-    release_package="sing-box-${latest_release_version}-linux-${arch}"
-    prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}"
-
-    release_path="/root/sbox/release"
+    # 目录路径
+    release_path="/root/sbox"
     prerelease_path="/root/sbox/prerelease"
-
     mkdir -p "$release_path" "$prerelease_path"
 
-    # 下载并处理正式版
-    if [ -f "${release_path}/sing-box" ]; then
-        echo -e "\e[1;3;32m正式版文件已经存在，跳过下载。\e[0m"
-    else
-        release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}.tar.gz"
-        curl -sLo "/root/${release_package}.tar.gz" "$release_url"
+    if [ "$version_choice" == "1" ]; then
+        # 获取最新版本号
+        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
+            jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
+        latest_release_version=${latest_release_tag#v}
 
-        tar -xzf "/root/${release_package}.tar.gz" -C /root
-        mv "/root/${release_package}/sing-box" "$release_path"
-        rm -r "/root/${release_package}.tar.gz" "/root/${release_package}"
-        chown root:root "${release_path}/sing-box"
-        chmod +x "${release_path}/sing-box"
-        echo -e "\e[1;3;32m正式版已成功安装到: ${release_path}/sing-box\e[0m"
+        latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
+            jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
+        latest_prerelease_version=${latest_prerelease_tag#v}
+
+        # 下载最新正式版
+        release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
+        release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
+        echo -e "\e[1;3;32m***正在下载最新正式版...***\e[0m"
+        curl -sLo "/root/${release_package}" "$release_url"
+        tar -xzf "/root/${release_package}" -C /root
+        mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box"
+        rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
+        chmod +x "$release_path/sing-box"
+        echo -e "\e[1;3;32m***最新正式版已下载并安装到: $release_path/sing-box***\e[0m"
+
+        # 下载最新测试版
+        prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
+        prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
+        echo -e "\e[1;3;33m***正在下载最新测试版...***\e[0m"
+        curl -sLo "/root/${prerelease_package}" "$prerelease_url"
+        tar -xzf "/root/${prerelease_package}" -C /root
+        mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
+        rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
+        chmod +x "$prerelease_path/sing-box"
+        echo -e "\e[1;3;33m***最新测试版已下载并安装到: $prerelease_path/sing-box***\e[0m"
+
+    elif [ "$version_choice" == "2" ]; then
+        # 旧版信息
+        old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2"
+        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.110-alpha.19"
+
+        # 下载旧的正式版
+        echo -e "\e[1;3;32m***正在下载旧的正式版 (1.10.2)...***\e[0m"
+        curl -L -o "$release_path/sing-box" "$old_release_url"
+        chmod +x "$release_path/sing-box"
+        echo -e "\e[1;3;32m***旧的正式版已下载并安装到: $release_path/sing-box***\e[0m"
+
+        # 下载旧的测试版
+        echo -e "\e[1;3;33m***正在下载旧的测试版 (1.110-alpha.19)...***\e[0m"
+        curl -L -o "$prerelease_path/sing-box" "$old_prerelease_url"
+        chmod +x "$prerelease_path/sing-box"
+        echo -e "\e[1;3;33m***旧的测试版已下载并安装到: $prerelease_path/sing-box***\e[0m"
+
+    else
+        echo -e "\e[1;3;31m***无效选项，请重新运行脚本。***\e[0m"
+        exit 1
     fi
 
-    # 下载并处理测试版
-    if [ -f "${prerelease_path}/sing-box" ]; then
-        echo -e "\e[1;3;32m测试版文件已经存在，跳过下载。\e[0m"
-    else
-        prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}.tar.gz"
-        curl -sLo "/root/${prerelease_package}.tar.gz" "$prerelease_url"
-
-        tar -xzf "/root/${prerelease_package}.tar.gz" -C /root
-        mv "/root/${prerelease_package}/sing-box" "$prerelease_path"
-        rm -r "/root/${prerelease_package}.tar.gz" "/root/${prerelease_package}"
-        chown root:root "${prerelease_path}/sing-box"
-        chmod +x "${prerelease_path}/sing-box"
-        echo -e "\e[1;3;33m测试版已成功安装到: ${prerelease_path}/sing-box\e[0m"
-    fi
-
-    # 设置默认内核为正式版
-    default_kernel="${release_path}/sing-box"
-    current_link="/root/sbox/sing-box"
-    if [ ! -L "$current_link" ]; then
-        ln -sf "$default_kernel" "$current_link"
-        echo -e "\e[1;3;32m默认使用正式版内核\e[0m"
-    else
-        echo -e "\e[1;3;36m当前已启用正式版内核\e[0m"
-    fi
+    echo -e "\e[1;3;32m***下载完成！***\e[0m"
 }
 
 #singbox 内核切换
