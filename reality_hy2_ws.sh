@@ -2,7 +2,7 @@
    
 # 创建快捷指令
 add_alias() {
-    config_file=$1
+    config_file=$1  
     alias_names=("a" "5")
     [ ! -f "$config_file" ] || touch "$config_file"
     for alias_name in "${alias_names[@]}"; do
@@ -184,7 +184,7 @@ EOF
 }
 
 # 下载 cloudflared 官方版
-download_cloudflared() {
+download_cloudflared() {  
     official_dir="/root/sbox/"
     mkdir -p "$official_dir" 
     
@@ -267,10 +267,6 @@ download_singbox() {
             jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
         latest_prerelease_version=${latest_prerelease_tag#v}
 
-        # 显示版本号
-        echo -e "\e[1;3;32m***最新正式版版本号: $latest_release_version***\e[0m"
-        echo -e "\e[1;3;33m***最新测试版版本号: $latest_prerelease_version***\e[0m"
-
         # 下载最新正式版
         release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
         release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
@@ -289,14 +285,14 @@ download_singbox() {
         curl -sLo "/root/${prerelease_package}" "$prerelease_url"
         tar -xzf "/root/${prerelease_package}" -C /root
         mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
-        rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"  
+        rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
         chmod +x "$prerelease_path/sing-box"
         echo -e "\e[1;3;33m***最新测试版已下载并安装到: $prerelease_path/sing-box***\e[0m"
 
     elif [ "$version_choice" == "2" ]; then
         # 旧版信息
         old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2"
-        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19"  
+        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19"
 
         # 下载旧的正式版
         echo -e "\e[1;3;32m***正在下载旧的正式版 (1.10.2)...***\e[0m"
@@ -305,7 +301,7 @@ download_singbox() {
         echo -e "\e[1;3;32m***旧的正式版已下载并安装到: $release_path/sing-box***\e[0m"
 
         # 下载旧的测试版
-        echo -e "\e[1;3;33m***正在下载旧的测试版 (1.11.0-alpha.19)...***\e[0m"
+        echo -e "\e[1;3;33m***正在下载旧的测试版 (1.110-alpha.19)...***\e[0m"
         curl -L -o "$prerelease_path/sing-box" "$old_prerelease_url"
         chmod +x "$prerelease_path/sing-box"
         echo -e "\e[1;3;33m***旧的测试版已下载并安装到: $prerelease_path/sing-box***\e[0m"
@@ -320,27 +316,26 @@ download_singbox() {
 
 #singbox 内核切换
 switch_kernel() {
-    # 检测当前使用的 sing-box 版本
-    current_link_target=$(readlink /root/sbox/sing-box)
-    # 判断当前符号链接指向的路径
-    if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
-        echo -e "\e[1;3;31m=================\e[0m"
-        echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
-        echo -e "\e[1;3;31m=================\e[0m"
-        echo ""  
-    else
-        echo ""
-        echo -e "\e[1;3;31m=================\e[0m"
-        echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
-        echo -e "\e[1;3;31m=================\e[0m"
-    fi
+# 检测当前使用的 sing-box 版本
+current_link_target=$(readlink /root/sbox/sing-box)
+# 判断当前符号链接指向的路径
+if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo ""
+else
+    echo ""
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
+fi
 
     # 提供切换内核选项
     while true; do
         echo -e "\e[1;3;38;2;228;76;228m是否需要切换sing-box内核？\e[0m"
-        echo -e "\e[1;3;36m1) \e[1;3;36m切换到测试版\e[0m"
+         echo -e "\e[1;3;36m1) \e[1;3;36m切换到测试版\e[0m"
         echo -e "\e[1;3;32m2) \e[1;3;32m切换到正式版\e[0m"
-        echo -e "\e[1;3;34m3) \e[1;3;34m切换到旧版本 (1.10.2 / 1.11.0-alpha.19)\e[0m"
         echo -e "\e[1;3;31m0) \e[1;3;31m不切换退出\e[0m"
         echo -ne "\e[1;3;33m请输入选项:\e[0m"
         read -p " " choice
@@ -353,10 +348,10 @@ switch_kernel() {
                 sleep 2
                 systemctl restart sing-box
                 if systemctl is-active --quiet sing-box; then
-                    echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
-                else
-                    echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
-                fi
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
             2)
@@ -367,25 +362,10 @@ switch_kernel() {
                 sleep 2
                 systemctl restart sing-box
                 if systemctl is-active --quiet sing-box; then
-                    echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
-                else
-                    echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
-                fi
-                break
-                ;;
-            3)
-                # 切换到旧版本 (1.10.2 或 1.11.0-alpha.19)
-                ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
-                echo -e "\e[1;3;34m已切换到旧版本内核 (1.10.2)。\e[0m"
-                systemctl stop sing-box
-                pkill -f sing-box
-                sleep 2
-                systemctl restart sing-box
-                if systemctl is-active --quiet sing-box; then
-                    echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
-                else
-                    echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
-                fi
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
                 break
                 ;;
             0)
@@ -400,7 +380,6 @@ switch_kernel() {
     done
     echo -e "\e[1;35m======================\e[0m"
 }
-
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
