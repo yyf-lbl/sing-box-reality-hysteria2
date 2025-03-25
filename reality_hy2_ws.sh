@@ -14,14 +14,14 @@ add_alias() {
     done
     . "$config_file"
 }
-config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")  
-for config_file in "${config_files[@]}"; do  
+config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
+for config_file in "${config_files[@]}"; do
     add_alias "$config_file"
 done
 # 重新加载 .bashrc
      source /root/.bashrc
 # 文本文字从左到右依次延时逐个显示
-print_with_delay() {  
+print_with_delay() {
     local message="$1"
     local delay="$2"
     
@@ -41,10 +41,10 @@ show_notice() {
     local reset_color="\033[0m"  # 重置颜色
     # 打印黄色边框
     printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印顶部边框
-    printf "${yellow_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行  
+    printf "${yellow_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
     # 处理中文字符长度
     local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数
-    local total_padding=$((width - message_length - 4))  # 4 是两侧 "||" 占用的字符数  
+    local total_padding=$((width - message_length - 4))  # 4 是两侧 "||" 占用的字符数
     local left_padding=$((total_padding / 2))
     local right_padding=$((total_padding - left_padding))
     # 确保填充宽度正确（包括中文字符）
@@ -61,7 +61,7 @@ show_notice() {
     printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印底部边框
 }
 # 安装依赖
-install_base(){  
+install_base(){
   # Check if jq is installed, and install it if not
   if ! command -v jq &> /dev/null; then
       echo -e "\033[1;3;33m正在安装所需依赖，请稍后...${RESET}"
@@ -89,7 +89,7 @@ regenarte_cloudflared_argo(){
   read -p $'\e[1;3;33mY 使用固定 Argo 隧道或 N 使用临时隧道？(Y/N，Enter 默认 Y): \e[0m' use_fixed
   use_fixed=${use_fixed:-Y}
 
-  if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then  
+  if [[ "$use_fixed" =~ ^[Yy]$ || -z "$use_fixed" ]]; then
     # 终止现有的 cloudflared 进程
     pid=$(pgrep -f cloudflared-linux)
     if [ -n "$pid" ]; then
@@ -259,7 +259,7 @@ download_singbox() {
 
     if [ "$version_choice" == "1" ]; then
         # 获取最新版本号
-        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \  
+        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
             jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
         latest_release_version=${latest_release_tag#v}
 
@@ -316,85 +316,68 @@ download_singbox() {
 
 #singbox 内核切换
 switch_kernel() {
-    # 检测当前使用的 sing-box 版本
-    current_link_target=$(readlink /root/sbox/sing-box)
-
-    # 判断当前符号链接指向的路径
-    if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
-        echo -e "\e[1;3;31m=================\e[0m"
-        echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
-        echo -e "\e[1;3;31m=================\e[0m"
-        echo ""
-    else
-        echo ""
-        echo -e "\e[1;3;31m=================\e[0m"
-        echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
-        echo -e "\e[1;3;31m=================\e[0m"
-    fi
+# 检测当前使用的 sing-box 版本
+current_link_target=$(readlink /root/sbox/sing-box)
+# 判断当前符号链接指向的路径
+if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo ""
+else
+    echo ""
+    echo -e "\e[1;3;31m=================\e[0m"
+    echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
+    echo -e "\e[1;3;31m=================\e[0m"
+fi
 
     # 提供切换内核选项
     while true; do
         echo -e "\e[1;3;38;2;228;76;228m是否需要切换sing-box内核？\e[0m"
-        echo -e "\e[1;3;36m1) 切换到测试版\e[0m"
-        echo -e "\e[1;3;32m2) 切换到正式版\e[0m"
-        echo -e "\e[1;3;34m3) 切换到旧正式版 (1.10.2)\e[0m"
-        echo -e "\e[1;3;35m4) 切换到旧测试版 (1.11.0-alpha.19)\e[0m"
-        echo -e "\e[1;3;31m0) 不切换退出\e[0m"
+         echo -e "\e[1;3;36m1) \e[1;3;36m切换到测试版\e[0m"
+        echo -e "\e[1;3;32m2) \e[1;3;32m切换到正式版\e[0m"
+        echo -e "\e[1;3;31m0) \e[1;3;31m不切换退出\e[0m"
         echo -ne "\e[1;3;33m请输入选项:\e[0m"
         read -p " " choice
-
         case $choice in
             1)
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
+                systemctl stop sing-box
+                pkill -f sing-box
+                sleep 2
+                systemctl restart sing-box
+                if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
+                break
                 ;;
             2)
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
-                ;;
-            3)
-                if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
-                    echo -e "\e[1;3;33m未找到旧正式版 (1.10.2)，正在下载...\e[0m"
-                    mkdir -p /root/sbox/old_version
-                    wget -O /root/sbox/old_version/sing-box-1.10.2 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2
-                    chmod +x /root/sbox/old_version/sing-box-1.10.2
-                fi
-                ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
-                echo -e "\e[1;3;34m已切换到旧正式版 (1.10.2)。\e[0m"
-                ;;
-            4)
-                if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
-                    echo -e "\e[1;3;33m未找到旧测试版 (1.11.0-alpha.19)，正在下载...\e[0m"
-                    mkdir -p /root/sbox/old_version
-                    wget -O /root/sbox/old_version/sing-box-1.11.0-alpha.19 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19
-                    chmod +x /root/sbox/old_version/sing-box-1.11.0-alpha.19
-                fi
-                ln -sf /root/sbox/old_version/sing-box-1.11.0-alpha.19 /root/sbox/sing-box
-                echo -e "\e[1;3;35m已切换到旧测试版 (1.11.0-alpha.19)。\e[0m"
+                systemctl stop sing-box
+                pkill -f sing-box
+                sleep 2
+                systemctl restart sing-box
+                if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+    fi
+                break
                 ;;
             0)
-                echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
+                echo ""
+                echo -e "\e[1;3;36m未进行任何更改退出\e[0m"
                 break
                 ;;
             *)
                 echo -e "\e[1;3;31m无效选项，请重新输入。\e[0m"
-                continue
                 ;;
         esac
-
-        # 重启 sing-box
-        systemctl stop sing-box
-        pkill -f sing-box
-        sleep 2
-        systemctl restart sing-box
-        if systemctl is-active --quiet sing-box; then
-            echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
-        else
-            echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
-        fi
-        break
     done
-
     echo -e "\e[1;35m======================\e[0m"
 }
 
@@ -420,7 +403,7 @@ show_client_configuration() {
     # 生成 Reality 客户端链接
     if jq -e '.inbounds[] | select(.type == "vless")' /root/sbox/sbconfig_server.json > /dev/null; then
         current_listen_port=$(jq -r '.inbounds[] | select(.type == "vless") | .listen_port' /root/sbox/sbconfig_server.json)
-        current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)  
+        current_server_name=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.server_name' /root/sbox/sbconfig_server.json)
         uuid=$(jq -r '.inbounds[] | select(.type == "vless") | .users[0].uuid' /root/sbox/sbconfig_server.json)
         public_key=$(base64 --decode /root/sbox/public.key.b64)
         short_id=$(jq -r '.inbounds[] | select(.type == "vless") | .tls.reality.short_id[0]' /root/sbox/sbconfig_server.json)
