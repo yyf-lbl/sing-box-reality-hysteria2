@@ -2,7 +2,7 @@
    
 # 创建快捷指令
 add_alias() {
-    config_file=$1  
+    config_file=$1
     alias_names=("a" "5")
     [ ! -f "$config_file" ] || touch "$config_file"
     for alias_name in "${alias_names[@]}"; do
@@ -184,7 +184,7 @@ EOF
 }
 
 # 下载 cloudflared 官方版
-download_cloudflared() {  
+download_cloudflared() {
     official_dir="/root/sbox/"
     mkdir -p "$official_dir" 
     
@@ -380,10 +380,11 @@ fi
     done
     echo -e "\e[1;35m======================\e[0m"
 }
+
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
-    if [[ ! -f /root/sbox/sbconfig_server.json ]]; then  
+    if [[ ! -f /root/sbox/sbconfig_server.json ]]; then
         echo "配置文件不存在！"
         return 1
     fi
