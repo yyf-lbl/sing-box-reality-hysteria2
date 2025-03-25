@@ -356,7 +356,7 @@ switch_kernel() {
                 if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
                     echo -e "\e[1;3;33m未找到旧正式版 (1.10.2)，正在下载...\e[0m"
                     mkdir -p /root/sbox/old_version
-                    wget -O /root/sbox/old_version/sing-box-1.10.2 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2
+                    wget -q -O /root/sbox/old_version/sing-box-1.10.2 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2
                     chmod +x /root/sbox/old_version/sing-box-1.10.2
                 fi
                 ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
@@ -366,7 +366,7 @@ switch_kernel() {
                 if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
                     echo -e "\e[1;3;33m未找到旧测试版 (1.11.0-alpha.19)，正在下载...\e[0m"
                     mkdir -p /root/sbox/old_version
-                    wget -O /root/sbox/old_version/sing-box-1.11.0-alpha.19 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19
+                    wget -q -O /root/sbox/old_version/sing-box-1.11.0-alpha.19 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19
                     chmod +x /root/sbox/old_version/sing-box-1.11.0-alpha.19
                 fi
                 ln -sf /root/sbox/old_version/sing-box-1.11.0-alpha.19 /root/sbox/sing-box
