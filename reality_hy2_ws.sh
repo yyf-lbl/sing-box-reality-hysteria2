@@ -316,70 +316,88 @@ download_singbox() {
 
 #singbox 内核切换
 switch_kernel() {
-# 检测当前使用的 sing-box 版本
-current_link_target=$(readlink /root/sbox/sing-box)
-# 判断当前符号链接指向的路径
-if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
-    echo -e "\e[1;3;31m=================\e[0m"
-    echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
-    echo -e "\e[1;3;31m=================\e[0m"
-    echo ""
-else
-    echo ""
-    echo -e "\e[1;3;31m=================\e[0m"
-    echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
-    echo -e "\e[1;3;31m=================\e[0m"
-fi
+    # 检测当前使用的 sing-box 版本
+    current_link_target=$(readlink /root/sbox/sing-box)
+
+    # 判断当前符号链接指向的路径
+    if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
+        echo -e "\e[1;3;31m=================\e[0m"
+        echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
+        echo -e "\e[1;3;31m=================\e[0m"
+        echo ""
+    else
+        echo ""
+        echo -e "\e[1;3;31m=================\e[0m"
+        echo -e "\e[1;3;33m当前正在使用最新的sing-box测试版\e[0m"
+        echo -e "\e[1;3;31m=================\e[0m"
+    fi
 
     # 提供切换内核选项
     while true; do
         echo -e "\e[1;3;38;2;228;76;228m是否需要切换sing-box内核？\e[0m"
-         echo -e "\e[1;3;36m1) \e[1;3;36m切换到测试版\e[0m"
-        echo -e "\e[1;3;32m2) \e[1;3;32m切换到正式版\e[0m"
-        echo -e "\e[1;3;31m0) \e[1;3;31m不切换退出\e[0m"
+        echo -e "\e[1;3;36m1) 切换到测试版\e[0m"
+        echo -e "\e[1;3;32m2) 切换到正式版\e[0m"
+        echo -e "\e[1;3;34m3) 切换到旧正式版 (1.10.2)\e[0m"
+        echo -e "\e[1;3;35m4) 切换到旧测试版 (1.11.0-alpha.19)\e[0m"
+        echo -e "\e[1;3;31m0) 不切换退出\e[0m"
         echo -ne "\e[1;3;33m请输入选项:\e[0m"
         read -p " " choice
+
         case $choice in
             1)
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
-                systemctl stop sing-box
-                pkill -f sing-box
-                sleep 2
-                systemctl restart sing-box
-                if systemctl is-active --quiet sing-box; then
-        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
-    else
-        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
-    fi
-                break
                 ;;
             2)
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
-                systemctl stop sing-box
-                pkill -f sing-box
-                sleep 2
-                systemctl restart sing-box
-                if systemctl is-active --quiet sing-box; then
-        echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
-    else
-        echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
-    fi
-                break
+                ;;
+            3)
+                if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
+                    echo -e "\e[1;3;33m未找到旧正式版 (1.10.2)，正在下载...\e[0m"
+                    mkdir -p /root/sbox/old_version
+                    wget -O /root/sbox/old_version/sing-box-1.10.2 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2
+                    chmod +x /root/sbox/old_version/sing-box-1.10.2
+                fi
+                ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
+                echo -e "\e[1;3;34m已切换到旧正式版 (1.10.2)。\e[0m"
+                ;;
+            4)
+                if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
+                    echo -e "\e[1;3;33m未找到旧测试版 (1.11.0-alpha.19)，正在下载...\e[0m"
+                    mkdir -p /root/sbox/old_version
+                    wget -O /root/sbox/old_version/sing-box-1.11.0-alpha.19 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19
+                    chmod +x /root/sbox/old_version/sing-box-1.11.0-alpha.19
+                fi
+                ln -sf /root/sbox/old_version/sing-box-1.11.0-alpha.19 /root/sbox/sing-box
+                echo -e "\e[1;3;35m已切换到旧测试版 (1.11.0-alpha.19)。\e[0m"
                 ;;
             0)
-                echo ""
-                echo -e "\e[1;3;36m未进行任何更改退出\e[0m"
+                echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
                 break
                 ;;
             *)
                 echo -e "\e[1;3;31m无效选项，请重新输入。\e[0m"
+                continue
                 ;;
         esac
+
+        # 重启 sing-box
+        systemctl stop sing-box
+        pkill -f sing-box
+        sleep 2
+        systemctl restart sing-box
+        if systemctl is-active --quiet sing-box; then
+            echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+        else
+            echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+        fi
+        break
     done
+
     echo -e "\e[1;35m======================\e[0m"
 }
+
 
 #生成协议链接
 show_client_configuration() {
