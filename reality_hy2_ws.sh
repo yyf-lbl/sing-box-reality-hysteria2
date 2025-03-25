@@ -327,7 +327,7 @@ switch_kernel() {
         echo -e "\e[1;3;31m=================\e[0m"
         echo -e "\e[1;3;32m当前正在使用最新的sing-box正式版\e[0m"
         echo -e "\e[1;3;31m=================\e[0m"
-        echo ""
+        echo ""  
     else
         echo ""
         echo -e "\e[1;3;31m=================\e[0m"
@@ -374,7 +374,7 @@ switch_kernel() {
                 break
                 ;;
             3)
-                # Switch to old version (1.10.2 or 1.11.0-alpha.19)
+                # 切换到旧版本 (1.10.2 或 1.11.0-alpha.19)
                 ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
                 echo -e "\e[1;3;34m已切换到旧版本内核 (1.10.2)。\e[0m"
                 systemctl stop sing-box
