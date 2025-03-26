@@ -327,9 +327,9 @@ download_singbox() {
 
 #singbox 内核切换
 switch_kernel() {
-    # 获取当前使用的 sing-box 版本
+    # 获取当前 sing-box 版本
     if [[ -f /root/sbox/sing-box ]]; then
-        current_version=$(/root/sbox/sing-box --version 2>/dev/null | head -n 1)
+        current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1)
     else
         current_version="未找到 sing-box"
     fi
@@ -338,10 +338,12 @@ switch_kernel() {
     current_link_target=$(readlink /root/sbox/sing-box)
 
     echo -e "\e[1;3;31m=================\e[0m"
+    echo -e "\e[1;3;32m当前 sing-box 版本: $current_version\e[0m"
+
     if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
-        echo -e "\e[1;3;32m当前正在使用最新的 sing-box 正式版: $current_version\e[0m"
+        echo -e "\e[1;3;32m当前正在使用最新的 sing-box 正式版\e[0m"
     elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
-        echo -e "\e[1;3;33m当前正在使用最新的 sing-box 测试版: $current_version\e[0m"
+        echo -e "\e[1;3;33m当前正在使用最新的 sing-box 测试版\e[0m"
     elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.10.2" ]]; then
         echo -e "\e[1;3;34m当前正在使用旧正式版 (1.10.2)\e[0m"
     elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.11.0-alpha.19" ]]; then
@@ -351,7 +353,7 @@ switch_kernel() {
     fi
     echo -e "\e[1;3;31m=================\e[0m"
 
-    # 提供切换选项
+    # 选择切换版本
     while true; do
         echo -e "\e[1;3;38;2;228;76;228m是否需要切换 sing-box 内核？\e[0m"
         echo -e "\e[1;3;36m1) 切换到测试版\e[0m"
@@ -402,7 +404,7 @@ switch_kernel() {
         esac
 
         # 获取新版本号
-        new_version=$(/root/sbox/sing-box --version 2>/dev/null | head -n 1)
+        new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1)
         echo -e "\e[1;3;32m当前 sing-box 版本: $new_version\e[0m"
 
         # 重启 sing-box
