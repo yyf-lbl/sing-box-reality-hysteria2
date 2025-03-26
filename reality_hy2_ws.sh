@@ -35,12 +35,12 @@ print_with_delay() {
 show_notice() {
     local message="$1"
     local width=50  # 定义长方形的宽度
-    local border_char="="  # 边框字符
+    local border_char="="  # 边框字符  
     local yellow_color="\033[31m"  # 黄色
     local yellow_bold_italic="\033[33;1;3m"  # 黄色斜体加粗
     local reset_color="\033[0m"  # 重置颜色
     # 打印黄色边框
-    printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印顶部边框
+    printf "${yellow_color}%${width}s${reset_color}\n" | tr " " "$border_char"  # 打印顶部边框  
     printf "${yellow_color}||%$((width - 4))s||${reset_color}\n"  # 打印空行
     # 处理中文字符长度
     local message_length=$(echo -n "$message" | wc -m)  # 使用 -m 计算字符数
@@ -201,7 +201,7 @@ download_cloudflared() {
             cf_arch="arm"
             ;;
         *)
-            echo -e "\e[1;31mUnsupported architecture: ${arch}\e[0m"
+            echo -e "\e[1;31mUnsupported architecture: ${arch}\e[0m"  
             return 1
             ;;
     esac
@@ -237,7 +237,7 @@ download_singbox() {
     read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' version_choice
 
     arch=$(uname -m)
-    echo -e "\e[1;3;32m本机系统架构: $arch（ amd64，64-bit 架构）\e[0m"
+    echo -e "\e[1;3;32m本机系统架构: $arch\e[0m"
 
     case ${arch} in
         x86_64) arch="amd64" ;;
@@ -261,22 +261,34 @@ download_singbox() {
         echo -e "\e[1;3;32m即将下载最新正式版: $latest_release_version\e[0m"
         release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
         release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
-        curl -sLo "/root/${release_package}" "$release_url"
-        tar -xzf "/root/${release_package}" -C /root
-        mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box"
-        rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
-        chmod +x "$release_path/sing-box"
-        echo -e "\e[1;3;32m***最新正式版 ($latest_release_version) 已下载并安装到: $release_path/sing-box***\e[0m"
+        echo -e "\e[1;3;34m下载地址: $release_url\e[0m"
+
+        if curl -sLo "/root/${release_package}" "$release_url"; then
+            tar -xzf "/root/${release_package}" -C /root
+            mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box"
+            rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
+            chmod +x "$release_path/sing-box"
+            echo -e "\e[1;3;32m✔ 最新正式版 ($latest_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
+        else
+            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
+            exit 1
+        fi
 
         echo -e "\e[1;3;33m即将下载最新测试版: $latest_prerelease_version\e[0m"
         prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
         prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
-        curl -sLo "/root/${prerelease_package}" "$prerelease_url"
-        tar -xzf "/root/${prerelease_package}" -C /root
-        mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
-        rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
-        chmod +x "$prerelease_path/sing-box"
-        echo -e "\e[1;3;33m最新测试版 ($latest_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+        echo -e "\e[1;3;34m下载地址: $prerelease_url\e[0m"
+
+        if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
+            tar -xzf "/root/${prerelease_package}" -C /root
+            mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
+            rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
+            chmod +x "$prerelease_path/sing-box"
+            echo -e "\e[1;3;33m✔ 最新测试版 ($latest_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+        else
+            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
+            exit 1
+        fi
 
     elif [ "$version_choice" == "2" ]; then
         old_release_version="1.10.2"
@@ -286,21 +298,31 @@ download_singbox() {
         old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
 
         echo -e "\e[1;3;32m即将下载旧的正式版: $old_release_version\e[0m"
-        curl -sLo "$release_path/sing-box" "$old_release_url"
-        chmod +x "$release_path/sing-box"
-        echo -e "\e[1;3;32m旧的正式版 ($old_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
+        echo -e "\e[1;3;34m下载地址: $old_release_url\e[0m"
+        if curl -sLo "$release_path/sing-box" "$old_release_url"; then
+            chmod +x "$release_path/sing-box"
+            echo -e "\e[1;3;32m✔ 旧正式版 ($old_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
+        else
+            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
+            exit 1
+        fi
 
         echo -e "\e[1;3;33m即将下载旧的测试版: $old_prerelease_version\e[0m"
-        curl -sLo "$prerelease_path/sing-box" "$old_prerelease_url"
-        chmod +x "$prerelease_path/sing-box"
-        echo -e "\e[1;3;33m旧的测试版 ($old_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+        echo -e "\e[1;3;34m下载地址: $old_prerelease_url\e[0m"
+        if curl -sLo "$prerelease_path/sing-box" "$old_prerelease_url"; then
+            chmod +x "$prerelease_path/sing-box"
+            echo -e "\e[1;3;33m✔ 旧测试版 ($old_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+        else
+            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
+            exit 1
+        fi
 
     else
         echo -e "\e[1;3;31m无效选项，请重新运行脚本。\e[0m"
         exit 1
     fi
 
-    echo -e "\e[1;3;32m下载完成！\e[0m"
+    echo -e "\e[1;3;32m🎉 下载完成！\e[0m"
 }
 
 #singbox 内核切换
