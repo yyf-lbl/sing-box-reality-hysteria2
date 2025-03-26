@@ -261,7 +261,7 @@ download_singbox() {
         echo -e "\e[1;3;32m即将下载最新正式版: $latest_release_version\e[0m"
         release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
         release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
-        echo -e "\e[1;3;34m下载地址: $release_url\e[0m"
+      
 
         if curl -sLo "/root/${release_package}" "$release_url"; then
             tar -xzf "/root/${release_package}" -C /root
@@ -277,7 +277,7 @@ download_singbox() {
         echo -e "\e[1;3;33m即将下载最新测试版: $latest_prerelease_version\e[0m"
         prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
         prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
-        echo -e "\e[1;3;34m下载地址: $prerelease_url\e[0m"
+    
 
         if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
             tar -xzf "/root/${prerelease_package}" -C /root
@@ -298,7 +298,7 @@ download_singbox() {
         old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
 
         echo -e "\e[1;3;32m即将下载旧的正式版: $old_release_version\e[0m"
-        echo -e "\e[1;3;34m下载地址: $old_release_url\e[0m"
+     
         if curl -sLo "$release_path/sing-box" "$old_release_url"; then
             chmod +x "$release_path/sing-box"
             echo -e "\e[1;3;32m✔ 旧正式版 ($old_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
@@ -308,7 +308,7 @@ download_singbox() {
         fi
 
         echo -e "\e[1;3;33m即将下载旧的测试版: $old_prerelease_version\e[0m"
-        echo -e "\e[1;3;34m下载地址: $old_prerelease_url\e[0m"
+    
         if curl -sLo "$prerelease_path/sing-box" "$old_prerelease_url"; then
             chmod +x "$prerelease_path/sing-box"
             echo -e "\e[1;3;33m✔ 旧测试版 ($old_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
@@ -322,7 +322,7 @@ download_singbox() {
         exit 1
     fi
 
-    echo -e "\e[1;3;32m🎉 下载完成！\e[0m"
+    echo -e "\e[1;3;32m下载已完成！\e[0m"
 }
 
 #singbox 内核切换
