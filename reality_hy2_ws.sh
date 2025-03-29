@@ -748,7 +748,7 @@ else
     echo -e "\033[1;3;31m找不到可访问的DNS。\033[0m"
 
 fi
-config="{  
+config="{
   \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
@@ -903,161 +903,6 @@ config="{ 
     }
   }
 }"
-config1="{
-  \"log\": {
-    \"disabled\": false,
-    \"level\": \"info\",
-    \"output\": \"/root/sbox/sb.log\",
-    \"timestamp\": true
-  },
-  \"dns\": {
-    \"servers\": [
-      {
-        \"tag\": \"cloudflare\",
-        \"address\": \"https:\/\/1.1.1.1\/dns-query\",
-        \"strategy\": \"ipv4_only\",
-        \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"google\",
-        \"address\": \"tls:\/\/8.8.8.8\",
-        \"strategy\": \"ipv4_only\",
-        \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"quad9\",
-        \"address\": \"https:\/\/9.9.9.9\/dns-query\",
-        \"strategy\": \"ipv4_only\",
-        \"detour\": \"direct\"
-      }
-    ],
-    \"rules\": [
-      {
-        \"domain_suffix\": \"google.com\",
-        \"server\": \"google\"
-      },
-      {
-        \"domain_suffix\": \"cloudflare.com\",
-        \"server\": \"cloudflare\"
-      },
-      {
-        \"domain_suffix\": \"quad9.net\",
-        \"server\": \"quad9\"
-      }
-    ],
-    \"final\": \"$fastest_dns\",
-    \"strategy\": \"ipv4_only\",
-    \"disable_cache\": false,
-    \"disable_expire\": false
-  },
-  \"inbounds\": [],
-  \"outbounds\": [
-    {
-      \"type\": \"direct\",
-      \"tag\": \"direct\"
-    }
-  ],
-  \"endpoints\": [
-    {
-      \"type\": \"wireguard\",
-      \"tag\": \"warp-ep\",
-      \"mtu\": 1280,
-      \"address\": [
-        \"172.16.0.2\/32\",
-        \"2606:4700:110:8a36:df92:102a:9602:fa18\/128\"
-      ],
-      \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
-      \"peers\": [
-        {
-          \"address\": \"engage.cloudflareclient.com\",
-          \"port\": 2408,
-          \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5\/1SUtzH0JuVo51h2wPfgyo=\",
-          \"allowed_ips\": [
-            \"0.0.0.0\/0\",
-            \"::\/0\"
-          ],
-          \"reserved\": [6, 146, 6]
-        }
-      ]
-    }
-  ],
-  \"route\": {
-    \"rule_set\": [
-      {
-        \"tag\": \"geosite-openai\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https:\/\/raw.githubusercontent.com\/MetaCubeX\/meta-rules-dat\/sing\/geo\/geosite\/openai.srs\",
-        \"update_interval\": \"1d\"
-      }
-    ],
-    \"rules\": [
-      {
-        \"action\": \"sniff\"
-      },
-      {
-        \"action\": \"resolve\",
-        \"domain\": [
-          \"api.statsig.com\",
-          \"browser-intake-datadoghq.com\",
-          \"cdn.openai.com\",
-          \"chat.openai.com\",
-          \"auth.openai.com\",
-          \"chat.openai.com.cdn.cloudflare.net\",
-          \"ios.chat.openai.com\",
-          \"o33249.ingest.sentry.io\",
-          \"openai-api.arkoselabs.com\",
-          \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
-          \"openaicomproductionae4b.blob.core.windows.net\",
-          \"production-openaicom-storage.azureedge.net\",
-          \"static.cloudflareinsights.com\"
-        ],
-        \"domain_suffix\": [
-          \".algolia.net\",
-          \".auth0.com\",
-          \".chatgpt.com\",
-          \".challenges.cloudflare.com\",
-          \".client-api.arkoselabs.com\",
-          \".events.statsigapi.net\",
-          \".featuregates.org\",
-          \".identrust.com\",
-          \".intercom.io\",
-          \".intercomcdn.com\",
-          \".launchdarkly.com\",
-          \".oaistatic.com\",
-          \".oaiusercontent.com\",
-          \".observeit.net\",
-          \".openai.com\",
-          \".openaiapi-site.azureedge.net\",
-          \".openaicom.imgix.net\",
-          \".segment.io\",
-          \".sentry.io\",
-          \".stripe.com\"
-        ],
-        \"strategy\": \"prefer_ipv4\"
-      },
-      {
-        \"action\": \"resolve\",
-        \"rule_set\": [\"geosite-openai\"],
-        \"strategy\": \"prefer_ipv6\"
-      },
-      {
-        \"domain\": [\"api.openai.com\"],
-        \"rule_set\": [\"geosite-openai\"],
-        \"outbound\": \"warp-ep\"
-      }
-    ]
-  },
-  \"experimental\": {
-    \"cache_file\": {
-      \"enabled\": true,
-      \"path\": \"\/root\/sbox\/cache.db\",
-      \"cache_id\": \"mycacheid\",
-      \"store_fakeip\": true
-    }
-  }
-}"
-
 
     for choice in $choices; do
         case $choice in
@@ -1105,36 +950,7 @@ fi
                 server_name=${server_name_input:-itunes.apple.com}
                 echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
                 echo ""
-                config=$(echo "$config" | jq --arg listen_port "$vless_listen_port" \
-                    --arg server_name "$server_name" \
-                    --arg private_key "$private_key" \
-                    --arg short_id "$short_id" \
-                    --arg uuid "$uuid" \
-                    '.inbounds += [{
-                        "type": "vless",
-                        "tag": "vless-in",
-                        "listen": "::",
-                        "listen_port": ($listen_port | tonumber),
-                        "users": [{
-                            "uuid": $uuid,
-                            "flow": "xtls-rprx-vision"
-                        }],
-                        "tls": {
-                            "enabled": true,
-                            "server_name": $server_name,
-                            "reality": {
-                                "enabled": true,
-                                "handshake": {
-                                    "server": $server_name,
-                                    "server_port": 443
-                                },
-                                "private_key": $private_key,
-                                "short_id": [$short_id]
-                            }
-                        }
-                    }]')
-                    
-                    configa=$(echo "$config1" | jq --arg listen_port "$vless_listen_port" \
+                config=$(echo "$config" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
                     --arg short_id "$short_id" \
@@ -1307,24 +1123,6 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
-
-                    configa=$(echo "$config1" | jq --arg vmess_port "$vmess_port" \
-                    --arg vmess_uuid "$vmess_uuid" \
-                    --arg ws_path "$ws_path" \
-                    '.inbounds += [{
-                        "type": "vmess",
-                        "tag": "vmess-in",
-                        "listen": "::",
-                        "listen_port": ($vmess_port | tonumber),
-                        "users": [{
-                            "uuid": $vmess_uuid
-                        }],
-                        "transport": {
-                            "type": "ws",
-                            "path": $ws_path,
-                            "early_data_header_name": "Sec-WebSocket-Protocol"
-                        }
-                    }]')
                 ;;
 
             3)
@@ -1361,23 +1159,6 @@ fi
                 echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
                 echo ""
                 config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
-                    --arg hy_password "$hy_password" \
-                    '.inbounds += [{
-                        "type": "hysteria2",
-                        "tag": "hy2-in",
-                        "listen": "::",
-                        "listen_port": ($hy_listen_port | tonumber),
-                        "users": [{
-                            "password": $hy_password
-                        }],
-                        "tls": {
-                            "enabled": true,
-                            "alpn": ["h3"],
-                            "certificate_path": "/root/self-cert/cert.pem",
-                            "key_path": "/root/self-cert/private.key"
-                        }
-                    }]')
-                    configa=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
                         "type": "hysteria2",
@@ -1454,27 +1235,6 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
-        configa=$(echo "$config1" | jq --arg tuic_listen_port "$tuic_listen_port" \
-        --arg tuic_password "$tuic_password" \
-        --arg tuic_uuid "$tuic_uuid" \
-        '.inbounds += [{
-            "type": "tuic",
-            "tag": "tuic-in",
-            "listen": "::",
-            "listen_port": ($tuic_listen_port | tonumber),
-            "users": [{
-                "uuid": $tuic_uuid,
-                "password": $tuic_password
-            }],
-            "congestion_control": "bbr",
-            "tls": {
-                "enabled": true,
-                "alpn": ["h3"],
-                "certificate_path": "/root/self-cert/cert.pem",
-                "key_path": "/root/self-cert/private.key"
-            }
-        }]')
-
 
     ;;
 
@@ -1485,28 +1245,19 @@ fi
     done
     # 生成最终配置文件
     echo "$config" > /root/sbox/sbconfig_server.json
-    echo "$configa" > /root/sbox/sbconfig1_server.json
   #  echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
 #创建sing-box和cloudflare服务文件并启动
 setup_services() {
-    # 获取 sing-box 版本
-    local version=$(/root/sbox/sing-box version | awk '{print $3}')
-
-    # 确定要使用的配置文件
-    if [[ "$version" == "1.10.2" || "$version" < "1.10.2" ]]; then
-        config_file="/root/sbox/sbconfig_server.json"
-    else
-        config_file="/root/sbox/sbconfig1_server.json"
-    fi
-
     # 获取 vmess 端口
-    local vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' "$config_file")
-
-    # 创建 sing-box systemd 服务文件
+    local vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
+    local CLOUDFLARED_PATH="/root/sbox/cloudflared-linux"
+    local CONFIG_PATH="/root/sbox/tunnel.yml"
+    local JSON_PATH="/root/sbox/tunnel.json"
+    local LOG_PATH="/root/sbox/argo_run.log"
+    # 创建 sing-box 服务文件
     cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
-Description=Sing-box Service
 After=network.target nss-lookup.target
 
 [Service]
@@ -1514,7 +1265,7 @@ User=root
 WorkingDirectory=/root
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/bin/sh -c 'ver=$(/root/sbox/sing-box version | awk "{print \$3}"); if [ "$ver" = "1.10.2" ] || [ "$ver" \< "1.10.2" ]; then exec /root/sbox/sing-box run -c /root/sbox/sbconfig_server.json; else exec /root/sbox/sing-box run -c /root/sbox/sbconfig1_server.json; fi'
+ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -1524,7 +1275,7 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 
-    # 如果存在 vmess 配置，则创建 Cloudflare Tunnel 服务
+    # 如果存在 vmess 类型的配置，则创建 Cloudflare 服务文件
     if [ -n "$vmess_port" ]; then
         cat > /etc/systemd/system/cloudflared.service <<EOF
 [Unit]
@@ -1543,17 +1294,16 @@ StandardError=append:/root/sbox/argo_run.log
 
 [Install]
 WantedBy=multi-user.target
+
 EOF
     fi
 
-    # 重新加载 systemd
-    systemctl daemon-reload
-
-    # 检查配置文件是否正确
-    if /root/sbox/sing-box check -c "$config_file"; then
+    # 检查配置并启动服务
+    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
         echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
-
-        # 启动并设置 sing-box 开机自启
+        # 重新加载系统服务管理器
+        systemctl daemon-reload
+        # 启动并设置服务开机自启  
         systemctl start sing-box
         systemctl enable sing-box > /dev/null 2>&1
 
@@ -1563,7 +1313,7 @@ EOF
             echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
         fi
 
-        # 启动 Cloudflare Tunnel（如果有 vmess 端口）
+        # 如果 Cloudflare 服务文件存在，启动 Cloudflare 服务
         if [ -n "$vmess_port" ]; then
             systemctl start cloudflared
             systemctl enable cloudflared > /dev/null 2>&1
@@ -1577,36 +1327,24 @@ EOF
 
         show_client_configuration
     else
-        echo -e "\e[1;3;31m配置错误，sing-box 服务未启动！\e[0m"
+        echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
     fi
 }
-
 # 重启服务
 sbox_services() {
-    # 获取 sing-box 版本
-    version=$(/root/sbox/sing-box version | awk '{print $3}')
-
-    # 选择合适的配置文件
-    if [ "$version" = "1.10.2" ] || [ "$version" \< "1.10.2" ]; then
-        config_file="/root/sbox/sbconfig_server.json"
-    else
-        config_file="/root/sbox/sbconfig1_server.json"
-    fi
-
-    # 检查配置文件是否正确
-    if /root/sbox/sing-box check -c "$config_file"; then
-        pkill -f sing-box  # 终止现有 sing-box 进程
+    # 启动 sing-box 服务
+    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+        pkill -f sing-box  # 杀掉现有的 sing-box 进程
         systemctl daemon-reload  # 重新加载 systemd 配置
-        systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 开机自启
+        systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
         systemctl start sing-box  # 启动 sing-box 服务
-        # 打印成功信息
+        # 打印成功信息，绿色加粗斜体
         echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
     else
-        echo -e "\e[1;3;31m配置错误，sing-box 服务未启动！\e[0m"
+        echo "Error in configuration. Aborting"
         return 1  # 返回错误状态
     fi
 }
-
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
     show_notice "将重新安装中..."
@@ -1621,11 +1359,9 @@ reinstall_sing_box() {
     [ -f /etc/systemd/system/cloudflared.service ] && rm /etc/systemd/system/cloudflared.service
     [ -f /etc/systemd/system/sing-box.service ] && rm /etc/systemd/system/sing-box.service   
     [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig_server.json
-    [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig1_server.json
     [ -f /root/sbox/cloudflared-linux ] && rm /root/sbox/cloudflared-linux
     [ -f /root/sbox/public.key.b64 ] && rm /root/sbox/public.key.b64
     [ -f /root/sbox/argo.txt.b64 ] && rm /root/sbox/argo.txt.b64
-    [ -f /root/sbox/sing-box ] && rm /root/sbox/prerelease/sing-box
     [ -f /root/sbox/sing-box ] && rm /root/sbox/sing-box
     
     # 删除证书和 sbox 目录
