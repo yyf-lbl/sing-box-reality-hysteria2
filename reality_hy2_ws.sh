@@ -429,7 +429,7 @@ switch_kernel() {
         config_file=""
         version_number=$(echo $new_version | grep -oP '\d+\.\d+\.\d+' | head -n 1)  # 获取版本号，例如1.10.2
 
-        if [[ "$(echo $version_number | awk -F. '{print $1*100+$2*10+$3}')" -le 1102 ]]; then
+        if [[ "$(echo $version_number | awk -F. '{print $1*100+$2*10+$3}')" -le 1110 ]]; then
             config_file="/root/sbox/config/sbconfig_server.json"  # 小于等于 1.10.2 使用此配置文件
         else
             config_file="/root/sbox/config/sbconfig1_server.json"  # 大于 1.10.2 使用此配置文件
