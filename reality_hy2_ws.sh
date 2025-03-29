@@ -879,8 +879,9 @@ config="{
       \"cache_id\": \"mycacheid\",
       \"store_fakeip\": true
     }
-  },
-  
+  }
+} "
+  config1="{
   \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
@@ -1034,6 +1035,7 @@ config="{
     }
   }
 }"
+
     for choice in $choices; do
         case $choice in
             1)
@@ -1081,6 +1083,34 @@ fi
                 echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
                 echo ""
                 config=$(echo "$config" | jq --arg listen_port "$listen_port" \
+                    --arg server_name "$server_name" \
+                    --arg private_key "$private_key" \
+                    --arg short_id "$short_id" \
+                    --arg uuid "$uuid" \
+                    '.inbounds += [{
+                        "type": "vless",
+                        "tag": "vless-in",
+                        "listen": "::",
+                        "listen_port": ($listen_port | tonumber),
+                        "users": [{
+                            "uuid": $uuid,
+                            "flow": "xtls-rprx-vision"
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "server_name": $server_name,
+                            "reality": {
+                                "enabled": true,
+                                "handshake": {
+                                    "server": $server_name,
+                                    "server_port": 443
+                                },
+                                "private_key": $private_key,
+                                "short_id": [$short_id]
+                            }
+                        }
+                    }]')
+                    config1=$(echo "$config1" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
                     --arg short_id "$short_id" \
@@ -1238,6 +1268,23 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
+                    config1=$(echo "$config1" | jq --arg vmess_port "$vmess_port" \
+                    --arg vmess_uuid "$vmess_uuid" \
+                    --arg ws_path "$ws_path" \
+                    '.inbounds += [{
+                        "type": "vmess",
+                        "tag": "vmess-in",
+                        "listen": "::",
+                        "listen_port": ($vmess_port | tonumber),
+                        "users": [{
+                            "uuid": $vmess_uuid
+                        }],
+                        "transport": {
+                            "type": "ws",
+                            "path": $ws_path,
+                            "early_data_header_name": "Sec-WebSocket-Protocol"
+                        }
+                    }]')
                 ;;
             3)
                 show_notice "★ ★ ★ 开始配置Hysteria2协议 ★ ★ ★"
@@ -1268,6 +1315,23 @@ fi
                 echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
                 echo ""
                 config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
+                    --arg hy_password "$hy_password" \
+                    '.inbounds += [{
+                        "type": "hysteria2",
+                        "tag": "hy2-in",
+                        "listen": "::",
+                        "listen_port": ($hy_listen_port | tonumber),
+                        "users": [{
+                            "password": $hy_password
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "alpn": ["h3"],
+                            "certificate_path": "/root/self-cert/cert.pem",
+                            "key_path": "/root/self-cert/private.key"
+                        }
+                    }]')
+                    config1=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
                         "type": "hysteria2",
@@ -1338,6 +1402,26 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
+        config1=$(echo "$config1" | jq --arg tuic_listen_port "$tuic_listen_port" \
+        --arg tuic_password "$tuic_password" \
+        --arg tuic_uuid "$tuic_uuid" \
+        '.inbounds += [{
+            "type": "tuic",
+            "tag": "tuic-in",
+            "listen": "::",
+            "listen_port": ($tuic_listen_port | tonumber),
+            "users": [{
+                "uuid": $tuic_uuid,
+                "password": $tuic_password
+            }],
+            "congestion_control": "bbr",
+            "tls": {
+                "enabled": true,
+                "alpn": ["h3"],
+                "certificate_path": "/root/self-cert/cert.pem",
+                "key_path": "/root/self-cert/private.key"
+            }
+        }]')
     ;;
               *)
                 echo "无效选择: $choice"
@@ -1345,7 +1429,9 @@ fi
         esac
     done
     echo "$config" > /root/sbox/sbconfig_server.json
+    echo "$config1" > /root/sbox/sbconfig1_server.json
     echo "配置文件已生成：/root/sbox/sbconfig_server.json"
+    echo "配置文件已生成：/root/sbox/sbconfig1_server.json"
 }
 #创建sing-box和cloudflare服务文件并启动
 setup_services() {
