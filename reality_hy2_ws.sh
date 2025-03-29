@@ -425,11 +425,25 @@ switch_kernel() {
         new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1)
         echo -e "\e[1;3;32m当前 sing-box 版本: $new_version\e[0m"
 
-        # 重启 sing-box
+        # 根据版本号选择配置文件
+        config_file=""
+        version_number=$(echo $new_version | grep -oP '\d+\.\d+\.\d+' | head -n 1)  # 获取版本号，例如1.10.2
+
+        if [[ "$(echo $version_number | awk -F. '{print $1*100+$2*10+$3}')" -le 1102 ]]; then
+            config_file="/root/sbox/config/sbconfig_server.json"  # 小于等于 1.10.2 使用此配置文件
+        else
+            config_file="/root/sbox/config/sbconfig1_server.json"  # 大于 1.10.2 使用此配置文件
+        fi
+
+        # 停止并重启 sing-box 服务
         systemctl stop sing-box
         pkill -f sing-box
         sleep 2
-        systemctl restart sing-box
+
+        # 使用指定的配置文件启动 sing-box
+        /root/sbox/sing-box -c $config_file
+        systemctl start sing-box
+
         if systemctl is-active --quiet sing-box; then
             echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
         else
