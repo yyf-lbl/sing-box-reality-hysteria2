@@ -366,14 +366,31 @@ switch_kernel() {
 
         case $choice in
             1)
+                # 检查并下载最新测试版 (alpha)
+                if [[ ! -f /root/sbox/prerelease/sing-box ]]; then
+                    echo -e "\e[1;3;33m未找到测试版，正在下载最新 alpha 版本...\e[0m"
+                    mkdir -p /root/sbox/prerelease
+                    latest_alpha=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r '.tag_name' | grep -E 'alpha')
+                    wget -q -O /root/sbox/prerelease/sing-box "https://github.com/SagerNet/sing-box/releases/download/${latest_alpha}/sing-box-${latest_alpha}"
+                    chmod +x /root/sbox/prerelease/sing-box
+                fi
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
                 ;;
             2)
+                # 检查并下载最新正式版 (stable)
+                if [[ ! -f /root/sbox/release/sing-box ]]; then
+                    echo -e "\e[1;3;32m未找到正式版，正在下载最新正式版...\e[0m"
+                    mkdir -p /root/sbox/release
+                    latest_stable=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r '.tag_name' | grep -v 'alpha')
+                    wget -q -O /root/sbox/release/sing-box "https://github.com/SagerNet/sing-box/releases/download/${latest_stable}/sing-box-${latest_stable}"
+                    chmod +x /root/sbox/release/sing-box
+                fi
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
                 ;;
             3)
+                # 下载旧正式版 (1.10.2)
                 if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
                     echo -e "\e[1;3;33m未找到旧正式版 (1.10.2)，正在下载...\e[0m"
                     mkdir -p /root/sbox/old_version
@@ -384,6 +401,7 @@ switch_kernel() {
                 echo -e "\e[1;3;34m已切换到旧正式版 (1.10.2)。\e[0m"
                 ;;
             4)
+                # 下载旧测试版 (1.11.0-alpha.19)
                 if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
                     echo -e "\e[1;3;33m未找到旧测试版 (1.11.0-alpha.19)，正在下载...\e[0m"
                     mkdir -p /root/sbox/old_version
