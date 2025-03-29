@@ -1105,7 +1105,7 @@ fi
                 server_name=${server_name_input:-itunes.apple.com}
                 echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
                 echo ""
-                config=$(echo "$config" | jq --arg listen_port "$listen_port" \
+                config=$(echo "$config" | jq --arg listen_port "$vless_listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
                     --arg short_id "$short_id" \
@@ -1134,7 +1134,7 @@ fi
                         }
                     }]')
                     
-                    configa=$(echo "$config1" | jq --arg listen_port "$listen_port" \
+                    configa=$(echo "$config1" | jq --arg listen_port "$vless_listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
                     --arg short_id "$short_id" \
