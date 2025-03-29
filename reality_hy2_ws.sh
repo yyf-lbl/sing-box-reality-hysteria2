@@ -1430,8 +1430,8 @@ fi
     done
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "$config1" > /root/sbox/sbconfig1_server.json
-    echo "配置文件已生成：/root/sbox/sbconfig_server.json"
-    echo "配置文件已生成：/root/sbox/sbconfig1_server.json"
+   # echo "配置文件已生成：/root/sbox/sbconfig_server.json"
+   # echo "配置文件已生成：/root/sbox/sbconfig1_server.json"
 }
 #创建sing-box和cloudflare服务文件并启动
 setup_services() {
