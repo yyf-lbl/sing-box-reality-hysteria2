@@ -1514,8 +1514,7 @@ User=root
 WorkingDirectory=/root
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/bin/sh -c 'ver=$(/root/sbox/sing-box version | awk "{print \$3}"); if [ "\$ver" = "1.10.2" ] || [ "\$ver" \< "1.10.2" ]; then exec /root/sbox/sing-box run -c /root/sbox/sbconfig_server.json; else exec /root/sbox/sing-box run -c /root/sbox/sbconfig1_server.json; fi'
-
+ExecStart=/bin/sh -c 'ver=$(/root/sbox/sing-box version | awk "{print \$3}"); if [ "$ver" = "1.10.2" ] || [ "$ver" \< "1.10.2" ]; then exec /root/sbox/sing-box run -c /root/sbox/sbconfig_server.json; else exec /root/sbox/sing-box run -c /root/sbox/sbconfig1_server.json; fi'
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
