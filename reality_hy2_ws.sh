@@ -666,8 +666,7 @@ echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
  echo ""
 }
 # 安装sing-box
-install_singbox() { 
-    
+install_singbox() {     
   while true; do
     echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
     echo -e "\e[1;3;33m1) vless-Reality\e[0m"
@@ -676,16 +675,11 @@ install_singbox() {
     echo -e "\e[1;3;33m4) Tuic\e[0m"
     read -p $'\e[1;3;33m请输入你的选择: \e[0m' choices
     echo ""  
-    # 检查输入是否为空
     if [[ -z "$choices" ]]; then
         echo "输入不能为空，请重新输入。"
         continue
     fi
-
-    # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
-    
-    # 检查输入的选择是否有效
     valid=true
     for choice in "${selected_protocols[@]}"; do
         if [[ ! "$choice" =~ ^[1-4]$ ]]; then
@@ -702,28 +696,17 @@ install_singbox() {
         break  # 有效选择后退出循环
     fi
 done
-
-    # 初始化配置变量
     listen_port=443
     vmess_port=15555
     hy_listen_port=8443
     tuic_listen_port=8080
-# json配置部分
-# 定义要测试的 DNS
 dns_servers=("1.1.1.1" "8.8.8.8" "9.9.9.9")
 dns_names=("cloudflare" "google" "quad9")
-
-# 初始化变量
 latencies=()
 min_latency=9999
 fastest_dns=""
-
-# 测试每个 DNS 的延迟
 for i in "${!dns_servers[@]}"; do
-    # 使用 ping 测试延迟
     latency=$(ping -c 1 -W 1 "${dns_servers[i]}" 2>/dev/null | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
-    
-    # 检查是否成功获取延迟值
     if [[ $latency =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
         latencies[i]=$latency
       echo -e "\033[1;3;35m${dns_names[i]} DNS 延迟: ${latency}ms\033[0m"
@@ -732,21 +715,16 @@ for i in "${!dns_servers[@]}"; do
         echo "${dns_names[i]} DNS latency: Unreachable"
     fi
 done
-
-# 找出最快的 DNS
 for i in "${!latencies[@]}"; do
     if (( $(echo "${latencies[i]} < $min_latency" | bc -l) )); then
         min_latency=${latencies[i]}
         fastest_dns=${dns_names[i]}
     fi
 done
-
-# 输出结果
 if [[ -n $fastest_dns ]]; then
    echo -e "\033[1;3;33m最快的 DNS 是 ${fastest_dns}，延迟为 ${min_latency} 毫秒。\033[0m"
 else
     echo -e "\033[1;3;31m找不到可访问的DNS。\033[0m"
-
 fi
 config="{
   \"log\": {
@@ -901,9 +879,161 @@ config="{
       \"cache_id\": \"mycacheid\",
       \"store_fakeip\": true
     }
+  },
+  
+  \"log\": {
+    \"disabled\": false,
+    \"level\": \"info\",
+    \"output\": \"/root/sbox/sb.log\",
+    \"timestamp\": true
+  },
+  \"dns\": {
+    \"servers\": [
+      {
+        \"tag\": \"cloudflare\",
+        \"address\": \"https:\/\/1.1.1.1\/dns-query\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"google\",
+        \"address\": \"tls:\/\/8.8.8.8\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"quad9\",
+        \"address\": \"https:\/\/9.9.9.9\/dns-query\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      }
+    ],
+    \"rules\": [
+      {
+        \"domain_suffix\": \"google.com\",
+        \"server\": \"google\"
+      },
+      {
+        \"domain_suffix\": \"cloudflare.com\",
+        \"server\": \"cloudflare\"
+      },
+      {
+        \"domain_suffix\": \"quad9.net\",
+        \"server\": \"quad9\"
+      }
+    ],
+    \"final\": \"cloudflare\",
+    \"strategy\": \"ipv4_only\",
+    \"disable_cache\": false,
+    \"disable_expire\": false
+  },
+  \"inbounds\": [],
+  \"outbounds\": [
+    {
+      \"type\": \"direct\",
+      \"tag\": \"direct\"
+    }
+  ],
+  \"endpoints\": [
+    {
+      \"type\": \"wireguard\",
+      \"tag\": \"warp-ep\",
+      \"mtu\": 1280,
+      \"address\": [
+        \"172.16.0.2\/32\",
+        \"2606:4700:110:8a36:df92:102a:9602:fa18\/128\"
+      ],
+      \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
+      \"peers\": [
+        {
+          \"address\": \"engage.cloudflareclient.com\",
+          \"port\": 2408,
+          \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5\/1SUtzH0JuVo51h2wPfgyo=\",
+          \"allowed_ips\": [
+            \"0.0.0.0\/0\",
+            \"::\/0\"
+          ],
+          \"reserved\": [6, 146, 6]
+        }
+      ]
+    }
+  ],
+  \"route\": {
+    \"rule_set\": [
+      {
+        \"tag\": \"geosite-openai\",
+        \"type\": \"remote\",
+        \"format\": \"binary\",
+        \"url\": \"https:\/\/raw.githubusercontent.com\/MetaCubeX\/meta-rules-dat\/sing\/geo\/geosite\/openai.srs\",
+        \"update_interval\": \"1d\"
+      }
+    ],
+    \"rules\": [
+      {
+        \"action\": \"sniff\"
+      },
+      {
+        \"action\": \"resolve\",
+        \"domain\": [
+          \"api.statsig.com\",
+          \"browser-intake-datadoghq.com\",
+          \"cdn.openai.com\",
+          \"chat.openai.com\",
+          \"auth.openai.com\",
+          \"chat.openai.com.cdn.cloudflare.net\",
+          \"ios.chat.openai.com\",
+          \"o33249.ingest.sentry.io\",
+          \"openai-api.arkoselabs.com\",
+          \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
+          \"openaicomproductionae4b.blob.core.windows.net\",
+          \"production-openaicom-storage.azureedge.net\",
+          \"static.cloudflareinsights.com\"
+        ],
+        \"domain_suffix\": [
+          \".algolia.net\",
+          \".auth0.com\",
+          \".chatgpt.com\",
+          \".challenges.cloudflare.com\",
+          \".client-api.arkoselabs.com\",
+          \".events.statsigapi.net\",
+          \".featuregates.org\",
+          \".identrust.com\",
+          \".intercom.io\",
+          \".intercomcdn.com\",
+          \".launchdarkly.com\",
+          \".oaistatic.com\",
+          \".oaiusercontent.com\",
+          \".observeit.net\",
+          \".openai.com\",
+          \".openaiapi-site.azureedge.net\",
+          \".openaicom.imgix.net\",
+          \".segment.io\",
+          \".sentry.io\",
+          \".stripe.com\"
+        ],
+        \"strategy\": \"prefer_ipv4\"
+      },
+      {
+        \"action\": \"resolve\",
+        \"rule_set\": [\"geosite-openai\"],
+        \"strategy\": \"prefer_ipv6\"
+      },
+      {
+        \"domain\": [\"api.openai.com\"],
+        \"rule_set\": [\"geosite-openai\"],
+        \"outbound\": \"warp-ep\"
+      }
+    ]
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"enabled\": true,
+      \"path\": \"\/root\/sbox\/cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
   }
 }"
-
     for choice in $choices; do
         case $choice in
             1)
@@ -1061,16 +1191,11 @@ done
 
     # 处理 Argo 的配置
     if [[ $argo_auth =~ TunnelSecret ]]; then
-        # 创建 JSON 凭据文件
         echo "$argo_auth" > /root/sbox/tunnel.json
-
-        # 生成 tunnel.yml 文件
  cat > /root/sbox/tunnel.yml << EOF
-
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 protocol: http2
-
 ingress:
   - hostname: $argo_domain
     service: http://localhost:$vmess_port
@@ -1078,34 +1203,24 @@ ingress:
       noTLSVerify: true
   - service: "http_status:404"
 EOF
-
-      #  echo "生成的 tunnel.yml 文件内容:"
-      #  cat /root/sbox/tunnel.yml
-        # 启动固定隧道
        /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
        echo "" 
         echo -e "\e[1;3;32mCloudflared 固定隧道功能已启动！\e[0m"
     echo ""
     fi
 else
-    # 用户选择使用临时隧道
 pid=$(pgrep -f cloudflared)
 if [ -n "$pid" ]; then
-    # 终止现有进程
     pkill -f cloudflared 2>/dev/null
 fi
-
-    # 启动临时隧道
 nohup /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
 sleep 2
 echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
 sleep 5
 echo ""
-#连接到域名
 argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
-# 生成vmess配置文件
 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
@@ -1124,7 +1239,6 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                         }
                     }]')
                 ;;
-
             3)
                 show_notice "★ ★ ★ 开始配置Hysteria2协议 ★ ★ ★"
                 sleep 2
@@ -1133,20 +1247,15 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
                 echo -e "\e[1;3;32m随机生成的hy2密码: $hy_password\e[0m"
                 sleep 1
-                # 提示用户输入自定义端口，或者选择随机生成端口
 read -p $'\e[1;3;33m请输入 Hysteria2 监听端口 (默认端口: 8443)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' hy_listen_port_input
 sleep 1
-
-# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
 if [[ "$hy_listen_port_input" == "y" || "$hy_listen_port_input" == "Y" ]]; then
     hy_listen_port=$((RANDOM % 55536 + 10000))
     echo -e "\e[1;3;32m自动生成的 Hysteria2 端口: $hy_listen_port\e[0m"
-# 如果用户输入了自定义端口且输入有效，使用自定义端口
 elif [[ "$hy_listen_port_input" =~ ^[0-9]+$ ]] && [ "$hy_listen_port_input" -ge 10000 ] && [ "$hy_listen_port_input" -le 65535 ]; then
     hy_listen_port=$hy_listen_port_input
     echo -e "\e[1;3;32m使用自定义的 Hysteria2 端口: $hy_listen_port\e[0m"
 else
-    # 否则使用默认的已设置端口
     echo -e "\e[1;3;32m使用默认的 Hysteria2 端口: $hy_listen_port\e[0m"
 fi
                 sleep 1
@@ -1189,20 +1298,15 @@ fi
     tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
     echo -e "\e[1;3;33m随机生成Tuic-UUID：$tuic_uuid\e[0m"
     sleep 1
-    # 提示用户输入自定义端口，或者选择随机生成端口
 read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' tuic_listen_port_input
 sleep 1
-
-# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
 if [[ "$tuic_listen_port_input" == "y" || "$tuic_listen_port_input" == "Y" ]]; then
     tuic_listen_port=$((RANDOM % 55536 + 10000))
     echo -e "\e[1;3;32m自动生成的 TUIC 端口: $tuic_listen_port\e[0m"
-# 如果用户输入了自定义端口且输入有效，使用自定义端口
 elif [[ "$tuic_listen_port_input" =~ ^[0-9]+$ ]] && [ "$tuic_listen_port_input" -ge 10000 ] && [ "$tuic_listen_port_input" -le 65535 ]; then
     tuic_listen_port=$tuic_listen_port_input
     echo -e "\e[1;3;32m使用自定义的 TUIC 端口: $tuic_listen_port\e[0m"
 else
-    # 否则使用默认的已设置端口
     echo -e "\e[1;3;32m使用默认的 TUIC 端口: $tuic_listen_port\e[0m"
 fi
     sleep 1
@@ -1214,7 +1318,6 @@ fi
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
     echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
     echo ""
-
     config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
         --arg tuic_uuid "$tuic_uuid" \
@@ -1235,17 +1338,14 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
-
     ;;
-
               *)
                 echo "无效选择: $choice"
                 ;;    
         esac
     done
-    # 生成最终配置文件
     echo "$config" > /root/sbox/sbconfig_server.json
-  #  echo "配置文件已生成：/root/sbox/sbconfig_server.json"
+    echo "配置文件已生成：/root/sbox/sbconfig_server.json"
 }
 #创建sing-box和cloudflare服务文件并启动
 setup_services() {
