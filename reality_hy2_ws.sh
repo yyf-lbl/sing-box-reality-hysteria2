@@ -334,25 +334,27 @@ switch_kernel() {
         current_version="未找到 sing-box"
     fi
 
-    # 获取当前符号链接指向的路径
-    current_link_target=$(readlink /root/sbox/sing-box)
+    # 提取版本号的主版本号和次版本号
+    major_version=$(echo "$current_version" | grep -oP '^\d+\.\d+' | cut -d. -f1,2)  # 提取主版本号和次版本号
+    if [[ -z "$major_version" ]]; then
+        echo -e "\e[1;3;31m未能提取到有效的版本号，退出。\e[0m"
+        return 1  # 退出函数
+    fi
 
     echo -e "\e[1;3;31m=================\e[0m"
     echo -e "\e[1;3;32m当前 sing-box 版本: $current_version\e[0m"
 
-    # 获取当前版本号并判断选择相应的配置文件
-    # 假设版本号格式为 "1.10.2" 或 "1.11.0-alpha.19"，根据需要提取数字部分进行比较
-    major_version=$(echo $current_version | grep -oP '^\d+\.\d+\.\d+' | cut -d. -f1,2) # 例如提取 "1.10"
+    # 比较版本号，判断版本是否小于等于 1.10
     if [[ $(echo "$major_version <= 1.10" | bc) -eq 1 ]]; then
         config_file="/root/sbox/sbconfig_server.json"  # 小于等于1.10.2版本使用此配置文件
     else
         config_file="/root/sbox/sbconfig1_server.json"  # 大于1.10.2版本使用此配置文件
     fi
 
-    if [[ $current_link_target == "/root/sbox/sing-box" ]]; then
-        echo -e "\e[1;3;32m当前正在使用正式版 sing-box\e[0m"
-    elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
+    if [[ $current_version == *"prerelease"* ]]; then
         echo -e "\e[1;3;33m当前正在使用测试版 sing-box\e[0m"
+    elif [[ $current_version == *"release"* ]]; then
+        echo -e "\e[1;3;32m当前正在使用正式版 sing-box\e[0m"
     else
         echo -e "\e[1;3;31m当前 sing-box 版本未知。\e[0m"
         config_file=""
@@ -362,20 +364,42 @@ switch_kernel() {
     # 选择切换版本
     while true; do
         echo -e "\e[1;3;38;2;228;76;228m是否需要切换 sing-box 内核？\e[0m"
-        echo -e "\e[1;3;36m1) 切换到测试版\e[0m"
-        echo -e "\e[1;3;32m2) 切换到正式版\e[0m"
-        echo -e "\e[1;3;34m0) 不切换退出\e[0m"
+        echo -e "\e[1;3;36m1) 切换到最新测试版\e[0m"
+        echo -e "\e[1;3;32m2) 切换到最新正式版\e[0m"
+        echo -e "\e[1;3;34m3) 切换到旧正式版 (1.10.2)\e[0m"
+        echo -e "\e[1;3;35m4) 切换到旧测试版 (1.11.0-alpha.19)\e[0m"
+        echo -e "\e[1;3;31m0) 不切换退出\e[0m"
         echo -ne "\e[1;3;33m请输入选项:\e[0m"
         read -p " " choice
 
         case $choice in
             1)
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
-                echo -e "\e[1;3;33m已切换到测试版 sing-box。\e[0m"
+                echo -e "\e[1;3;33m已切换到最新测试版 sing-box。\e[0m"
                 ;;
             2)
-                ln -sf /root/sbox/sing-box /root/sbox/sing-box
-                echo -e "\e[1;3;32m已切换到正式版 sing-box。\e[0m"
+                ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
+                echo -e "\e[1;3;32m已切换到最新正式版 sing-box。\e[0m"
+                ;;
+            3)
+                if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
+                    echo -e "\e[1;3;33m未找到旧正式版 (1.10.2)，正在下载...\e[0m"
+                    mkdir -p /root/sbox/old_version
+                    wget -q -O /root/sbox/old_version/sing-box-1.10.2 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2
+                    chmod +x /root/sbox/old_version/sing-box-1.10.2
+                fi
+                ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
+                echo -e "\e[1;3;34m已切换到旧正式版 (1.10.2)。\e[0m"
+                ;;
+            4)
+                if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
+                    echo -e "\e[1;3;33m未找到旧测试版 (1.11.0-alpha.19)，正在下载...\e[0m"
+                    mkdir -p /root/sbox/old_version
+                    wget -q -O /root/sbox/old_version/sing-box-1.11.0-alpha.19 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19
+                    chmod +x /root/sbox/old_version/sing-box-1.11.0-alpha.19
+                fi
+                ln -sf /root/sbox/old_version/sing-box-1.11.0-alpha.19 /root/sbox/sing-box
+                echo -e "\e[1;3;35m已切换到旧测试版 (1.11.0-alpha.19)。\e[0m"
                 ;;
             0)
                 echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
