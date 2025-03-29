@@ -1435,23 +1435,47 @@ fi
 }
 #创建sing-box和cloudflare服务文件并启动
 setup_services() {
-    # 获取 vmess 端口
-    local vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
-    local CLOUDFLARED_PATH="/root/sbox/cloudflared-linux"
-    local CONFIG_PATH="/root/sbox/tunnel.yml"
-    local JSON_PATH="/root/sbox/tunnel.json"
-    local LOG_PATH="/root/sbox/argo_run.log"
-    # 创建 sing-box 服务文件
-    cat > /etc/systemd/system/sing-box.service <<EOF
+#!/bin/bash
+
+# 设置路径变量
+SBOX_DIR="/root/sbox"
+SING_BOX_CONFIG="$SBOX_DIR/sbconfig_server.json"
+SING_BOX_CONFIG_NEW="$SBOX_DIR/sbconfig1_server.json"
+CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
+CONFIG_PATH="$SBOX_DIR/tunnel.yml"
+JSON_PATH="$SBOX_DIR/tunnel.json"
+LOG_PATH="$SBOX_DIR/argo_run.log"
+
+# 确保 jq 已安装
+if ! command -v jq &> /dev/null; then
+    echo -e "\e[1;3;31m错误: jq 没有安装! 请安装 jq。\e[0m"
+    exit 1
+fi
+
+# 获取 sing-box 版本
+SING_BOX_VERSION=$($SBOX_DIR/sing-box version | grep -oP '\d+\.\d+\.\d+')
+
+# 比较 sing-box 版本，选择配置文件
+if [[ "$(echo -e "1.10.2\n$SING_BOX_VERSION" | sort -V | head -n1)" == "1.10.2" ]]; then
+    CONFIG_FILE="$SING_BOX_CONFIG"
+else
+    CONFIG_FILE="$SING_BOX_CONFIG_NEW"
+fi
+
+# 获取 vmess 端口
+VMESS_PORT=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' "$CONFIG_FILE")
+
+# 创建 sing-box 服务文件
+cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
 After=network.target nss-lookup.target
 
 [Service]
 User=root
-WorkingDirectory=/root
+WorkingDirectory=$SBOX_DIR
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
 AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+ExecStart=$SBOX_DIR/sing-box run -c $CONFIG_FILE
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -1461,8 +1485,9 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 
-    # 如果存在 vmess 类型的配置，则创建 Cloudflare 服务文件
-    if [ -n "$vmess_port" ]; then
+# 如果 vmess 类型的配置存在，则创建 Cloudflare 服务文件
+if [ -n "$VMESS_PORT" ]; then
+    if [ ! -f /etc/systemd/system/cloudflared.service ]; then
         cat > /etc/systemd/system/cloudflared.service <<EOF
 [Unit]
 Description=Cloudflare Tunnel
@@ -1471,66 +1496,89 @@ After=network.target
 [Service]
 Type=simple
 ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared" > /dev/null; then echo -e "\e[32m\e[3mCloudflared is already running\e[0m"; exit 0; fi'
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then $CLOUDFLARED_PATH tunnel --config $CONFIG_PATH run > $LOG_PATH 2>&1; else $CLOUDFLARED_PATH tunnel --url http://localhost:$VMESS_PORT --no-autoupdate --edge-ip-version auto --protocol http2 > $LOG_PATH 2>&1; fi'
 Restart=always
 RestartSec=5s
 User=root
-StandardOutput=append:/root/sbox/argo_run.log
-StandardError=append:/root/sbox/argo_run.log
+StandardOutput=append:$LOG_PATH
+StandardError=append:$LOG_PATH
 
 [Install]
 WantedBy=multi-user.target
-
 EOF
     fi
+fi
 
-    # 检查配置并启动服务
-    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-        echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
-        # 重新加载系统服务管理器
-        systemctl daemon-reload
-        # 启动并设置服务开机自启  
-        systemctl start sing-box
-        systemctl enable sing-box > /dev/null 2>&1
+# 检查配置并启动 sing-box 服务
+if $SBOX_DIR/sing-box check -c "$CONFIG_FILE"; then
+    echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
+    systemctl daemon-reload
+    systemctl start sing-box
+    systemctl enable sing-box > /dev/null 2>&1
 
-        if systemctl is-active --quiet sing-box; then
-            echo -e "\e[1;3;32msing-box 服务已成功启动！\e[0m"
-        else
-            echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
-        fi
-
-        # 如果 Cloudflare 服务文件存在，启动 Cloudflare 服务
-        if [ -n "$vmess_port" ]; then
-            systemctl start cloudflared
-            systemctl enable cloudflared > /dev/null 2>&1
-
-            if systemctl is-active --quiet cloudflared; then
-                echo -e "\e[1;3;32mCloudflare Tunnel 服务已成功启动！\e[0m"
-            else
-                echo -e "\e[1;3;31mCloudflare Tunnel 服务启动失败！\e[0m"
-            fi
-        fi
-
-        show_client_configuration
+    if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 服务已成功启动！\e[0m"
     else
-        echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
+        echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
     fi
+
+    # 启动 Cloudflare 服务（如果存在 vmess 端口）
+    if [ -n "$VMESS_PORT" ]; then
+        systemctl start cloudflared
+        systemctl enable cloudflared > /dev/null 2>&1
+
+        if systemctl is-active --quiet cloudflared; then
+            echo -e "\e[1;3;32mCloudflare Tunnel 服务已成功启动！\e[0m"
+        else
+            echo -e "\e[1;3;31mCloudflare Tunnel 服务启动失败！\e[0m"
+        fi
+    fi
+
+    show_client_configuration
+else
+    echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
+fi
 }
 # 重启服务
 sbox_services() {
-    # 启动 sing-box 服务
-    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-        pkill -f sing-box  # 杀掉现有的 sing-box 进程
-        systemctl daemon-reload  # 重新加载 systemd 配置
-        systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
-        systemctl start sing-box  # 启动 sing-box 服务
-        # 打印成功信息，绿色加粗斜体
-        echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
+    # 获取 sing-box 版本
+    SING_BOX_VERSION=$(/root/sbox/sing-box version | grep -oP '\d+\.\d+\.\d+')
+    # 比较 sing-box 版本，选择配置文件
+    if [[ "$(echo -e "1.10.2\n$SING_BOX_VERSION" | sort -V | head -n1)" == "1.10.2" ]]; then
+        CONFIG_FILE="/root/sbox/sbconfig_server.json"
     else
-        echo "Error in configuration. Aborting"
+        CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+    fi
+
+    # 检查配置文件是否有效
+    if /root/sbox/sing-box check -c "$CONFIG_FILE"; then
+        # 杀掉现有的 sing-box 进程
+        pkill -f sing-box
+
+        # 重新加载 systemd 配置
+        systemctl daemon-reload
+
+        # 设置 sing-box 服务开机启动
+        systemctl enable sing-box > /dev/null 2>&1
+
+        # 启动 sing-box 服务
+        systemctl start sing-box
+
+        # 检查服务是否启动成功
+        if systemctl is-active --quiet sing-box; then
+            # 打印成功信息，绿色加粗斜体
+            echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
+        else
+            echo -e "\e[1;3;31m错误: sing-box 服务启动失败！\e[0m"
+            return 1  # 返回错误状态
+        fi
+    else
+        # 如果配置无效，打印错误信息
+        echo -e "\e[1;3;31m配置错误: 配置文件 ($CONFIG_FILE) 无效或格式错误！\e[0m"
         return 1  # 返回错误状态
     fi
 }
+
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
     show_notice "将重新安装中..."
