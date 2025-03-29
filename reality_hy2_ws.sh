@@ -923,7 +923,7 @@ config="{
         \"server\": \"quad9\"
       }
     ],
-    \"final\": \"cloudflare\",
+    \"final\": \"$fastest_dns\",
     \"strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
