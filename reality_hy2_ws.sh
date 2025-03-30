@@ -1,22 +1,21 @@
 #!/bin/bash  
 asdf() {
-   # 设置路径变量
+    # 设置路径变量
     SBOX_DIR="/root/sbox"
     SBOX_TEST_DIR="$SBOX_DIR/prerelease"
     CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
     CONFIG_PATH="$SBOX_DIR/tunnel.yml"
     JSON_PATH="$SBOX_DIR/tunnel.json"
     LOG_PATH="$SBOX_DIR/argo_run.log"
+
     # 检测 sing-box 位置
     SING_BOX_BIN=""
     if [ -f "$SBOX_DIR/sing-box" ]; then
         SING_BOX_VERSION_STABLE=$(/root/sbox/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-        echo -e "\e[1;3;32m检测到正式版 sing-box: $SING_BOX_VERSION_STABLE\e[0m"
     fi
 
     if [ -f "$SBOX_TEST_DIR/sing-box" ]; then
         SING_BOX_VERSION_TEST=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-        echo -e "\e[1;3;33m检测到测试版 sing-box: $SING_BOX_VERSION_TEST\e[0m"
     fi
 
     # 如果只有一个版本，直接使用
@@ -45,16 +44,12 @@ asdf() {
         fi
     fi
 
-    echo -e "\e[1;3;34m已选择使用: $SING_BOX_BIN (版本 $SING_BOX_VERSION)\e[0m"
-
     # 选择配置文件
     if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
         CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
     else
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
     fi
-
-    echo -e "使用配置文件: $CONFIG_FILE"
 
     # 获取 vmess 端口
     VMESS_PORT=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' "$CONFIG_FILE")
@@ -97,35 +92,6 @@ StandardError=append:$LOG_PATH
 [Install]
 WantedBy=multi-user.target
 EOF
-    fi
-
-    # 检查配置并启动 sing-box
-    if $SING_BOX_BIN check -c "$CONFIG_FILE"; then
-        echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box...\e[0m"
-        systemctl daemon-reload
-        systemctl start sing-box
-        systemctl enable sing-box > /dev/null 2>&1
-
-        if systemctl is-active --quiet sing-box; then
-            echo -e "\e[1;3;32msing-box ($SING_BOX_VERSION) 已成功启动！\e[0m"
-        else
-            echo -e "\e[1;3;31msing-box 启动失败！\e[0m"
-        fi
-
-        # 启动 Cloudflare Tunnel（如果有 vmess 端口）
-        if [ -n "$VMESS_PORT" ]; then
-            systemctl start cloudflared
-            systemctl enable cloudflared > /dev/null 2>&1
-
-            if systemctl is-active --quiet cloudflared; then
-                echo -e "\e[1;3;32mCloudflare Tunnel 已成功启动！\e[0m"
-            else
-                echo -e "\e[1;3;31mCloudflare Tunnel 启动失败！\e[0m"
-            fi
-        fi
-    else
-        echo -e "\e[1;3;33m配置错误，sing-box 未启动！\e[0m"
-        exit 1
     fi
 
     # 手动重启功能
