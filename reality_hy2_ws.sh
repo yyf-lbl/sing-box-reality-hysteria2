@@ -1,5 +1,4 @@
-#!/bin/bash
-   
+#!/bin/bash  
 # 创建快捷指令
 add_alias() {
     config_file=$1
@@ -442,16 +441,7 @@ fi
         echo -e "\e[1;3;32m当前 sing-box 版本: $new_version\e[0m"
 
         # 重启 sing-box
-        systemctl stop sing-box
-        pkill -f sing-box
-        sleep 2
-        systemctl restart sing-box
-        if systemctl is-active --quiet sing-box; then
-            echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
-        else
-            echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
-        fi
-        break
+        setup_services
     done
 
     echo -e "\e[1;35m======================\e[0m"
@@ -1479,7 +1469,6 @@ setup_services() {
     CONFIG_PATH="$SBOX_DIR/tunnel.yml"
     JSON_PATH="$SBOX_DIR/tunnel.json"
     LOG_PATH="$SBOX_DIR/argo_run.log"
-
     # 检测 sing-box 位置
     SING_BOX_BIN=""
     if [ -f "$SBOX_DIR/sing-box" ]; then
