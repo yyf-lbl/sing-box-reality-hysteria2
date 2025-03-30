@@ -1,6 +1,6 @@
 #!/bin/bash  
 asdf() {
-   # 设置路径变量
+    # 设置路径变量
     SBOX_DIR="/root/sbox"
     SBOX_TEST_DIR="$SBOX_DIR/prerelease"
     CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
@@ -74,6 +74,12 @@ EOF
     echo -e "3) 重启两者"
     echo -e "4) 不重启"
     read -p "请输入选择 (1/2/3/4): " restart_choice
+
+    # 如果用户选择重启任何服务，执行 `systemctl daemon-reload` 来重新加载系统配置
+    if [[ "$restart_choice" == "1" || "$restart_choice" == "2" || "$restart_choice" == "3" ]]; then
+        echo -e "\e[1;3;33m正在重新加载系统单元配置...\e[0m"
+        systemctl daemon-reload
+    fi
 
     case $restart_choice in
         1)
