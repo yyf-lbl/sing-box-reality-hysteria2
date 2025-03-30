@@ -329,6 +329,8 @@ switch_kernel() {
     # 获取当前 sing-box 版本
     if [[ -f /root/sbox/sing-box ]]; then
         current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n1)
+    elif [[ -f /root/sbox/prerelease/sing-box ]]; then
+        current_version=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1)
     else
         current_version="未找到 sing-box"
     fi
