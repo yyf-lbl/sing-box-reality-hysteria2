@@ -2097,7 +2097,7 @@ case $choice in
         ;;
     9)
      switch_kernel
-     setup_services
+   
       ;;
       
     10) 
