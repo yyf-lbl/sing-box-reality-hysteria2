@@ -1503,12 +1503,11 @@ setup_services() {
 
     echo -e "\e[1;3;34m已选择使用: $SING_BOX_BIN (版本 $SING_BOX_VERSION)\e[0m"
 
-    # 选择配置文件
-   if [[ "$(echo -e "1.10.2\n$SING_BOX_VERSION_STABLE" | sort -V | head -n1)" == "1.10.2" ]] && \
-       [[ "$(echo -e "1.10.2\n$SING_BOX_VERSION_TEST" | sort -V | head -n1)" == "1.10.2" ]]; then
-        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
-    else
+    # 根据版本号选择配置文件
+    if [[ "$(echo -e "1.10.2\n$SING_BOX_VERSION" | sort -V | head -n1)" == "1.10.2" ]]; then
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+    else
+        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
     fi
 
     # 获取 vmess 端口
@@ -1582,6 +1581,7 @@ EOF
         echo -e "\e[1;3;33m配置错误，sing-box 未启动！\e[0m"
     fi
 }
+
 
 # 重启服务
 sbox_services() {
