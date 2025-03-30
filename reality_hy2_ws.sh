@@ -183,59 +183,22 @@ EOF
 }
 
 #重启sing-box服务
-Restart_service() {
-   # 设置路径变量
+restart_singbox() {
+    # 获取 sing-box 配置文件路径
     SBOX_DIR="/root/sbox"
-    SBOX_TEST_DIR="$SBOX_DIR/latest_version"
-    OLD_VERSION_DIR="$SBOX_DIR/old_version"
+    CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+    SING_BOX_BIN="$SBOX_DIR/sing-box"
 
-    # 获取当前运行的 sing-box 进程路径
-    CURRENT_SING_BOX_BIN=$(systemctl show sing-box -p ExecStart | awk -F '=' '{print $2}' | awk '{print $1}')
-    
-    # 调试输出：确认路径是否正确提取
-    echo "当前运行的 sing-box 路径: $CURRENT_SING_BOX_BIN"
-    
-    if [ -z "$CURRENT_SING_BOX_BIN" ] || [ ! -f "$CURRENT_SING_BOX_BIN" ]; then
-        echo -e "\e[1;3;31m错误: 当前没有正在运行的 sing-box 进程！\e[0m"
+    # 检查 sing-box 是否安装
+    if [ ! -f "$SING_BOX_BIN" ]; then
+        echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
         exit 1
     fi
 
-    # 获取当前 sing-box 版本
-    CURRENT_SING_BOX_VERSION=$("$CURRENT_SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+    # 获取 sing-box 版本
+    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
 
-    if [ -z "$CURRENT_SING_BOX_VERSION" ]; then
-        echo -e "\e[1;3;31m错误: 无法获取 sing-box 版本信息！\e[0m"
-        exit 1
-    fi
-
-    # 读取已安装的 sing-box 版本
-    SING_BOX_VERSION_STABLE=$("$SBOX_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-    SING_BOX_VERSION_TEST=$("$SBOX_TEST_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-    SING_BOX_VERSION_OLD_STABLE=$("$OLD_VERSION_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-    SING_BOX_VERSION_OLD_TEST=$("$OLD_VERSION_DIR/sing-box-test" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-
-    # 识别当前运行的 sing-box 版本类别
-    if [[ "$CURRENT_SING_BOX_BIN" == "$SBOX_DIR/sing-box" ]]; then
-        VERSION_TYPE="最新正式版"
-        COLOR="32" # 绿色
-    elif [[ "$CURRENT_SING_BOX_BIN" == "$SBOX_TEST_DIR/sing-box" ]]; then
-        VERSION_TYPE="最新测试版"
-        COLOR="33" # 黄色
-    elif [[ "$CURRENT_SING_BOX_BIN" == "$OLD_VERSION_DIR/sing-box" ]]; then
-        VERSION_TYPE="旧正式版"
-        COLOR="34" # 蓝色
-    elif [[ "$CURRENT_SING_BOX_BIN" == "$OLD_VERSION_DIR/sing-box-test" ]]; then
-        VERSION_TYPE="旧测试版"
-        COLOR="35" # 紫色
-    else
-        VERSION_TYPE="未知版本"
-        COLOR="31" # 红色
-    fi
-
-    echo -e "\e[1;3;${COLOR}m当前运行的 sing-box 版本: $CURRENT_SING_BOX_VERSION ($VERSION_TYPE)\e[0m"
-
-    # 选择对应的配置文件
-    if [[ "$CURRENT_SING_BOX_VERSION" > "1.10.2" ]]; then
+    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
         CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
     else
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
@@ -243,20 +206,23 @@ Restart_service() {
 
     echo -e "使用配置文件: $CONFIG_FILE"
 
-    # 重新加载 systemd 配置
-    systemctl daemon-reload
+    # 检查 sing-box 配置文件是否有效
+    if $SING_BOX_BIN check -c "$CONFIG_FILE"; then
+        echo -e "\e[1;3;33m配置检查成功，正在重启 sing-box...\e[0m"
 
-    # 重新启动 sing-box
-    echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
-    systemctl restart sing-box
+        # 重启 sing-box 服务
+        systemctl daemon-reload
+        systemctl restart sing-box
 
-    if systemctl is-active --quiet sing-box; then
-        echo -e "\e[1;3;32msing-box ($VERSION_TYPE) 已成功重启！\e[0m"
+        if systemctl is-active --quiet sing-box; then
+            echo -e "\e[1;3;32msing-box ($SING_BOX_VERSION) 已成功重启！\e[0m"
+        else
+            echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
+        fi
     else
-        echo -e "\e[1;3;31msing-box 启动失败！\e[0m"
+        echo -e "\e[1;3;31m配置错误，sing-box 无法重启！\e[0m"
     fi
 }
-
 # 下载 cloudflared 官方版
 download_cloudflared() {
     official_dir="/root/sbox/"
@@ -2138,7 +2104,7 @@ case $choice in
         restart_tunnel
         ;;
     8)       
-      box_services
+      sbox_services
         ;;
     9) 
       check_tunnel_status
