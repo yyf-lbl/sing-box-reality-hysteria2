@@ -2089,7 +2089,20 @@ case $choice in
         restart_tunnel
         ;;
     8) 
-         if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
+    # 根据当前版本选择配置文件
+if [[ $current_link_target == "/root/sbox/sing-box" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 正式版配置文件
+elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 测试版配置文件
+elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.10.2" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig_server.json"  # 旧正式版配置文件
+elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.11.0-alpha.19" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 旧测试版配置文件
+else
+    echo -e "\e[1;3;31m当前 sing-box 版本未知，无法选择配置文件。\e[0m"
+    return 1  # 如果版本未知，返回错误状态
+fi
+         if /root/sbox/sing-box check -c "$CONFIG_FILE"; then
         pkill -f sing-box  # 杀掉现有的 sing-box 进程
         systemctl daemon-reload  # 重新加载 systemd 配置
         systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
