@@ -1,4 +1,39 @@
 #!/bin/bash  
+asdf(){
+# 获取当前 sing-box 路径
+current_link_target=$(readlink /root/sbox/sing-box)
+
+# 打印当前路径，方便调试
+echo "当前 sing-box 路径: $current_link_target"
+
+# 根据当前路径选择配置文件
+if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig_server.json"  # 正式版配置文件
+elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 测试版配置文件
+elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.10.2" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig_server.json"  # 旧正式版配置文件
+elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.11.0-alpha.19" ]]; then
+    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 旧测试版配置文件
+else
+    echo -e "\e[1;3;31m当前 sing-box 版本未知，无法选择配置文件。\e[0m"
+    return 1  # 如果版本未知，返回错误状态
+fi
+
+# 检查配置文件并启动 sing-box
+if /root/sbox/sing-box check -c "$CONFIG_FILE"; then
+    pkill -f sing-box  # 杀掉现有的 sing-box 进程
+    systemctl daemon-reload  # 重新加载 systemd 配置
+    systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
+    systemctl start sing-box  # 启动 sing-box 服务
+    # 打印成功信息，绿色加粗斜体
+    echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
+else
+    echo "Error in configuration. Aborting"
+    return 1  # 返回错误状态
+fi
+
+}
 # 创建快捷指令
 add_alias() {
     config_file=$1
@@ -2089,30 +2124,8 @@ case $choice in
         restart_tunnel
         ;;
     8) 
-    # 根据当前版本选择配置文件
-if [[ $current_link_target == "/root/sbox/sing-box" ]]; then
-    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 正式版配置文件
-elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
-    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 测试版配置文件
-elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.10.2" ]]; then
-    CONFIG_FILE="/root/sbox/sbconfig_server.json"  # 旧正式版配置文件
-elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.11.0-alpha.19" ]]; then
-    CONFIG_FILE="/root/sbox/sbconfig1_server.json"  # 旧测试版配置文件
-else
-    echo -e "\e[1;3;31m当前 sing-box 版本未知，无法选择配置文件。\e[0m"
-    return 1  # 如果版本未知，返回错误状态
-fi
-         if /root/sbox/sing-box check -c "$CONFIG_FILE"; then
-        pkill -f sing-box  # 杀掉现有的 sing-box 进程
-        systemctl daemon-reload  # 重新加载 systemd 配置
-        systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
-        systemctl start sing-box  # 启动 sing-box 服务
-        # 打印成功信息，绿色加粗斜体
-        echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
-    else
-        echo "Error in configuration. Aborting"
-        return 1  # 返回错误状态
-    fi
+   
+asdf
         ;;
   
   
