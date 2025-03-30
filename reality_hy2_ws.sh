@@ -2,28 +2,26 @@
 asdf() {
     # 设置路径变量
     SBOX_DIR="/root/sbox"
-    SBOX_TEST_DIR="$SBOX_DIR/prerelease"
+    SING_BOX_BIN="$SBOX_DIR/sing-box"
 
-    # 获取当前运行的 sing-box 进程路径
-    CURRENT_SING_BOX_BIN=$(ps aux | grep -v grep | grep "sing-box" | awk '{print $11}' | head -n1)
-
-    if [ -z "$CURRENT_SING_BOX_BIN" ]; then
-        echo -e "\e[1;3;31m错误: 未检测到正在运行的 sing-box！\e[0m"
+    # 检查 sing-box 是否存在
+    if [ ! -f "$SING_BOX_BIN" ]; then
+        echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
         exit 1
     fi
 
-    # 获取当前 sing-box 版本
-    CURRENT_SING_BOX_VERSION=$($CURRENT_SING_BOX_BIN version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+    # 获取 sing-box 版本
+    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
 
-    if [ -z "$CURRENT_SING_BOX_VERSION" ]; then
+    if [ -z "$SING_BOX_VERSION" ]; then
         echo -e "\e[1;3;31m错误: 无法获取 sing-box 版本信息！\e[0m"
         exit 1
     fi
 
-    echo -e "\e[1;3;34m当前运行的 sing-box 版本: $CURRENT_SING_BOX_VERSION\e[0m"
+    echo -e "\e[1;3;34m当前运行的 sing-box 版本: $SING_BOX_VERSION\e[0m"
 
     # 根据版本号选择配置文件
-    if [[ "$CURRENT_SING_BOX_VERSION" > "1.10.2" ]]; then
+    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
         CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
     else
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
@@ -31,10 +29,10 @@ asdf() {
 
     echo -e "使用配置文件: $CONFIG_FILE"
 
-    # 重新加载 systemd 配置
+    # 重新加载 systemd 配置（如果有变更）
     systemctl daemon-reload
 
-    # 重新启动 sing-box 并应用正确的配置文件
+    # 重新启动 sing-box 并检查状态
     echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
     systemctl restart sing-box
 
