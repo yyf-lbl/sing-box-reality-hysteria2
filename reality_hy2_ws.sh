@@ -382,42 +382,6 @@ download_singbox() {
 
     echo -e "\e[1;3;32m✔ 下载任务完成！\e[0m"
 }
-get_singbox_download_url() {
-    local version_type=$1
-    local arch=$(uname -m)
-
-    # 适配不同的系统架构
-    case ${arch} in
-        x86_64) arch="amd64" ;;
-        aarch64) arch="arm64" ;;
-        armv7l) arch="armv7" ;;
-    esac
-
-    if [ "$version_type" == "latest_release" ]; then
-        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
-        latest_release_version=${latest_release_tag#v}
-        echo "https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/sing-box-${latest_release_version}-linux-${arch}.tar.gz"
-    
-    elif [ "$version_type" == "latest_prerelease" ]; then
-        latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
-        latest_prerelease_version=${latest_prerelease_tag#v}
-        echo "https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
-    
-    elif [ "$version_type" == "old_release" ]; then
-        old_release_version="1.10.2"
-        echo "https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
-    
-    elif [ "$version_type" == "old_prerelease" ]; then
-        old_prerelease_version="1.11.0-alpha.19"
-        echo "https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
-    
-    else
-        echo "Invalid version type"
-        return 1
-    fi
-}
-
-#singbox 内核切换
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
     echo -e "\e[1;3;32m1. 最新正式版\e[0m"
@@ -426,34 +390,27 @@ switch_kernel() {
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
-    local download_url=""
-    local save_path=""
-    local version_tag=""
-    
-    # 确保存放目录存在
-    mkdir -p /root/sbox/latest_version
-    mkdir -p /root/sbox/old_version
-
+    # 根据用户选择下载或切换版本
     case $version_choice in
         1)
-            download_url=$(get_singbox_download_url "latest_release")
-            save_path="/root/sbox/latest_version/sing-box-latest"
-            version_tag="latest_release"
+            # 下载并使用最新正式版
+            download_singbox 1
+            VERSION_TYPE="latest_release"
             ;;
         2)
-            download_url=$(get_singbox_download_url "latest_prerelease")
-            save_path="/root/sbox/latest_version/sing-box-test-latest"
-            version_tag="latest_prerelease"
+            # 下载并使用最新测试版
+            download_singbox 1
+            VERSION_TYPE="latest_prerelease"
             ;;
         3)
-            download_url=$(get_singbox_download_url "old_release")
-            save_path="/root/sbox/old_version/sing-box-old"
-            version_tag="old_release"
+            # 下载并使用旧正式版
+            download_singbox 2
+            VERSION_TYPE="old_release"
             ;;
         4)
-            download_url=$(get_singbox_download_url "old_prerelease")
-            save_path="/root/sbox/old_version/sing-box-test-old"
-            version_tag="old_prerelease"
+            # 下载并使用旧测试版
+            download_singbox 2
+            VERSION_TYPE="old_prerelease"
             ;;
         *)
             echo -e "\e[1;3;31m无效选择，请选择 1-4 之间的数字。\e[0m"
@@ -461,52 +418,26 @@ switch_kernel() {
             ;;
     esac
 
-    if [ "$download_url" != "Invalid version type" ]; then
-        echo -e "\e[1;3;32m正在下载: $download_url\e[0m"
-        
-        # 下载文件
-        wget -O /root/sbox/sing-box.tar.gz "$download_url"
-
-        # 检查文件是否是有效的二进制文件
-        if file /root/sbox/sing-box.tar.gz | grep -q "gzip compressed data"; then
-            echo -e "\e[1;3;32m文件格式正确，准备移动...\e[0m"
-        else
-            echo -e "\e[1;3;31m下载的文件可能是 HTML 或其他格式，检查链接是否正确。\e[0m"
-            # 如果是错误页面或其他格式的文件，输出文件的开始部分
-            head -n 20 /root/sbox/sing-box.tar.gz
-            exit 1
-        fi
-
-        # 移动并重命名 sing-box 二进制文件
-        mv /root/sbox/sing-box.tar.gz "$save_path"
-        chmod +x "$save_path"
-        echo -e "\e[1;3;32m✔ sing-box 已下载并存放在: $save_path\e[0m"
-    else
-        echo -e "\e[1;3;31m✖ 下载链接获取失败。\e[0m"
-        exit 1
-    fi
-
     # 设置相应的配置文件路径
     SBOX_DIR="/root/sbox"
-    case $version_tag in
+    case $VERSION_TYPE in
         latest_release)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新正式版的配置文件
             ;;
         latest_prerelease)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新测试版的配置文件
             ;;
         old_release)
-            CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+            CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"    # 旧正式版配置文件
             ;;
         old_prerelease)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"    # 旧测试版配置文件
             ;;
     esac
 
-    # 启动服务
+    # 调用 setup_services 启动服务
     setup_services "$CONFIG_FILE"
 }
-
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
