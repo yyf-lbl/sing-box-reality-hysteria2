@@ -204,8 +204,8 @@ restart_singbox() {
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
     fi
 
-    echo -e "使用配置文件: $CONFIG_FILE"
-
+    echo -e "\e[1;3;35m正在重启sing-box服务...\e[0m"
+    sleep 2
     # 检查 sing-box 配置文件是否有效
     if $SING_BOX_BIN check -c "$CONFIG_FILE"; then
         echo -e "\e[1;3;33m配置检查成功，正在重启 sing-box...\e[0m"
