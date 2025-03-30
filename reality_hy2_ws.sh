@@ -340,6 +340,18 @@ switch_kernel() {
     current_link_target1=$(readlink /root/sbox/prerelease/sing-box)
     echo -e "\e[1;3;31m=================\e[0m"
     echo -e "\e[1;3;32m当前 sing-box 版本: $current_version\e[0m"
+# 检查符号链接是否存在并获取目标路径
+if [[ -L /root/sbox/sing-box ]]; then
+    current_link_target=$(readlink /root/sbox/sing-box)
+else
+    current_link_target="符号链接 /root/sbox/sing-box 不存在"
+fi
+
+if [[ -L /root/sbox/prerelease/sing-box ]]; then
+    current_link_target1=$(readlink /root/sbox/prerelease/sing-box)
+else
+    current_link_target1="符号链接 /root/sbox/prerelease/sing-box 不存在"
+fi
 
     # 判断当前版本
     if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
