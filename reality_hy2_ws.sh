@@ -375,8 +375,11 @@ switch_kernel() {
                     chmod +x /root/sbox/prerelease/sing-box
                 fi
                 ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
+                # 根据版本号选择配置文件
+                CONFIG_FILE="/root/sbox/sbconfig_server.json"
                 echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
                 ;;
+
             2)
                 # 检查并下载最新正式版 (stable)
                 if [[ ! -f /root/sbox/release/sing-box ]]; then
@@ -387,8 +390,11 @@ switch_kernel() {
                     chmod +x /root/sbox/release/sing-box
                 fi
                 ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
+                # 根据版本号选择配置文件
+                CONFIG_FILE="/root/sbox/sbconfig1_server.json"
                 echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
                 ;;
+
             3)
                 # 下载旧正式版 (1.10.2)
                 if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
@@ -398,8 +404,11 @@ switch_kernel() {
                     chmod +x /root/sbox/old_version/sing-box-1.10.2
                 fi
                 ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
+                # 使用默认的配置文件
+                CONFIG_FILE="/root/sbox/sbconfig_server.json"
                 echo -e "\e[1;3;34m已切换到旧正式版 (1.10.2)。\e[0m"
                 ;;
+
             4)
                 # 下载旧测试版 (1.11.0-alpha.19)
                 if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
@@ -409,12 +418,16 @@ switch_kernel() {
                     chmod +x /root/sbox/old_version/sing-box-1.11.0-alpha.19
                 fi
                 ln -sf /root/sbox/old_version/sing-box-1.11.0-alpha.19 /root/sbox/sing-box
+                # 使用默认的配置文件
+                CONFIG_FILE="/root/sbox/sbconfig_server.json"
                 echo -e "\e[1;3;35m已切换到旧测试版 (1.11.0-alpha.19)。\e[0m"
                 ;;
+
             0)
                 echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
                 break
                 ;;
+
             *)
                 echo -e "\e[1;3;31m无效选项，请重新输入。\e[0m"
                 continue
@@ -440,6 +453,7 @@ switch_kernel() {
 
     echo -e "\e[1;35m======================\e[0m"
 }
+
 
 #生成协议链接
 show_client_configuration() {
