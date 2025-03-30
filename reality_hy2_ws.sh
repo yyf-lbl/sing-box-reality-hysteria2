@@ -1621,46 +1621,6 @@ EOF
     fi
 }
 
-# 重启服务
-sbox_services() {
-    # 获取 sing-box 版本
-    SING_BOX_VERSION=$(/root/sbox/sing-box version | grep -oP '\d+\.\d+\.\d+')
-    # 比较 sing-box 版本，选择配置文件
-    if [[ "$(echo -e "1.10.2\n$SING_BOX_VERSION" | sort -V | head -n1)" == "1.10.2" ]]; then
-        CONFIG_FILE="/root/sbox/sbconfig_server.json"
-    else
-        CONFIG_FILE="/root/sbox/sbconfig1_server.json"
-    fi
-
-    # 检查配置文件是否有效
-    if /root/sbox/sing-box check -c "$CONFIG_FILE"; then
-        # 杀掉现有的 sing-box 进程
-        pkill -f sing-box
-
-        # 重新加载 systemd 配置
-        systemctl daemon-reload
-
-        # 设置 sing-box 服务开机启动
-        systemctl enable sing-box > /dev/null 2>&1
-
-        # 启动 sing-box 服务
-        systemctl start sing-box
-
-        # 检查服务是否启动成功
-        if systemctl is-active --quiet sing-box; then
-            # 打印成功信息，绿色加粗斜体
-            echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
-        else
-            echo -e "\e[1;3;31m错误: sing-box 服务启动失败！\e[0m"
-            return 1  # 返回错误状态
-        fi
-    else
-        # 如果配置无效，打印错误信息
-        echo -e "\e[1;3;31m配置错误: 配置文件 ($CONFIG_FILE) 无效或格式错误！\e[0m"
-        return 1  # 返回错误状态
-    fi
-}
-
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
     show_notice "将重新安装中..."
