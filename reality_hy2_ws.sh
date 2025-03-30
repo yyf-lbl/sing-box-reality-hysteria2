@@ -467,11 +467,13 @@ switch_kernel() {
         # 下载文件
         wget -O /root/sbox/sing-box.tar.gz "$download_url"
 
-        # 检查下载的文件是否是有效的二进制文件
+        # 检查文件是否是有效的二进制文件
         if file /root/sbox/sing-box.tar.gz | grep -q "gzip compressed data"; then
             echo -e "\e[1;3;32m文件格式正确，准备移动...\e[0m"
         else
-            echo -e "\e[1;3;31m下载的文件格式错误，请检查下载链接。\e[0m"
+            echo -e "\e[1;3;31m下载的文件可能是 HTML 或其他格式，检查链接是否正确。\e[0m"
+            # 如果是错误页面或其他格式的文件，输出文件的开始部分
+            head -n 20 /root/sbox/sing-box.tar.gz
             exit 1
         fi
 
