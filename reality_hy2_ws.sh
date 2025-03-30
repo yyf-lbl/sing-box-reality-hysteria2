@@ -301,7 +301,7 @@ download_singbox() {
         prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
         prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
 
-        # 下载正式版（如果不存在）
+        # 检查是否已经下载过最新正式版
         if [ ! -f "$release_path/sing-box-$latest_release_version" ]; then
             echo -e "\e[1;3;32m下载最新正式版: $latest_release_version\e[0m"
             if curl -sLo "/root/${release_package}" "$release_url"; then
@@ -313,9 +313,11 @@ download_singbox() {
             else
                 echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
             fi
+        else
+            echo -e "\e[1;3;32m✔ 最新正式版已存在: $latest_release_version\e[0m"
         fi
 
-        # 下载测试版（如果不存在）
+        # 检查是否已经下载过最新测试版
         if [ ! -f "$release_path/sing-box-test-$latest_prerelease_version" ]; then
             echo -e "\e[1;3;33m下载最新测试版: $latest_prerelease_version\e[0m"
             if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
@@ -327,7 +329,10 @@ download_singbox() {
             else
                 echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
             fi
+        else
+            echo -e "\e[1;3;33m✔ 最新测试版已存在: $latest_prerelease_version\e[0m"
         fi
+
         echo -e "\e[1;35m======================\e[0m"
         # 选择使用哪个版本
         echo -e "\e[1;3;33m请选择要使用的版本启动服务:\e[0m"
@@ -353,18 +358,22 @@ download_singbox() {
         old_release_path="$old_version_path/sing-box-$old_release_version"
         old_prerelease_path="$old_version_path/sing-box-$old_prerelease_version"
 
-        old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
-        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
-
+        # 检查是否已经下载过旧正式版
         if [ ! -f "$old_release_path" ]; then
             echo -e "\e[1;3;32m下载旧正式版: $old_release_version\e[0m"
             curl -sLo "$old_release_path" "$old_release_url" && chmod +x "$old_release_path"
+        else
+            echo -e "\e[1;3;32m✔ 旧正式版已存在: $old_release_version\e[0m"
         fi
 
+        # 检查是否已经下载过旧测试版
         if [ ! -f "$old_prerelease_path" ]; then
             echo -e "\e[1;3;33m下载旧测试版: $old_prerelease_version\e[0m"
             curl -sLo "$old_prerelease_path" "$old_prerelease_url" && chmod +x "$old_prerelease_path"
+        else
+            echo -e "\e[1;3;33m✔ 旧测试版已存在: $old_prerelease_version\e[0m"
         fi
+
         echo -e "\e[1;35m======================\e[0m"
         echo -e "\e[1;3;33m请选择要使用的旧版本启动服务:\e[0m"
         echo -e "\e[1;3;32m1. 旧正式版 ($old_release_version)\e[0m"
@@ -381,7 +390,9 @@ download_singbox() {
     fi
 
     echo -e "\e[1;3;32m✔ 下载任务完成！\e[0m"
+    echo -e "\e[1;35m======================\e[0m"
 }
+#切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
     echo -e "\e[1;3;32m1. 最新正式版\e[0m"
@@ -1479,7 +1490,7 @@ setup_services() {
     else
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
     fi
-    echo -e "使用配置文件: $CONFIG_FILE"
+ 
 
     # 获取 vmess 端口（如果有）
     VMESS_PORT=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' "$CONFIG_FILE")
@@ -1540,8 +1551,12 @@ EOF
 
                 if systemctl is-active --quiet cloudflared; then
                     echo -e "\e[1;3;32mCloudflare Tunnel 已成功启动！\e[0m"
+                    
+                   echo -e "\e[1;35m======================\e[0m"
                 else
                     echo -e "\e[1;3;31mCloudflare Tunnel 启动失败！\e[0m"
+                    
+                      echo -e "\e[1;35m======================\e[0m"
                 fi
             fi
         else
