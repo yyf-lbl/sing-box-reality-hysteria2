@@ -390,6 +390,7 @@ switch_kernel() {
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
+    echo -e "\e[1;35m======================\e[0m"
     # 根据用户选择下载或切换版本
     case $version_choice in
         1)
