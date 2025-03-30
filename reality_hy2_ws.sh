@@ -231,8 +231,8 @@ download_cloudflared() {
 # 下载singbox最新测试版内核和正式版
 download_singbox() {
     echo -e "\e[1;3;33m请选择要下载的版本:\e[0m"
-    echo -e "\e[1;3;36m1. 下载最新版本 (正式版 + 测试版)\e[0m"
-    echo -e "\e[1;3;36m2. 下载旧版本 (正式版 + 测试版)\e[0m"
+    echo -e "\e[1;3;32m1. 更新最新版本 (正式版 + 测试版)\e[0m"
+    echo -e "\e[1;3;32m2. 使用旧版本 (正式版 + 测试版)\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' version_choice
 
     arch=$(uname -m)
