@@ -1,6 +1,6 @@
 #!/bin/bash  
 asdf() {
-    # 设置路径变量
+     # 设置路径变量
     SBOX_DIR="/root/sbox"
     SBOX_TEST_DIR="$SBOX_DIR/prerelease"
     CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
@@ -67,57 +67,18 @@ WantedBy=multi-user.target
 EOF
     fi
 
-    # 手动重启功能
-    echo -e "\n是否需要重启 sing-box 或 Cloudflare Tunnel?"
-    echo -e "1) 重启 sing-box"
-    echo -e "2) 重启 Cloudflare Tunnel"
-    echo -e "3) 重启两者"
-    echo -e "4) 不重启"
-    read -p "请输入选择 (1/2/3/4): " restart_choice
+    # 直接执行 daemon-reload 来加载最新的服务配置
+  #  echo -e "\e[1;3;33m正在重新加载系统单元配置...\e[0m"
+    systemctl daemon-reload
 
-    # 如果用户选择重启任何服务，执行 `systemctl daemon-reload` 来重新加载系统配置
-    if [[ "$restart_choice" == "1" || "$restart_choice" == "2" || "$restart_choice" == "3" ]]; then
-        echo -e "\e[1;3;33m正在重新加载系统单元配置...\e[0m"
-        systemctl daemon-reload
+    # 直接重启 sing-box
+    echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
+    systemctl restart sing-box
+    if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 已成功重启！\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
     fi
-
-    case $restart_choice in
-        1)
-            echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
-            systemctl restart sing-box
-            if systemctl is-active --quiet sing-box; then
-                echo -e "\e[1;3;32msing-box 已成功重启！\e[0m"
-            else
-                echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
-            fi
-            ;;
-        2)
-            echo -e "\e[1;3;33m正在重启 Cloudflare Tunnel...\e[0m"
-            systemctl restart cloudflared
-            if systemctl is-active --quiet cloudflared; then
-                echo -e "\e[1;3;32mCloudflare Tunnel 已成功重启！\e[0m"
-            else
-                echo -e "\e[1;3;31mCloudflare Tunnel 重启失败！\e[0m"
-            fi
-            ;;
-        3)
-            echo -e "\e[1;3;33m正在重启 sing-box 和 Cloudflare Tunnel...\e[0m"
-            systemctl restart sing-box
-            systemctl restart cloudflared
-            if systemctl is-active --quiet sing-box && systemctl is-active --quiet cloudflared; then
-                echo -e "\e[1;3;32msing-box 和 Cloudflare Tunnel 已成功重启！\e[0m"
-            else
-                echo -e "\e[1;3;31msing-box 或 Cloudflare Tunnel 重启失败！\e[0m"
-            fi
-            ;;
-        4)
-            echo -e "\e[1;3;32m没有重启操作，服务保持运行状态。\e[0m"
-            ;;
-        *)
-            echo -e "\e[1;3;31m错误: 无效的选择！\e[0m"
-            exit 1
-            ;;
-    esac
 }
 # 创建快捷指令
 add_alias() {
