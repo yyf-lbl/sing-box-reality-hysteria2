@@ -2138,7 +2138,7 @@ case $choice in
         restart_tunnel
         ;;
     8)       
-      Restart_service
+      box_services
         ;;
     9) 
       check_tunnel_status
