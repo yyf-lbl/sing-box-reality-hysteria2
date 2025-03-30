@@ -2081,7 +2081,7 @@ case $choice in
         uninstall_singbox
         ;;
     6)
-        show_notice "正在执行操作..."
+        show_notice "正在等待执行..."
         download_singbox
         setup_services
         ;;
