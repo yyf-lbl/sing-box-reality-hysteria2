@@ -1,7 +1,11 @@
 #!/bin/bash  
 asdf() {
     # 获取当前 sing-box 路径
-    current_link_target="/root/sbox/sing-box"
+    if [[ -L /root/sbox/sing-box ]]; then
+        current_link_target=$(readlink /root/sbox/sing-box)
+    else
+        current_link_target="/root/sbox/sing-box"  # 如果不是符号链接，使用原路径
+    fi
 
     # 打印当前路径，方便调试
     echo "当前 sing-box 路径: $current_link_target"
@@ -33,6 +37,7 @@ asdf() {
         return 1  # 返回错误状态
     fi
 }
+
 
 # 创建快捷指令
 add_alias() {
