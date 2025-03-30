@@ -382,6 +382,40 @@ download_singbox() {
 
     echo -e "\e[1;3;32m✔ 下载任务完成！\e[0m"
 }
+get_singbox_download_url() {
+    local version_type=$1
+    local arch=$(uname -m)
+
+    # 适配不同的系统架构
+    case ${arch} in
+        x86_64) arch="amd64" ;;
+        aarch64) arch="arm64" ;;
+        armv7l) arch="armv7" ;;
+    esac
+
+    if [ "$version_type" == "latest_release" ]; then
+        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
+        latest_release_version=${latest_release_tag#v}
+        echo "https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/sing-box-${latest_release_version}-linux-${arch}.tar.gz"
+    
+    elif [ "$version_type" == "latest_prerelease" ]; then
+        latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
+        latest_prerelease_version=${latest_prerelease_tag#v}
+        echo "https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
+    
+    elif [ "$version_type" == "old_release" ]; then
+        old_release_version="1.10.2"
+        echo "https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
+    
+    elif [ "$version_type" == "old_prerelease" ]; then
+        old_prerelease_version="1.11.0-alpha.19"
+        echo "https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
+    
+    else
+        echo "Invalid version type"
+        return 1
+    fi
+}
 
 #singbox 内核切换
 switch_kernel() {
@@ -392,26 +426,32 @@ switch_kernel() {
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
-    # 根据用户选择下载或切换版本
+    local download_url=""
+    local save_path=""
+    
+    # 确保存放目录存在
+    mkdir -p /root/sbox/latest_version
+    mkdir -p /root/sbox/old_version
+
     case $version_choice in
         1)
-            # 下载并使用最新正式版
-            download_singbox 1
+            download_url=$(get_singbox_download_url "latest_release")
+            save_path="/root/sbox/latest_version/sing-box-latest"
             VERSION_TYPE="latest_release"
             ;;
         2)
-            # 下载并使用最新测试版
-            download_singbox 1
+            download_url=$(get_singbox_download_url "latest_prerelease")
+            save_path="/root/sbox/latest_version/sing-box-test-latest"
             VERSION_TYPE="latest_prerelease"
             ;;
         3)
-            # 下载并使用旧正式版
-            download_singbox 2
+            download_url=$(get_singbox_download_url "old_release")
+            save_path="/root/sbox/old_version/sing-box-old"
             VERSION_TYPE="old_release"
             ;;
         4)
-            # 下载并使用旧测试版
-            download_singbox 2
+            download_url=$(get_singbox_download_url "old_prerelease")
+            save_path="/root/sbox/old_version/sing-box-test-old"
             VERSION_TYPE="old_prerelease"
             ;;
         *)
@@ -420,26 +460,45 @@ switch_kernel() {
             ;;
     esac
 
+    if [ "$download_url" != "Invalid version type" ]; then
+        echo -e "\e[1;3;32m正在下载: $download_url\e[0m"
+        
+        # 下载并解压
+        wget -O /root/sbox/sing-box.tar.gz "$download_url"
+        tar -xzvf /root/sbox/sing-box.tar.gz -C /root/sbox/
+
+        # 移动并重命名 sing-box
+        mv /root/sbox/sing-box-*/* "$save_path"
+        rm -rf /root/sbox/sing-box-*  # 删除解压的临时目录
+        chmod +x "$save_path"
+
+        echo -e "\e[1;3;32m✔ sing-box 已下载并存放在: $save_path\e[0m"
+    else
+        echo -e "\e[1;3;31m✖ 下载链接获取失败。\e[0m"
+        exit 1
+    fi
+
     # 设置相应的配置文件路径
     SBOX_DIR="/root/sbox"
     case $VERSION_TYPE in
         latest_release)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新正式版的配置文件
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
             ;;
         latest_prerelease)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新测试版的配置文件
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
             ;;
         old_release)
-            CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"    # 旧正式版配置文件
+            CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
             ;;
         old_prerelease)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"    # 旧测试版配置文件
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
             ;;
     esac
 
-    # 调用 setup_services 启动服务
+    # 启动服务
     setup_services "$CONFIG_FILE"
 }
+
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
