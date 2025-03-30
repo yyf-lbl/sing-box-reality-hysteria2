@@ -1555,15 +1555,24 @@ setup_services() {
     LOG_PATH="$SBOX_DIR/argo_run.log"
     # 检测 sing-box 位置
     SING_BOX_BIN=""
+       # **检测正式版 sing-box**
     if [ -f "$SBOX_DIR/sing-box" ]; then
-        SING_BOX_VERSION_STABLE=$(/root/sbox/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+        SING_BOX_VERSION_STABLE=$("$SBOX_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
         echo -e "\e[1;3;32m检测到正式版 sing-box: $SING_BOX_VERSION_STABLE\e[0m"
+    elif [ -f "/root/sbox/old_version/sing-box" ]; then
+        SING_BOX_VERSION_STABLE=$("/root/sbox/old_version/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+        echo -e "\e[1;3;32m检测到旧正式版 sing-box: $SING_BOX_VERSION_STABLE\e[0m"
     fi
 
+    # **检测测试版 sing-box**
     if [ -f "$SBOX_TEST_DIR/sing-box" ]; then
-        SING_BOX_VERSION_TEST=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+        SING_BOX_VERSION_TEST=$("$SBOX_TEST_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
         echo -e "\e[1;3;33m检测到测试版 sing-box: $SING_BOX_VERSION_TEST\e[0m"
+    elif [ -f "/root/sbox/old_version/sing-box-test" ]; then
+        SING_BOX_VERSION_TEST=$("/root/sbox/old_version/sing-box-test" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+        echo -e "\e[1;3;33m检测到旧测试版 sing-box: $SING_BOX_VERSION_TEST\e[0m"
     fi
+
 
     # 如果只有一个版本，直接使用
     if [ -z "$SING_BOX_VERSION_TEST" ]; then
