@@ -439,17 +439,21 @@ fi
 #singbox 内核切换
 switch_kernel() {
     # 获取当前 sing-box 版本
-    if [[ -f /root/sbox/latest_version/sing-box-stable ]]; then
-        current_version=$(/root/sbox/latest_version/sing-box-stable version 2>/dev/null | head -n1)
-    elif [[ -f /root/sbox/latest_version/sing-box-alpha ]]; then
-        current_version=$(/root/sbox/latest_version/sing-box-alpha version 2>/dev/null | head -n1)
-    elif [[ -f /root/sbox/old_version/sing-box-stable ]]; then
-        current_version=$(/root/sbox/old_version/sing-box-stable version 2>/dev/null | head -n1)
-    elif [[ -f /root/sbox/old_version/sing-box-alpha ]]; then
-        current_version=$(/root/sbox/old_version/sing-box-alpha version 2>/dev/null | head -n1)
-    else
-        current_version="未找到 sing-box"
-    fi
+    if [[ -f /root/sbox/latest_version/sing-box-stable* ]]; then
+    # 最新正式版
+    current_version="最新正式版: $(ls /root/sbox/latest_version/sing-box-stable* | head -n1 | sed 's/.*sing-box-\(.*\)/\1/')"
+elif [[ -f /root/sbox/latest_version/sing-box-alpha* ]]; then
+    # 最新测试版
+    current_version="最新测试版: $(ls /root/sbox/latest_version/sing-box-alpha* | head -n1 | sed 's/.*sing-box-\(.*\)/\1/')"
+elif [[ -f /root/sbox/old_version/sing-box-stable* ]]; then
+    # 旧正式版
+    current_version="旧正式版: $(ls /root/sbox/old_version/sing-box-stable* | head -n1 | sed 's/.*sing-box-\(.*\)/\1/')"
+elif [[ -f /root/sbox/old_version/sing-box-alpha* ]]; then
+    # 旧测试版
+    current_version="旧测试版: $(ls /root/sbox/old_version/sing-box-alpha* | head -n1 | sed 's/.*sing-box-\(.*\)/\1/')"
+else
+    current_version="未找到 sing-box"
+fi
 
     # 检测当前符号链接指向的路径
     if [[ -L /root/sbox/sing-box ]]; then
