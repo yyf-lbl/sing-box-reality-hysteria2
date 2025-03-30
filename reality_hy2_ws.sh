@@ -1,62 +1,4 @@
 #!/bin/bash  
-asdf() {
-    # 设置路径变量
-    SBOX_DIR="/root/sbox"
-    SING_BOX_BIN="$SBOX_DIR/sing-box"
-
-    # 检查 sing-box 是否存在
-    if [ ! -f "$SING_BOX_BIN" ]; then
-        echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
-        exit 1
-    fi
-
-    # 获取 sing-box 版本
-    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-
-    if [ -z "$SING_BOX_VERSION" ]; then
-        echo -e "\e[1;3;31m错误: 无法获取 sing-box 版本信息！\e[0m"
-        exit 1
-    fi
-
-    echo -e "\e[1;3;34m当前运行的 sing-box 版本: $SING_BOX_VERSION\e[0m"
-
-    # 根据版本号选择配置文件
-    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
-        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
-    else
-        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
-    fi
-
-    echo -e "使用配置文件: $CONFIG_FILE"
-
-    # 重新加载 systemd 配置（如果有变更）
-    systemctl daemon-reload
-
-    # 重新启动 sing-box 并检查状态
-    echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
-    systemctl restart sing-box
-
-    if systemctl is-active --quiet sing-box; then
-        echo -e "\e[1;3;32msing-box 已成功重启！\e[0m"
-    else
-        echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
-    fi
-}
-
-# 创建快捷指令
-add_alias() {
-    config_file=$1
-    alias_names=("a" "5")
-    [ ! -f "$config_file" ] || touch "$config_file"
-    for alias_name in "${alias_names[@]}"; do
-        if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
-        #   echo "Adding alias $alias_name to $config_file"
-         #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
-            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
- fi
-    done
-    . "$config_file"
-}
 config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
 for config_file in "${config_files[@]}"; do
     add_alias "$config_file"
@@ -225,7 +167,64 @@ EOF
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
   fi
 }
+asdf() {
+    # 设置路径变量
+    SBOX_DIR="/root/sbox"
+    SING_BOX_BIN="$SBOX_DIR/sing-box"
 
+    # 检查 sing-box 是否存在
+    if [ ! -f "$SING_BOX_BIN" ]; then
+        echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
+        exit 1
+    fi
+
+    # 获取 sing-box 版本
+    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+
+    if [ -z "$SING_BOX_VERSION" ]; then
+        echo -e "\e[1;3;31m错误: 无法获取 sing-box 版本信息！\e[0m"
+        exit 1
+    fi
+
+    echo -e "\e[1;3;34m当前运行的 sing-box 版本: $SING_BOX_VERSION\e[0m"
+
+    # 根据版本号选择配置文件
+    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
+        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+    else
+        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+    fi
+
+    echo -e "使用配置文件: $CONFIG_FILE"
+
+    # 重新加载 systemd 配置（如果有变更）
+    systemctl daemon-reload
+
+    # 重新启动 sing-box 并检查状态
+    echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
+    systemctl restart sing-box
+
+    if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box 已成功重启！\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
+    fi
+}
+
+# 创建快捷指令
+add_alias() {
+    config_file=$1
+    alias_names=("a" "5")
+    [ ! -f "$config_file" ] || touch "$config_file"
+    for alias_name in "${alias_names[@]}"; do
+        if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
+        #   echo "Adding alias $alias_name to $config_file"
+         #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
+            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
+ fi
+    done
+    . "$config_file"
+}
 # 下载 cloudflared 官方版
 download_cloudflared() {
     official_dir="/root/sbox/"
