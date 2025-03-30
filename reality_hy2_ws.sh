@@ -1,6 +1,6 @@
 #!/bin/bash  
 asdf() {
-    # 设置路径变量
+   # 设置路径变量
     SBOX_DIR="/root/sbox"
     SBOX_TEST_DIR="$SBOX_DIR/prerelease"
     CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
@@ -8,46 +8,19 @@ asdf() {
     JSON_PATH="$SBOX_DIR/tunnel.json"
     LOG_PATH="$SBOX_DIR/argo_run.log"
 
-    # 检测 sing-box 位置
-    SING_BOX_BIN=""
+    # 选择已经存在的 sing-box 版本
     if [ -f "$SBOX_DIR/sing-box" ]; then
-        SING_BOX_VERSION_STABLE=$(/root/sbox/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-    fi
-
-    if [ -f "$SBOX_TEST_DIR/sing-box" ]; then
-        SING_BOX_VERSION_TEST=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-    fi
-
-    # 如果只有一个版本，直接使用
-    if [ -z "$SING_BOX_VERSION_TEST" ]; then
         SING_BOX_BIN="$SBOX_DIR/sing-box"
-        SING_BOX_VERSION="$SING_BOX_VERSION_STABLE"
-    elif [ -z "$SING_BOX_VERSION_STABLE" ]; then
+    elif [ -f "$SBOX_TEST_DIR/sing-box" ]; then
         SING_BOX_BIN="$SBOX_TEST_DIR/sing-box"
-        SING_BOX_VERSION="$SING_BOX_VERSION_TEST"
     else
-        # 如果两个版本都有，让用户选择
-        echo -e "\n请选择要使用的 sing-box 版本:"
-        echo -e "1) 正式版 ($SING_BOX_VERSION_STABLE)"
-        echo -e "2) 测试版 ($SING_BOX_VERSION_TEST)"
-        read -p "输入编号 (1/2): " choice
-
-        if [[ "$choice" == "1" ]]; then
-            SING_BOX_BIN="$SBOX_DIR/sing-box"
-            SING_BOX_VERSION="$SING_BOX_VERSION_STABLE"
-        elif [[ "$choice" == "2" ]]; then
-            SING_BOX_BIN="$SBOX_TEST_DIR/sing-box"
-            SING_BOX_VERSION="$SING_BOX_VERSION_TEST"
-        else
-            echo -e "\e[1;3;31m错误: 无效的选择！\e[0m"
-            exit 1
-        fi
+        echo -e "\e[1;3;31m错误: 未找到 sing-box 可执行文件！\e[0m"
+        exit 1
     fi
 
     # 选择配置文件
-    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
-        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
-    else
+    CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+    if [ ! -f "$CONFIG_FILE" ]; then
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
     fi
 
