@@ -2077,7 +2077,7 @@ case $choice in
     6)
         show_notice "正在更新内核..."
         download_singbox
-        sbox_services
+        setup_services
         ;;
     7)
         restart_tunnel
