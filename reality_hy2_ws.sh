@@ -328,11 +328,14 @@ download_singbox() {
 #singbox 内核切换
 switch_kernel() {
     # 获取当前 sing-box 版本
-    if [[ -f /root/sbox/sing-box ]]; then
-        current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n1)
-    else
-        current_version="未找到 sing-box"
-    fi
+   # 获取当前 sing-box 版本
+if [[ -f /root/sbox/sing-box ]]; then
+    current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n1)
+elif [[ -f /root/sbox/prerelease/sing-box ]]; then
+    current_version=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1)
+else
+    current_version="未找到 sing-box"
+fi
 
     # 检测当前符号链接指向的路径
     current_link_target=$(readlink /root/sbox/sing-box)
