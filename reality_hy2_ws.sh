@@ -1466,12 +1466,12 @@ setup_services() {
     # 检测 sing-box 位置
     SING_BOX_BIN=""
     if [ -f "$SBOX_DIR/sing-box" ]; then
-         SING_BOX_VERSION_STABLE=$(/root/sbox/sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
+        SING_BOX_VERSION_STABLE=$(/root/sbox/sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
         echo -e "\e[1;3;32m检测到正式版 sing-box: $SING_BOX_VERSION_STABLE\e[0m"
     fi
 
     if [ -f "$SBOX_TEST_DIR/sing-box" ]; then
-         SING_BOX_VERSION_TEST=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
+        SING_BOX_VERSION_TEST=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1 | awk '{print $3}')
         echo -e "\e[1;3;33m检测到测试版 sing-box: $SING_BOX_VERSION_TEST\e[0m"
     fi
 
@@ -1504,11 +1504,14 @@ setup_services() {
     echo -e "\e[1;3;34m已选择使用: $SING_BOX_BIN (版本 $SING_BOX_VERSION)\e[0m"
 
     # 根据版本号选择配置文件
+    # 提取版本号并与1.10.2进行比较
     if [[ "$(echo -e "1.10.2\n$SING_BOX_VERSION" | sort -V | head -n1)" == "1.10.2" ]]; then
         CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
     else
         CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
     fi
+
+    echo -e "使用配置文件: $CONFIG_FILE"
 
     # 获取 vmess 端口
     VMESS_PORT=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' "$CONFIG_FILE")
