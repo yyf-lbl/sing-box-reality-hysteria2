@@ -167,50 +167,6 @@ EOF
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
   fi
 }
-asdf() {
-    # 设置路径变量
-    SBOX_DIR="/root/sbox"
-    SING_BOX_BIN="$SBOX_DIR/sing-box"
-
-    # 检查 sing-box 是否存在
-    if [ ! -f "$SING_BOX_BIN" ]; then
-        echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
-        exit 1
-    fi
-
-    # 获取 sing-box 版本
-    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-
-    if [ -z "$SING_BOX_VERSION" ]; then
-        echo -e "\e[1;3;31m错误: 无法获取 sing-box 版本信息！\e[0m"
-        exit 1
-    fi
-
-    echo -e "\e[1;3;34m当前运行的 sing-box 版本: $SING_BOX_VERSION\e[0m"
-
-    # 根据版本号选择配置文件
-    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
-        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
-    else
-        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
-    fi
-
-    echo -e "使用配置文件: $CONFIG_FILE"
-
-    # 重新加载 systemd 配置（如果有变更）
-    systemctl daemon-reload
-
-    # 重新启动 sing-box 并检查状态
-    echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
-    systemctl restart sing-box
-
-    if systemctl is-active --quiet sing-box; then
-        echo -e "\e[1;3;32msing-box 已成功重启！\e[0m"
-    else
-        echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
-    fi
-}
-
 # 创建快捷指令
 add_alias() {
     config_file=$1
@@ -225,6 +181,77 @@ add_alias() {
     done
     . "$config_file"
 }
+Restart_service() {
+    # 设置路径变量
+    SBOX_DIR="/root/sbox"
+    SBOX_TEST_DIR="$SBOX_DIR/prerelease"
+    OLD_VERSION_DIR="$SBOX_DIR/old_version"
+
+    # 获取当前运行的 sing-box 进程路径
+    CURRENT_SING_BOX_BIN=$(systemctl show -p ExecStart sing-box.service | cut -d'=' -f2 | awk '{print $1}')
+    
+    if [ -z "$CURRENT_SING_BOX_BIN" ] || [ ! -f "$CURRENT_SING_BOX_BIN" ]; then
+        echo -e "\e[1;3;31m错误: 当前没有正在运行的 sing-box 进程！\e[0m"
+        exit 1
+    fi
+
+    # 获取当前 sing-box 版本
+    CURRENT_SING_BOX_VERSION=$("$CURRENT_SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+
+    if [ -z "$CURRENT_SING_BOX_VERSION" ]; then
+        echo -e "\e[1;3;31m错误: 无法获取 sing-box 版本信息！\e[0m"
+        exit 1
+    fi
+
+    # 读取已安装的 sing-box 版本
+    SING_BOX_VERSION_STABLE=$("$SBOX_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+    SING_BOX_VERSION_TEST=$("$SBOX_TEST_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+    SING_BOX_VERSION_OLD_STABLE=$("$OLD_VERSION_DIR/sing-box" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+    SING_BOX_VERSION_OLD_TEST=$("$OLD_VERSION_DIR/sing-box-test" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+
+    # 识别当前运行的 sing-box 版本类别
+    if [[ "$CURRENT_SING_BOX_BIN" == "$SBOX_DIR/sing-box" ]]; then
+        VERSION_TYPE="最新正式版"
+        COLOR="32" # 绿色
+    elif [[ "$CURRENT_SING_BOX_BIN" == "$SBOX_TEST_DIR/sing-box" ]]; then
+        VERSION_TYPE="最新测试版"
+        COLOR="33" # 黄色
+    elif [[ "$CURRENT_SING_BOX_BIN" == "$OLD_VERSION_DIR/sing-box" ]]; then
+        VERSION_TYPE="旧正式版"
+        COLOR="34" # 蓝色
+    elif [[ "$CURRENT_SING_BOX_BIN" == "$OLD_VERSION_DIR/sing-box-test" ]]; then
+        VERSION_TYPE="旧测试版"
+        COLOR="35" # 紫色
+    else
+        VERSION_TYPE="未知版本"
+        COLOR="31" # 红色
+    fi
+
+    echo -e "\e[1;3;${COLOR}m当前运行的 sing-box 版本: $CURRENT_SING_BOX_VERSION ($VERSION_TYPE)\e[0m"
+
+    # 选择对应的配置文件
+    if [[ "$CURRENT_SING_BOX_VERSION" > "1.10.2" ]]; then
+        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+    else
+        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+    fi
+
+    echo -e "使用配置文件: $CONFIG_FILE"
+
+    # 重新加载 systemd 配置
+    systemctl daemon-reload
+
+    # 重新启动 sing-box
+    echo -e "\e[1;3;33m正在重启 sing-box...\e[0m"
+    systemctl restart sing-box
+
+    if systemctl is-active --quiet sing-box; then
+        echo -e "\e[1;3;32msing-box ($VERSION_TYPE) 已成功重启！\e[0m"
+    else
+        echo -e "\e[1;3;31msing-box 启动失败！\e[0m"
+    fi
+}
+
 # 下载 cloudflared 官方版
 download_cloudflared() {
     official_dir="/root/sbox/"
@@ -733,7 +760,8 @@ uninstall_singbox() {
         "/etc/systemd/system/cloudflared.service"
         "/root/sbox/sbconfig_server.json"
         "/root/sbox/sbconfig1_server.json"
-         "/root/sbox/prerelease/sing-box"
+        "/root/sbox/latest_version"
+        "/root/sbox/old_version"
         "/root/sbox/sing-box"
         "/root/sbox/cloudflared-linux"
         "/root/sbox/argo.txt.b64"
@@ -2107,7 +2135,6 @@ case $choice in
         show_client_configuration
         ;;	
     5)
- 
         uninstall_singbox
         ;;
     6)
@@ -2118,12 +2145,9 @@ case $choice in
     7)
         restart_tunnel
         ;;
-    8) 
-   
-asdf
+    8)       
+      Restart_service
         ;;
-  
-  
     9) 
       check_tunnel_status
       ;;
@@ -2133,7 +2157,6 @@ asdf
         exit 0
         ;;
      *)
-   
         echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
         echo ""
         ;;
