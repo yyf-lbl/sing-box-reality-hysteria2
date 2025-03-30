@@ -184,7 +184,7 @@ EOF
 
 #重启sing-box服务
 Restart_service() {
-    # 设置路径变量
+   # 设置路径变量
     SBOX_DIR="/root/sbox"
     SBOX_TEST_DIR="$SBOX_DIR/prerelease"
     OLD_VERSION_DIR="$SBOX_DIR/old_version"
