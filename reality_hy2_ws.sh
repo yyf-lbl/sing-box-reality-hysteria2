@@ -1,6 +1,6 @@
 #!/bin/bash  
 asdf() {
-     # 设置路径变量
+   # 设置路径变量
     SBOX_DIR="/root/sbox"
     SBOX_TEST_DIR="$SBOX_DIR/prerelease"
     CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
