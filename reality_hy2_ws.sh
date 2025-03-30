@@ -1,16 +1,12 @@
 #!/bin/bash  
 asdf() {
-    # 获取当前 sing-box 路径
-    if [[ -L /root/sbox/sing-box ]]; then
-        current_link_target=$(readlink /root/sbox/sing-box)
-    else
-        current_link_target="/root/sbox/sing-box"  # 如果不是符号链接，使用原路径
-    fi
+    # 直接使用文件路径来判断当前 sing-box
+    current_link_target="/root/sbox/sing-box"
 
-    # 打印当前路径，方便调试
+    # 打印调试信息，查看当前路径
     echo "当前 sing-box 路径: $current_link_target"
 
-    # 根据当前路径选择配置文件
+    # 根据路径选择配置文件
     if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
         CONFIG_FILE="/root/sbox/sbconfig_server.json"  # 正式版配置文件
     elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
@@ -25,6 +21,7 @@ asdf() {
     fi
 
     # 检查配置文件并启动 sing-box
+    echo "使用的配置文件是: $CONFIG_FILE"
     if /root/sbox/sing-box check -c "$CONFIG_FILE"; then
         pkill -f sing-box  # 杀掉现有的 sing-box 进程
         systemctl daemon-reload  # 重新加载 systemd 配置
@@ -37,8 +34,6 @@ asdf() {
         return 1  # 返回错误状态
     fi
 }
-
-
 # 创建快捷指令
 add_alias() {
     config_file=$1
