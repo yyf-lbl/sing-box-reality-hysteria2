@@ -440,8 +440,6 @@ fi
         new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1)
         echo -e "\e[1;3;32m当前 sing-box 版本: $new_version\e[0m"
 
-        # 重启 sing-box
-        setup_services
     done
 
     echo -e "\e[1;35m======================\e[0m"
@@ -2089,6 +2087,7 @@ case $choice in
         ;;
     9)
      switch_kernel
+     setup_services
       ;;
       
     10) 
