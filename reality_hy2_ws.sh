@@ -1466,12 +1466,12 @@ setup_services() {
     # 检测 sing-box 位置
     SING_BOX_BIN=""
     if [ -f "$SBOX_DIR/sing-box" ]; then
-        SING_BOX_VERSION_STABLE=$("$SBOX_DIR/sing-box" version | grep -oP '\d+\.\d+\.\d+')
+        SING_BOX_VERSION_STABLE=$("$SBOX_DIR/sing-box" version | head -n1 | grep -oP '^\d+\.\d+\.\d+')
         echo -e "\e[1;3;32m检测到正式版 sing-box: $SING_BOX_VERSION_STABLE\e[0m"
     fi
 
     if [ -f "$SBOX_TEST_DIR/sing-box" ]; then
-        SING_BOX_VERSION_TEST=$("$SBOX_TEST_DIR/sing-box" version | grep -oP '\d+\.\d+\.\d+')
+        SING_BOX_VERSION_TEST=$("$SBOX_TEST_DIR/sing-box" version | head -n1 | grep -oP '^\d+\.\d+\.\d+(-\w+)?')
         echo -e "\e[1;3;33m检测到测试版 sing-box: $SING_BOX_VERSION_TEST\e[0m"
     fi
 
