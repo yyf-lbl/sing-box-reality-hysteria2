@@ -329,7 +329,7 @@ download_singbox() {
 switch_kernel() {
     # 获取当前 sing-box 版本
     if [[ -f /root/sbox/sing-box ]]; then
-        current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1)
+        current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n1)
     else
         current_version="未找到 sing-box"
     fi
@@ -1466,12 +1466,12 @@ setup_services() {
     # 检测 sing-box 位置
     SING_BOX_BIN=""
     if [ -f "$SBOX_DIR/sing-box" ]; then
-        SING_BOX_VERSION_STABLE=$("$SBOX_DIR/sing-box" version | head -n1 | grep -oP '^\d+\.\d+\.\d+')
+        SING_BOX_VERSION_STABLE=$(/root/sbox/sing-box version 2>/dev/null | head -n1)
         echo -e "\e[1;3;32m检测到正式版 sing-box: $SING_BOX_VERSION_STABLE\e[0m"
     fi
 
     if [ -f "$SBOX_TEST_DIR/sing-box" ]; then
-        SING_BOX_VERSION_TEST=$("$SBOX_TEST_DIR/sing-box" version | head -n1 | grep -oP '^\d+\.\d+\.\d+(-\w+)?')
+        SING_BOX_VERSION_TEST=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1)
         echo -e "\e[1;3;33m检测到测试版 sing-box: $SING_BOX_VERSION_TEST\e[0m"
     fi
 
