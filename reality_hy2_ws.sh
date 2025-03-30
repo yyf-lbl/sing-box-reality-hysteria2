@@ -337,14 +337,14 @@ switch_kernel() {
 
     # 检测当前符号链接指向的路径
     current_link_target=$(readlink /root/sbox/sing-box)
-
+    current_link_target1=$(readlink /root/sbox/prerelease/sing-box)
     echo -e "\e[1;3;31m=================\e[0m"
     echo -e "\e[1;3;32m当前 sing-box 版本: $current_version\e[0m"
 
     # 判断当前版本
     if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
         echo -e "\e[1;3;32m当前正在使用正式版 sing-box\e[0m"
-    elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
+    elif [[ $current_link_target1 == "/root/sbox/prerelease/sing-box" ]]; then
         echo -e "\e[1;3;33m当前正在使用测试版 sing-box\e[0m"
     else
         echo -e "\e[1;3;31m当前 sing-box 版本未知。\e[0m"
@@ -451,8 +451,6 @@ switch_kernel() {
 
     echo -e "\e[1;35m======================\e[0m"
 }
-
-
 
 #生成协议链接
 show_client_configuration() {
