@@ -2104,7 +2104,7 @@ case $choice in
         restart_tunnel
         ;;
     8)       
-      sbox_services
+     restart_singbox
         ;;
     9) 
       check_tunnel_status
