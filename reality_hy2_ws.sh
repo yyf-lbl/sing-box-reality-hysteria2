@@ -2157,6 +2157,9 @@ case $choice in
     9) 
       check_tunnel_status
       ;;
+    10) 
+      switch_kernel
+      ;;
       
     0)
         echo -e "\e[1;3;31m已退出脚本\e[0m"
