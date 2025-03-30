@@ -292,7 +292,8 @@ download_singbox() {
 
     release_path="/root/sbox"
     prerelease_path="/root/sbox/prerelease"
-    mkdir -p "$release_path" "$prerelease_path"
+    old_version_path="/root/sbox/old_version"
+    mkdir -p "$release_path" "$prerelease_path" "$old_version_path"
 
     if [ "$version_choice" == "1" ]; then
         # 获取最新正式版 & 测试版版本号
@@ -301,7 +302,7 @@ download_singbox() {
         latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
         latest_prerelease_version=${latest_prerelease_tag#v}
 
-        # 下载正式版
+        # 下载最新正式版
         release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
         release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
         if [ ! -f "$release_path/sing-box" ]; then
@@ -311,7 +312,7 @@ download_singbox() {
                 mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box"
                 rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
                 chmod +x "$release_path/sing-box"
-                echo -e "\e[1;3;32m✔ 最新正式版 ($latest_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
+                echo -e "\e[1;3;32m✔ 最新正式版 ($latest_release_version) 已安装到: $release_path/sing-box\e[0m"
             else
                 echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
             fi
@@ -319,7 +320,7 @@ download_singbox() {
             echo -e "\e[1;3;33m✔ 正式版已存在，无需下载。\e[0m"
         fi
 
-        # 下载测试版
+        # 下载最新测试版
         prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
         prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
         if [ ! -f "$prerelease_path/sing-box" ]; then
@@ -329,7 +330,7 @@ download_singbox() {
                 mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
                 rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
                 chmod +x "$prerelease_path/sing-box"
-                echo -e "\e[1;3;33m✔ 最新测试版 ($latest_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+                echo -e "\e[1;3;33m✔ 最新测试版 ($latest_prerelease_version) 已安装到: $prerelease_path/sing-box\e[0m"
             else
                 echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
             fi
@@ -345,11 +346,11 @@ download_singbox() {
         old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
 
         # 下载旧正式版
-        if [ ! -f "$release_path/sing-box" ]; then
+        if [ ! -f "$old_version_path/sing-box-$old_release_version" ]; then
             echo -e "\e[1;3;32m即将下载旧的正式版: $old_release_version\e[0m"
-            if curl -sLo "$release_path/sing-box" "$old_release_url"; then
-                chmod +x "$release_path/sing-box"
-                echo -e "\e[1;3;32m✔ 旧正式版 ($old_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
+            if curl -sLo "$old_version_path/sing-box-$old_release_version" "$old_release_url"; then
+                chmod +x "$old_version_path/sing-box-$old_release_version"
+                echo -e "\e[1;3;32m✔ 旧正式版 ($old_release_version) 已下载到: $old_version_path/sing-box-$old_release_version\e[0m"
             else
                 echo -e "\e[1;3;31m✖ 旧正式版下载失败，请检查网络连接。\e[0m"
             fi
@@ -358,11 +359,11 @@ download_singbox() {
         fi
 
         # 下载旧测试版
-        if [ ! -f "$prerelease_path/sing-box" ]; then
+        if [ ! -f "$old_version_path/sing-box-$old_prerelease_version" ]; then
             echo -e "\e[1;3;33m即将下载旧的测试版: $old_prerelease_version\e[0m"
-            if curl -sLo "$prerelease_path/sing-box" "$old_prerelease_url"; then
-                chmod +x "$prerelease_path/sing-box"
-                echo -e "\e[1;3;33m✔ 旧测试版 ($old_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+            if curl -sLo "$old_version_path/sing-box-$old_prerelease_version" "$old_prerelease_url"; then
+                chmod +x "$old_version_path/sing-box-$old_prerelease_version"
+                echo -e "\e[1;3;33m✔ 旧测试版 ($old_prerelease_version) 已下载到: $old_version_path/sing-box-$old_prerelease_version\e[0m"
             else
                 echo -e "\e[1;3;31m✖ 旧测试版下载失败，请检查网络连接。\e[0m"
             fi
