@@ -1,4 +1,18 @@
 #!/bin/bash  
+# 创建快捷指令
+add_alias() {
+    config_file=$1
+    alias_names=("a" "5")
+    [ ! -f "$config_file" ] || touch "$config_file"
+    for alias_name in "${alias_names[@]}"; do
+        if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
+        #   echo "Adding alias $alias_name to $config_file"
+         #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
+            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
+ fi
+    done
+    . "$config_file"
+}
 config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
 for config_file in "${config_files[@]}"; do
     add_alias "$config_file"
@@ -167,20 +181,8 @@ EOF
     echo "$argo" | base64 > /root/sbox/argo.txt.b64
   fi
 }
-# 创建快捷指令
-add_alias() {
-    config_file=$1
-    alias_names=("a" "5")
-    [ ! -f "$config_file" ] || touch "$config_file"
-    for alias_name in "${alias_names[@]}"; do
-        if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
-        #   echo "Adding alias $alias_name to $config_file"
-         #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
-            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
- fi
-    done
-    . "$config_file"
-}
+
+#重启sing-box服务
 Restart_service() {
     # 设置路径变量
     SBOX_DIR="/root/sbox"
