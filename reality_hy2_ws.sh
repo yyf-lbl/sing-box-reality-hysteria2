@@ -300,11 +300,32 @@ download_cloudflared() {
 
 # 下载singbox最新测试版内核和正式版
 download_singbox() {
-    echo -e "\e[1;3;33m请选择要下载的版本:\e[0m"
-    echo -e "\e[1;3;32m1. 更新最新版本 (正式版 + 测试版)\e[0m"
-    echo -e "\e[1;3;32m2. 使用旧版本 (正式版 + 测试版)\e[0m"
+ echo -e "\e[1;3;33m请选择要下载的版本:\e[0m"
+echo -e "\e[1;3;32m1. 更新最新版本 (正式版 + 测试版)\e[0m"
+echo -e "\e[1;3;32m2. 使用旧版本 (正式版 + 测试版)\e[0m"
+
+# 通过循环确保输入有效
+while true; do
     read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' version_choice
 
+    # 检查用户输入是否有效
+    if [[ "$version_choice" == "1" || "$version_choice" == "2" ]]; then
+        # 如果输入有效，退出循环并继续执行后续代码
+        break
+    else
+        # 如果输入无效，提示用户重新输入
+        echo -e "\e[1;3;31m无效输入，请重新选择 (1-2)。\e[0m"
+    fi
+done
+
+# 根据版本选择执行相应操作
+if [ "$version_choice" == "1" ]; then
+    echo "选择了更新最新版本 (正式版 + 测试版)"
+    # 继续执行更新操作的代码...
+elif [ "$version_choice" == "2" ]; then
+    echo "选择了使用旧版本 (正式版 + 测试版)"
+    # 继续执行使用旧版本的代码...
+fi
     arch=$(uname -m)
     echo -e "\e[1;3;32m本机系统架构: $arch\e[0m"
 
