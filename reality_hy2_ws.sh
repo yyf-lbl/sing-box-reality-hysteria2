@@ -190,7 +190,10 @@ Restart_service() {
     OLD_VERSION_DIR="$SBOX_DIR/old_version"
 
     # 获取当前运行的 sing-box 进程路径
-    CURRENT_SING_BOX_BIN=$(systemctl show -p ExecStart sing-box.service | cut -d'=' -f2 | awk '{print $1}')
+    CURRENT_SING_BOX_BIN=$(systemctl show sing-box -p ExecStart | awk -F '=' '{print $2}' | awk '{print $1}')
+    
+    # 调试输出：确认路径是否正确提取
+    echo "当前运行的 sing-box 路径: $CURRENT_SING_BOX_BIN"
     
     if [ -z "$CURRENT_SING_BOX_BIN" ] || [ ! -f "$CURRENT_SING_BOX_BIN" ]; then
         echo -e "\e[1;3;31m错误: 当前没有正在运行的 sing-box 进程！\e[0m"
