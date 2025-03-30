@@ -186,7 +186,7 @@ EOF
 Restart_service() {
    # 设置路径变量
     SBOX_DIR="/root/sbox"
-    SBOX_TEST_DIR="$SBOX_DIR/prerelease"
+    SBOX_TEST_DIR="$SBOX_DIR/latest_version"
     OLD_VERSION_DIR="$SBOX_DIR/old_version"
 
     # 获取当前运行的 sing-box 进程路径
