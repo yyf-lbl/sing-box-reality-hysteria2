@@ -382,7 +382,8 @@ fi
         fi
 
         # 选择使用哪个版本
-        echo -e "\e[1;3;33m请选择要使用的版本:\e[0m"
+         echo -e "\e[1;35m======================\e[0m"
+        echo -e "\e[1;3;33m请选择要使用最新的版本启动sing-box服务:\e[0m"
         echo -e "\e[1;3;32m1. 最新正式版 ($latest_release_version)\e[0m"
         echo -e "\e[1;3;33m2. 最新测试版 ($latest_prerelease_version)\e[0m"
         read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' latest_choice
@@ -417,8 +418,8 @@ fi
             echo -e "\e[1;3;33m下载旧测试版: $old_prerelease_version\e[0m"
             curl -sLo "$old_prerelease_path" "$old_prerelease_url" && chmod +x "$old_prerelease_path"
         fi
-
-        echo -e "\e[1;3;33m请选择要使用的旧版本:\e[0m"
+         echo -e "\e[1;35m======================\e[0m"
+        echo -e "\e[1;3;33m请选择要使用的旧版本启动sing-box服务:\e[0m"
         echo -e "\e[1;3;32m1. 旧正式版 ($old_release_version)\e[0m"
         echo -e "\e[1;3;33m2. 旧测试版 ($old_prerelease_version)\e[0m"
         read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' old_choice
