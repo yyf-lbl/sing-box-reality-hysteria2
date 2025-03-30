@@ -438,26 +438,41 @@ fi
 #singbox 内核切换
 switch_kernel() {
     # 获取当前 sing-box 版本
-    if [[ -f /root/sbox/sing-box ]]; then
-        current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-        current_link_target=$(readlink /root/sbox/sing-box)
-    elif [[ -f /root/sbox/prerelease/sing-box ]]; then
-        current_version=$(/root/sbox/prerelease/sing-box version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
-        current_link_target=$(readlink /root/sbox/prerelease/sing-box)
+    if [[ -f /root/sbox/latest_version/sing-box ]]; then
+        current_version=$(/root/sbox/latest_version/sing-box version 2>/dev/null | head -n1)
+    elif [[ -f /root/sbox/old_version/sing-box ]]; then
+        current_version=$(/root/sbox/old_version/sing-box version 2>/dev/null | head -n1)
     else
         current_version="未找到 sing-box"
-        current_link_target="未知路径"
     fi
 
-    # 输出当前版本信息
+    # 检测当前符号链接指向的路径
+    if [[ -L /root/sbox/sing-box ]]; then
+        current_link_target=$(readlink /root/sbox/sing-box)
+    else
+        current_link_target="符号链接 /root/sbox/sing-box 不存在"
+    fi
+
+    if [[ -L /root/sbox/latest_version/sing-box ]]; then
+        current_link_target_latest=$(readlink /root/sbox/latest_version/sing-box)
+    else
+        current_link_target_latest="符号链接 /root/sbox/latest_version/sing-box 不存在"
+    fi
+
+    if [[ -L /root/sbox/old_version/sing-box ]]; then
+        current_link_target_old=$(readlink /root/sbox/old_version/sing-box)
+    else
+        current_link_target_old="符号链接 /root/sbox/old_version/sing-box 不存在"
+    fi
+
     echo -e "\e[1;3;31m=================\e[0m"
     echo -e "\e[1;3;32m当前 sing-box 版本: $current_version\e[0m"
 
-    # 判断当前版本类型
-    if [[ "$current_link_target" == "/root/sbox/release/sing-box" ]]; then
-        echo -e "\e[1;3;32m当前正在使用正式版 sing-box\e[0m"
-    elif [[ "$current_link_target" == "/root/sbox/prerelease/sing-box" ]]; then
-        echo -e "\e[1;3;33m当前正在使用测试版 sing-box\e[0m"
+    # 判断当前版本和符号链接
+    if [[ $current_link_target == "/root/sbox/latest_version/sing-box" ]]; then
+        echo -e "\e[1;3;32m当前正在使用最新版本 sing-box\e[0m"
+    elif [[ $current_link_target == "/root/sbox/old_version/sing-box" ]]; then
+        echo -e "\e[1;3;33m当前正在使用旧版本 sing-box\e[0m"
     else
         echo -e "\e[1;3;31m当前 sing-box 版本未知。\e[0m"
     fi
@@ -476,35 +491,37 @@ switch_kernel() {
 
         case $choice in
             1)
-                # 切换到最新测试版
-                if [[ ! -f /root/sbox/prerelease/sing-box ]]; then
-                    echo -e "\e[1;3;33m未找到测试版，正在下载最新 alpha 版本...\e[0m"
-                    mkdir -p /root/sbox/prerelease
+                # 检查并下载最新测试版 (alpha)
+                if [[ ! -f /root/sbox/latest_version/sing-box ]]; then
+                    echo -e "\e[1;3;33m未找到最新测试版，正在下载...\e[0m"
+                    mkdir -p /root/sbox/latest_version
                     latest_alpha=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r '.tag_name' | grep -E 'alpha')
-                    wget -q -O /root/sbox/prerelease/sing-box "https://github.com/SagerNet/sing-box/releases/download/${latest_alpha}/sing-box-${latest_alpha}"
-                    chmod +x /root/sbox/prerelease/sing-box
+                    wget -q -O /root/sbox/latest_version/sing-box "https://github.com/SagerNet/sing-box/releases/download/${latest_alpha}/sing-box-${latest_alpha}"
+                    chmod +x /root/sbox/latest_version/sing-box
                 fi
-                ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
+                ln -sf /root/sbox/latest_version/sing-box /root/sbox/sing-box
+                # 根据版本号选择配置文件
                 CONFIG_FILE="/root/sbox/sbconfig1_server.json"
-                echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
+                echo -e "\e[1;3;33m已切换到最新测试版内核。\e[0m"
                 ;;
 
             2)
-                # 切换到最新正式版
-                if [[ ! -f /root/sbox/release/sing-box ]]; then
-                    echo -e "\e[1;3;32m未找到正式版，正在下载最新正式版...\e[0m"
-                    mkdir -p /root/sbox/release
+                # 检查并下载最新正式版 (stable)
+                if [[ ! -f /root/sbox/latest_version/sing-box ]]; then
+                    echo -e "\e[1;3;32m未找到最新正式版，正在下载...\e[0m"
+                    mkdir -p /root/sbox/latest_version
                     latest_stable=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r '.tag_name' | grep -v 'alpha')
-                    wget -q -O /root/sbox/release/sing-box "https://github.com/SagerNet/sing-box/releases/download/${latest_stable}/sing-box-${latest_stable}"
-                    chmod +x /root/sbox/release/sing-box
+                    wget -q -O /root/sbox/latest_version/sing-box "https://github.com/SagerNet/sing-box/releases/download/${latest_stable}/sing-box-${latest_stable}"
+                    chmod +x /root/sbox/latest_version/sing-box
                 fi
-                ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
+                ln -sf /root/sbox/latest_version/sing-box /root/sbox/sing-box
+                # 根据版本号选择配置文件
                 CONFIG_FILE="/root/sbox/sbconfig1_server.json"
-                echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
+                echo -e "\e[1;3;32m已切换到最新正式版内核。\e[0m"
                 ;;
 
             3)
-                # 切换到旧正式版 (1.10.2)
+                # 下载旧正式版 (1.10.2)
                 if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
                     echo -e "\e[1;3;33m未找到旧正式版 (1.10.2)，正在下载...\e[0m"
                     mkdir -p /root/sbox/old_version
@@ -512,12 +529,13 @@ switch_kernel() {
                     chmod +x /root/sbox/old_version/sing-box-1.10.2
                 fi
                 ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
+                # 使用默认的配置文件
                 CONFIG_FILE="/root/sbox/sbconfig_server.json"
                 echo -e "\e[1;3;34m已切换到旧正式版 (1.10.2)。\e[0m"
                 ;;
 
             4)
-                # 切换到旧测试版 (1.11.0-alpha.19)
+                # 下载旧测试版 (1.11.0-alpha.19)
                 if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
                     echo -e "\e[1;3;33m未找到旧测试版 (1.11.0-alpha.19)，正在下载...\e[0m"
                     mkdir -p /root/sbox/old_version
@@ -525,6 +543,7 @@ switch_kernel() {
                     chmod +x /root/sbox/old_version/sing-box-1.11.0-alpha.19
                 fi
                 ln -sf /root/sbox/old_version/sing-box-1.11.0-alpha.19 /root/sbox/sing-box
+                # 使用默认的配置文件
                 CONFIG_FILE="/root/sbox/sbconfig1_server.json"
                 echo -e "\e[1;3;35m已切换到旧测试版 (1.11.0-alpha.19)。\e[0m"
                 ;;
