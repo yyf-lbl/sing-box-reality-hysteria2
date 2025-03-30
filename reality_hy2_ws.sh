@@ -2028,15 +2028,13 @@ echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;31m5. 卸载Sing-box\e[0m"  # 红色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m6. 更新Sing-box内核\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;32m6. 更新或切换内核\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;35m9. 切换sing-box内核\e[0m"
-echo  "==============="
-echo -e "\e[1;3;32m10. 实时查看系统服务状态\e[0m"
+echo -e "\e[1;3;32m9. 实时查看系统服务状态\e[0m"
 echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
@@ -2083,7 +2081,7 @@ case $choice in
         uninstall_singbox
         ;;
     6)
-        show_notice "正在更新内核..."
+        show_notice "正在更新内核或切换内核..."
         download_singbox
         setup_services
         ;;
@@ -2103,12 +2101,9 @@ case $choice in
         return 1  # 返回错误状态
     fi
         ;;
-    9)
-     switch_kernel
-   
-      ;;
-      
-    10) 
+  
+  
+    9) 
       check_tunnel_status
       ;;
       
