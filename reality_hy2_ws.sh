@@ -296,7 +296,11 @@ download_singbox() {
     mkdir -p "$release_path" "$prerelease_path" "$old_version_path"
 
     if [ "$version_choice" == "1" ]; then
-        # 获取最新正式版 & 测试版版本号
+        # **清理旧版符号链接**
+        echo -e "\e[1;3;33m正在清理旧版本符号链接...\e[0m"
+        rm -f "$release_path/sing-box" "$prerelease_path/sing-box"
+
+        # 获取最新版本信息
         latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
         latest_release_version=${latest_release_tag#v}
         latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
@@ -305,92 +309,82 @@ download_singbox() {
         # 下载最新正式版
         release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
         release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
-        if [ ! -f "$release_path/sing-box" ]; then
-            echo -e "\e[1;3;32m即将下载最新正式版: $latest_release_version\e[0m"
-            if curl -sLo "/root/${release_package}" "$release_url"; then
-                tar -xzf "/root/${release_package}" -C /root
-                mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box"
-                rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
-                chmod +x "$release_path/sing-box"
-                echo -e "\e[1;3;32m✔ 最新正式版 ($latest_release_version) 已安装到: $release_path/sing-box\e[0m"
-            else
-                echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
-            fi
+        if curl -sLo "/root/${release_package}" "$release_url"; then
+            tar -xzf "/root/${release_package}" -C /root
+            mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box"
+            rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
+            chmod +x "$release_path/sing-box"
+            echo -e "\e[1;3;32m✔ 最新正式版 ($latest_release_version) 已安装到: $release_path/sing-box\e[0m"
         else
-            echo -e "\e[1;3;33m✔ 正式版已存在，无需下载。\e[0m"
+            echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
         fi
 
         # 下载最新测试版
         prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
         prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
-        if [ ! -f "$prerelease_path/sing-box" ]; then
-            echo -e "\e[1;3;33m即将下载最新测试版: $latest_prerelease_version\e[0m"
-            if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
-                tar -xzf "/root/${prerelease_package}" -C /root
-                mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
-                rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
-                chmod +x "$prerelease_path/sing-box"
-                echo -e "\e[1;3;33m✔ 最新测试版 ($latest_prerelease_version) 已安装到: $prerelease_path/sing-box\e[0m"
-            else
-                echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
-            fi
+        if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
+            tar -xzf "/root/${prerelease_package}" -C /root
+            mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
+            rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
+            chmod +x "$prerelease_path/sing-box"
+            echo -e "\e[1;3;33m✔ 最新测试版 ($latest_prerelease_version) 已安装到: $prerelease_path/sing-box\e[0m"
         else
-            echo -e "\e[1;3;33m✔ 测试版已存在，无需下载。\e[0m"
+            echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
         fi
 
-        elif [ "$version_choice" == "2" ]; then
-        old_version_dir="/root/sbox/old_version"
-        mkdir -p "$old_version_dir"
-
+    elif [ "$version_choice" == "2" ]; then
         old_release_version="1.10.2"
         old_prerelease_version="1.11.0-alpha.19"
 
-        old_release_path="$old_version_dir/sing-box-$old_release_version"
-        old_prerelease_path="$old_version_dir/sing-box-$old_prerelease_version"
+        old_release_path="$old_version_path/sing-box-$old_release_version"
+        old_prerelease_path="$old_version_path/sing-box-$old_prerelease_version"
 
         old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
         old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
 
-        echo -e "\e[1;3;32m即将下载旧的正式版: $old_release_version\e[0m"
-
+        # 下载旧正式版
         if [ ! -f "$old_release_path" ]; then
+            echo -e "\e[1;3;32m即将下载旧正式版: $old_release_version\e[0m"
             if curl -sLo "$old_release_path" "$old_release_url"; then
                 chmod +x "$old_release_path"
-                echo -e "\e[1;3;32m✔ 旧正式版 ($old_release_version) 已下载并存放到: $old_release_path\e[0m"
+                echo -e "\e[1;3;32m✔ 旧正式版 ($old_release_version) 已下载到: $old_release_path\e[0m"
             else
-                echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
+                echo -e "\e[1;3;31m✖ 旧正式版下载失败，请检查网络连接。\e[0m"
             fi
         else
             echo -e "\e[1;3;32m✔ 旧正式版已存在，跳过下载。\e[0m"
         fi
 
-        echo -e "\e[1;3;33m即将下载旧的测试版: $old_prerelease_version\e[0m"
-
+        # 下载旧测试版
         if [ ! -f "$old_prerelease_path" ]; then
+            echo -e "\e[1;3;33m即将下载旧测试版: $old_prerelease_version\e[0m"
             if curl -sLo "$old_prerelease_path" "$old_prerelease_url"; then
                 chmod +x "$old_prerelease_path"
-                echo -e "\e[1;3;33m✔ 旧测试版 ($old_prerelease_version) 已下载并存放到: $old_prerelease_path\e[0m"
+                echo -e "\e[1;3;33m✔ 旧测试版 ($old_prerelease_version) 已下载到: $old_prerelease_path\e[0m"
             else
-                echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
+                echo -e "\e[1;3;31m✖ 旧测试版下载失败，请检查网络连接。\e[0m"
             fi
         else
             echo -e "\e[1;3;33m✔ 旧测试版已存在，跳过下载。\e[0m"
         fi
 
-        # **创建符号链接**
+        # **清理最新版本的符号链接**
+        echo -e "\e[1;3;33m正在清理最新版本符号链接...\e[0m"
+        rm -f "$release_path/sing-box" "$prerelease_path/sing-box"
+
+        # **创建旧版本的符号链接**
         echo -e "\e[1;3;33m正在设置 sing-box 旧版本的符号链接...\e[0m"
+        ln -sf "$old_release_path" "$release_path/sing-box"
+        ln -sf "$old_prerelease_path" "$prerelease_path/sing-box"
 
-        # 先删除已有的 /root/sbox/sing-box（如果存在）
-        rm -f /root/sbox/sing-box
-
-        # 让 `/root/sbox/sing-box` 指向下载的旧正式版
-        ln -sf "$old_release_path" /root/sbox/sing-box
-
-        echo -e "\e[1;3;32m✔ 符号链接创建成功: /root/sbox/sing-box -> $old_release_path\e[0m"
+        echo -e "\e[1;3;32m✔ 符号链接创建成功:\e[0m"
+        echo -e "  📌 /root/sbox/sing-box -> $old_release_path"
+        echo -e "  📌 /root/sbox/prerelease/sing-box -> $old_prerelease_path"
     fi
 
-    echo -e "\e[1;3;32m下载任务已完成！\e[0m"
+    echo -e "\e[1;3;32m✅ 下载任务已完成！\e[0m"
 }
+
 
 #singbox 内核切换
 switch_kernel() {
