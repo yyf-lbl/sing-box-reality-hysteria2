@@ -467,6 +467,9 @@ switch_kernel() {
         wget -O /root/sbox/sing-box.tar.gz "$download_url"
         tar -xzvf /root/sbox/sing-box.tar.gz -C /root/sbox/
 
+        # 确保目标目录存在
+        mkdir -p "$(dirname "$save_path")"
+
         # 移动并重命名 sing-box
         mv /root/sbox/sing-box-*/* "$save_path"
         rm -rf /root/sbox/sing-box-*  # 删除解压的临时目录
