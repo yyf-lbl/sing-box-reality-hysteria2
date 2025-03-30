@@ -428,6 +428,7 @@ switch_kernel() {
 
     local download_url=""
     local save_path=""
+    local version_tag=""
     
     # 确保存放目录存在
     mkdir -p /root/sbox/latest_version
@@ -437,22 +438,22 @@ switch_kernel() {
         1)
             download_url=$(get_singbox_download_url "latest_release")
             save_path="/root/sbox/latest_version/sing-box-latest"
-            VERSION_TYPE="latest_release"
+            version_tag="latest_release"
             ;;
         2)
             download_url=$(get_singbox_download_url "latest_prerelease")
             save_path="/root/sbox/latest_version/sing-box-test-latest"
-            VERSION_TYPE="latest_prerelease"
+            version_tag="latest_prerelease"
             ;;
         3)
             download_url=$(get_singbox_download_url "old_release")
             save_path="/root/sbox/old_version/sing-box-old"
-            VERSION_TYPE="old_release"
+            version_tag="old_release"
             ;;
         4)
             download_url=$(get_singbox_download_url "old_prerelease")
             save_path="/root/sbox/old_version/sing-box-test-old"
-            VERSION_TYPE="old_prerelease"
+            version_tag="old_prerelease"
             ;;
         *)
             echo -e "\e[1;3;31m无效选择，请选择 1-4 之间的数字。\e[0m"
@@ -463,18 +464,20 @@ switch_kernel() {
     if [ "$download_url" != "Invalid version type" ]; then
         echo -e "\e[1;3;32m正在下载: $download_url\e[0m"
         
-        # 下载并解压
+        # 下载文件
         wget -O /root/sbox/sing-box.tar.gz "$download_url"
-        tar -xzvf /root/sbox/sing-box.tar.gz -C /root/sbox/
 
-        # 确保目标目录存在
-        mkdir -p "$(dirname "$save_path")"
+        # 检查下载的文件是否是有效的二进制文件
+        if file /root/sbox/sing-box.tar.gz | grep -q "gzip compressed data"; then
+            echo -e "\e[1;3;32m文件格式正确，准备移动...\e[0m"
+        else
+            echo -e "\e[1;3;31m下载的文件格式错误，请检查下载链接。\e[0m"
+            exit 1
+        fi
 
-        # 移动并重命名 sing-box
-        mv /root/sbox/sing-box-*/* "$save_path"
-        rm -rf /root/sbox/sing-box-*  # 删除解压的临时目录
+        # 移动并重命名 sing-box 二进制文件
+        mv /root/sbox/sing-box.tar.gz "$save_path"
         chmod +x "$save_path"
-
         echo -e "\e[1;3;32m✔ sing-box 已下载并存放在: $save_path\e[0m"
     else
         echo -e "\e[1;3;31m✖ 下载链接获取失败。\e[0m"
@@ -483,7 +486,7 @@ switch_kernel() {
 
     # 设置相应的配置文件路径
     SBOX_DIR="/root/sbox"
-    case $VERSION_TYPE in
+    case $version_tag in
         latest_release)
             CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
             ;;
