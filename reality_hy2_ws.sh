@@ -271,65 +271,117 @@ download_cloudflared() {
 
 # 下载singbox最新测试版内核和正式版
 download_singbox() {
-    local target_version=$1
-    arch=$(uname -m)
+    echo -e "\e[1;3;33m请选择要下载的版本:\e[0m"
+    echo -e "\e[1;3;32m1. 更新最新版本 (正式版 + 测试版)\e[0m"
+    echo -e "\e[1;3;32m2. 使用旧版本 (正式版 + 测试版)\e[0m"
+    read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' version_choice
 
-    # 处理架构
-    case $arch in
+    arch=$(uname -m)
+    echo -e "\e[1;3;32m本机系统架构: $arch\e[0m"
+
+    case ${arch} in
         x86_64) arch="amd64" ;;
         aarch64) arch="arm64" ;;
         armv7l) arch="armv7" ;;
-        *) echo "Unsupported architecture: $arch" && exit 1 ;;
     esac
 
-    # GitHub 仓库地址
-    official_repo="https://github.com/SagerNet/sing-box/releases/download"
-    custom_repo="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box"
-    
-    install_path="/root/sbox"
-    target_link="$install_path/sing-box"
+    release_path="/root/sbox/latest_version"
+    old_version_path="/root/sbox/old_version"
+    mkdir -p "$release_path" "$old_version_path"
 
-    case $target_version in
-        latest_release)
-            latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | jq -r '.tag_name')
-            latest_release_version=${latest_release_tag#v}
-            release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
-            release_url="$official_repo/${latest_release_tag}/${release_package}"
-            ;;
-        latest_prerelease)
-            latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '[.[] | select(.prerelease == true) | .tag_name] | max')
-            latest_prerelease_version=${latest_prerelease_tag#v}
-            release_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
-            release_url="$official_repo/${latest_prerelease_tag}/${release_package}"
-            ;;
-        old_release)
-            old_release_version="1.10.2"
-            release_package="sing-box-${old_release_version}-linux-${arch}.tar.gz"
-            release_url="${custom_repo}/sing-box-${old_release_version}"
-            ;;
-        old_prerelease)
-            old_prerelease_version="1.11.0-alpha.19"
-            release_package="sing-box-${old_prerelease_version}-linux-${arch}.tar.gz"
-            release_url="${custom_repo}/sing-box-${old_prerelease_version}"
-            ;;
-        *)
-            echo -e "\e[1;3;31m无效的版本类型！\e[0m"
-            exit 1
-            ;;
-    esac
+    if [ "$version_choice" == "1" ]; then
+        # 获取最新正式版 & 测试版版本号
+        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
+        latest_release_version=${latest_release_tag#v}
+        latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
+        latest_prerelease_version=${latest_prerelease_tag#v}
 
-    # 下载并解压
-    echo "Downloading $release_url..."
-    mkdir -p "$install_path"
-    curl -L -o "$install_path/$release_package" "$release_url"
-    tar -xzf "$install_path/$release_package" -C "$install_path"
-    rm -f "$install_path/$release_package"
+        release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
+        release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
+        prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
+        prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
 
-    # 创建软链接
-    ln -sf "$install_path/sing-box-$latest_release_version" "$target_link"
-    echo "Sing-box $latest_release_version installed successfully."
+        # 下载正式版（如果不存在）
+        if [ ! -f "$release_path/sing-box-$latest_release_version" ]; then
+            echo -e "\e[1;3;32m下载最新正式版: $latest_release_version\e[0m"
+            if curl -sLo "/root/${release_package}" "$release_url"; then
+                tar -xzf "/root/${release_package}" -C /root
+                mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box-$latest_release_version"
+                rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
+                chmod +x "$release_path/sing-box-$latest_release_version"
+                echo -e "\e[1;3;32m✔ 最新正式版已下载: $latest_release_version\e[0m"
+            else
+                echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
+            fi
+        fi
+
+        # 下载测试版（如果不存在）
+        if [ ! -f "$release_path/sing-box-test-$latest_prerelease_version" ]; then
+            echo -e "\e[1;3;33m下载最新测试版: $latest_prerelease_version\e[0m"
+            if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
+                tar -xzf "/root/${prerelease_package}" -C /root
+                mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$release_path/sing-box-test-$latest_prerelease_version"
+                rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
+                chmod +x "$release_path/sing-box-test-$latest_prerelease_version"
+                echo -e "\e[1;3;33m✔ 最新测试版已下载: $latest_prerelease_version\e[0m"
+            else
+                echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
+            fi
+        fi
+        echo -e "\e[1;35m======================\e[0m"
+        # 选择使用哪个版本
+        echo -e "\e[1;3;33m请选择要使用的版本启动服务:\e[0m"
+        echo -e "\e[1;3;32m1. 最新正式版 ($latest_release_version)\e[0m"
+        echo -e "\e[1;3;33m2. 最新测试版 ($latest_prerelease_version)\e[0m"
+        read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' latest_choice
+
+        rm -f /root/sbox/sing-box
+        if [ "$latest_choice" == "1" ]; then
+            ln -sf "$release_path/sing-box-$latest_release_version" /root/sbox/sing-box
+            echo -e "\e[1;3;32m✔ 使用最新正式版: $latest_release_version\e[0m"
+        else
+            ln -sf "$release_path/sing-box-test-$latest_prerelease_version" /root/sbox/sing-box
+            echo -e "\e[1;3;33m✔ 使用最新测试版: $latest_prerelease_version\e[0m"
+        fi
+
+    elif [ "$version_choice" == "2" ]; then
+        rm -f /root/sbox/sing-box
+
+        old_release_version="1.10.2"
+        old_prerelease_version="1.11.0-alpha.19"
+
+        old_release_path="$old_version_path/sing-box-$old_release_version"
+        old_prerelease_path="$old_version_path/sing-box-$old_prerelease_version"
+
+        old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
+        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
+
+        if [ ! -f "$old_release_path" ]; then
+            echo -e "\e[1;3;32m下载旧正式版: $old_release_version\e[0m"
+            curl -sLo "$old_release_path" "$old_release_url" && chmod +x "$old_release_path"
+        fi
+
+        if [ ! -f "$old_prerelease_path" ]; then
+            echo -e "\e[1;3;33m下载旧测试版: $old_prerelease_version\e[0m"
+            curl -sLo "$old_prerelease_path" "$old_prerelease_url" && chmod +x "$old_prerelease_path"
+        fi
+        echo -e "\e[1;35m======================\e[0m"
+        echo -e "\e[1;3;33m请选择要使用的旧版本启动服务:\e[0m"
+        echo -e "\e[1;3;32m1. 旧正式版 ($old_release_version)\e[0m"
+        echo -e "\e[1;3;33m2. 旧测试版 ($old_prerelease_version)\e[0m"
+        read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' old_choice
+
+        if [ "$old_choice" == "1" ]; then
+            ln -sf "$old_release_path" /root/sbox/sing-box
+            echo -e "\e[1;3;32m✔ 使用旧正式版: $old_release_version\e[0m"
+        else
+            ln -sf "$old_prerelease_path" /root/sbox/sing-box
+            echo -e "\e[1;3;33m✔ 使用旧测试版: $old_prerelease_version\e[0m"
+        fi
+    fi
+
+    echo -e "\e[1;3;32m✔ 下载任务完成！\e[0m"
 }
-
 #切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
