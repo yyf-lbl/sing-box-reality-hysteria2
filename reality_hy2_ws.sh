@@ -319,7 +319,7 @@ download_singbox() {
             echo -e "\e[1;3;33m下载最新测试版: $latest_prerelease_version\e[0m"
             if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
                 tar -xzf "/root/${prerelease_package}" -C /root
-                mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$release_path/sing-box-test-$latest_prerelease_version"
+                mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$release_path/sing-box-$latest_prerelease_version"
                 rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
                 chmod +x "$release_path/sing-box-test-$latest_prerelease_version"
                 echo -e "\e[1;3;33m✔ 最新测试版已下载: $latest_prerelease_version\e[0m"
