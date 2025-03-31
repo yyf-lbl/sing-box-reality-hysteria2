@@ -391,55 +391,37 @@ switch_kernel() {
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
-    echo -e "\e[1;35m======================\e[0m"
-    # 根据用户选择下载或切换版本
-    case $version_choice in
-        1)
-            # 下载并使用最新正式版
-            download_singbox 1
-            VERSION_TYPE="latest_release"
-            ;;
-        2)
-            # 下载并使用最新测试版
-            download_singbox 1
-            VERSION_TYPE="latest_prerelease"
-            ;;
-        3)
-            # 下载并使用旧正式版
-            download_singbox 2
-            VERSION_TYPE="old_release"
-            ;;
-        4)
-            # 下载并使用旧测试版
-            download_singbox 2
-            VERSION_TYPE="old_prerelease"
-            ;;
-        *)
-            echo -e "\e[1;3;31m无效选择，请选择 1-4 之间的数字。\e[0m"
-            exit 1
-            ;;
-    esac
+    if [[ "$version_choice" =~ ^[1-4]$ ]]; then
+        download_singbox $(( (version_choice + 1) / 3 ))  # 1,2 → 1 (最新) | 3,4 → 2 (旧版本)
+    else
+        echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"
+        exit 1
+    fi
 
-    # 设置相应的配置文件路径
+    # 设置配置文件路径
     SBOX_DIR="/root/sbox"
-    case $VERSION_TYPE in
-        latest_release)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新正式版的配置文件
-            ;;
-        latest_prerelease)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新测试版的配置文件
-            ;;
-        old_release)
-            CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"    # 旧正式版配置文件
-            ;;
-        old_prerelease)
-            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"    # 旧测试版配置文件
-            ;;
+    case $version_choice in
+        1) CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json" ;;  # 最新正式版
+        2) CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json" ;;  # 最新测试版
+        3) CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"  ;;  # 旧正式版
+        4) CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json" ;;  # 旧测试版
     esac
 
-    # 调用 setup_services 启动服务
-    setup_services "$CONFIG_FILE"
+    # 确保配置文件存在
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo -e "\e[1;3;31m错误: 找不到配置文件 $CONFIG_FILE\e[0m"
+        exit 1
+    fi
+
+    # 启动服务
+    setup_services "$CONFIG_FILE" || {
+        echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
+        exit 1
+    }
+
+    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
 }
+
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
