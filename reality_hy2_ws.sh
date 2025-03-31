@@ -268,9 +268,179 @@ download_cloudflared() {
 
     echo -e "\e[1;35m======================\e[0m"
 }
-
-# 下载singbox最新测试版内核和正式版
+# 下载singbox
 download_singbox() {
+    echo -e "\e[1;3;33m请选择要下载的版本:\e[0m"
+    echo -e "\e[1;3;32m1. 更新最新版本 (正式版 + 测试版)\e[0m"
+    echo -e "\e[1;3;32m2. 使用旧版本 (正式版 + 测试版)\e[0m"
+    read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' version_choice
+
+    arch=$(uname -m)
+    echo -e "\e[1;3;32m本机系统架构: $arch\e[0m"
+
+    case ${arch} in
+        x86_64) arch="amd64" ;;
+        aarch64) arch="arm64" ;;
+        armv7l) arch="armv7" ;;
+    esac
+
+    release_path="/root/sbox/latest_version"
+    old_version_path="/root/sbox/old_version"
+    mkdir -p "$release_path" "$old_version_path"
+
+    if [ "$version_choice" == "1" ]; then
+        # 获取最新正式版 & 测试版版本号
+        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
+        latest_release_version=${latest_release_tag#v}
+        latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
+        latest_prerelease_version=${latest_prerelease_tag#v}
+
+        release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
+        release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
+        prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
+        prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
+
+        # 下载正式版（如果不存在）
+        if [ ! -f "$release_path/sing-box-$latest_release_version" ]; then
+            echo -e "\e[1;3;32m下载最新正式版: $latest_release_version\e[0m"
+            if curl -sLo "/root/${release_package}" "$release_url"; then
+                tar -xzf "/root/${release_package}" -C /root
+                mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box-$latest_release_version"
+                rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
+                chmod +x "$release_path/sing-box-$latest_release_version"
+                echo -e "\e[1;3;32m✔ 最新正式版已下载: $latest_release_version\e[0m"
+            else
+                echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
+            fi
+        fi
+
+        # 下载测试版（如果不存在）
+        if [ ! -f "$release_path/sing-box-test-$latest_prerelease_version" ]; then
+            echo -e "\e[1;3;33m下载最新测试版: $latest_prerelease_version\e[0m"
+            if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
+                tar -xzf "/root/${prerelease_package}" -C /root
+                mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$release_path/sing-box-test-$latest_prerelease_version"
+                rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
+                chmod +x "$release_path/sing-box-test-$latest_prerelease_version"
+                echo -e "\e[1;3;33m✔ 最新测试版已下载: $latest_prerelease_version\e[0m"
+            else
+                echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
+            fi
+        fi
+        echo -e "\e[1;35m======================\e[0m"
+        # 选择使用哪个版本
+        echo -e "\e[1;3;33m请选择要使用的版本启动服务:\e[0m"
+        echo -e "\e[1;3;32m1. 最新正式版 ($latest_release_version)\e[0m"
+        echo -e "\e[1;3;33m2. 最新测试版 ($latest_prerelease_version)\e[0m"
+        read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' latest_choice
+
+        rm -f /root/sbox/sing-box
+        if [ "$latest_choice" == "1" ]; then
+            ln -sf "$release_path/sing-box-$latest_release_version" /root/sbox/sing-box
+            echo -e "\e[1;3;32m✔ 使用最新正式版: $latest_release_version\e[0m"
+        else
+            ln -sf "$release_path/sing-box-test-$latest_prerelease_version" /root/sbox/sing-box
+            echo -e "\e[1;3;33m✔ 使用最新测试版: $latest_prerelease_version\e[0m"
+        fi
+
+    elif [ "$version_choice" == "2" ]; then
+        rm -f /root/sbox/sing-box
+
+        old_release_version="1.10.2"
+        old_prerelease_version="1.11.0-alpha.19"
+
+        old_release_path="$old_version_path/sing-box-$old_release_version"
+        old_prerelease_path="$old_version_path/sing-box-$old_prerelease_version"
+
+        old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
+        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
+
+        if [ ! -f "$old_release_path" ]; then
+            echo -e "\e[1;3;32m下载旧正式版: $old_release_version\e[0m"
+            curl -sLo "$old_release_path" "$old_release_url" && chmod +x "$old_release_path"
+        fi
+
+        if [ ! -f "$old_prerelease_path" ]; then
+            echo -e "\e[1;3;33m下载旧测试版: $old_prerelease_version\e[0m"
+            curl -sLo "$old_prerelease_path" "$old_prerelease_url" && chmod +x "$old_prerelease_path"
+        fi
+        echo -e "\e[1;35m======================\e[0m"
+        echo -e "\e[1;3;33m请选择要使用的旧版本启动服务:\e[0m"
+        echo -e "\e[1;3;32m1. 旧正式版 ($old_release_version)\e[0m"
+        echo -e "\e[1;3;33m2. 旧测试版 ($old_prerelease_version)\e[0m"
+        read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' old_choice
+
+        if [ "$old_choice" == "1" ]; then
+            ln -sf "$old_release_path" /root/sbox/sing-box
+            echo -e "\e[1;3;32m✔ 使用旧正式版: $old_release_version\e[0m"
+        else
+            ln -sf "$old_prerelease_path" /root/sbox/sing-box
+            echo -e "\e[1;3;33m✔ 使用旧测试版: $old_prerelease_version\e[0m"
+        fi
+    fi
+
+    echo -e "\e[1;3;32m✔ 下载任务完成！\e[0m"
+}
+#切换singbox内核
+switch_kernel() {
+    echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
+    echo -e "\e[1;3;32m1. 最新正式版\e[0m"
+    echo -e "\e[1;3;33m2. 最新测试版\e[0m"
+    echo -e "\e[1;3;32m3. 旧正式版\e[0m"
+    echo -e "\e[1;3;33m4. 旧测试版\e[0m"
+    read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
+
+    echo -e "\e[1;35m======================\e[0m"
+    # 根据用户选择下载或切换版本
+    case $version_choice in
+        1)
+            # 下载并使用最新正式版
+            download_singbox 1
+            VERSION_TYPE="latest_release"
+            ;;
+        2)
+            # 下载并使用最新测试版
+            download_singbox 1
+            VERSION_TYPE="latest_prerelease"
+            ;;
+        3)
+            # 下载并使用旧正式版
+            download_singbox 2
+            VERSION_TYPE="old_release"
+            ;;
+        4)
+            # 下载并使用旧测试版
+            download_singbox 2
+            VERSION_TYPE="old_prerelease"
+            ;;
+        *)
+            echo -e "\e[1;3;31m无效选择，请选择 1-4 之间的数字。\e[0m"
+            exit 1
+            ;;
+    esac
+
+    # 设置相应的配置文件路径
+    SBOX_DIR="/root/sbox"
+    case $VERSION_TYPE in
+        latest_release)
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新正式版的配置文件
+            ;;
+        latest_prerelease)
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"   # 根据需要可以更改为最新测试版的配置文件
+            ;;
+        old_release)
+            CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"    # 旧正式版配置文件
+            ;;
+        old_prerelease)
+            CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"    # 旧测试版配置文件
+            ;;
+    esac
+
+    # 调用 setup_services 启动服务
+    setup_services "$CONFIG_FILE"
+}
+# 下载singbox最新测试版内核和正式版
+download_sing-box() {
     local version_type="$1"
     local arch=$(uname -m)
     case ${arch} in
@@ -335,10 +505,10 @@ switch_kernel() {
 
     # 直接调用 download_singbox 并指定具体版本
     case $version_choice in
-        1) download_singbox latest_release; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新正式版
-        2) download_singbox latest_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新测试版
-        3) download_singbox old_release; CONFIG_FILE="/root/sbox/sbconfig_server.json" ;;  # 旧正式版
-        4) download_singbox old_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 旧测试版
+        1) download_sing-box latest_release; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新正式版
+        2) download_sing-box latest_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新测试版
+        3) download_sing-box old_release; CONFIG_FILE="/root/sbox/sbconfig_server.json" ;;  # 旧正式版
+        4) download_sing-box old_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 旧测试版
         *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
     esac
 
