@@ -354,6 +354,8 @@ download_singbox() {
 
         old_release_version="1.10.2"
         old_prerelease_version="1.11.0-alpha.19"
+         old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
+        old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
 
         old_release_path="$old_version_path/sing-box-$old_release_version"
         old_prerelease_path="$old_version_path/sing-box-$old_prerelease_version"
