@@ -689,45 +689,36 @@ EOF
 
 #卸载sing-box程序
 uninstall_singbox() {
- echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
+    echo -e "\e[1;3;31m正在卸载 sing-box 服务...\e[0m"
     echo ""
+
     # 询问用户是否确认卸载
     while true; do
-         read -p $'\e[1;3;33m您确定要卸载sing-box服务吗？(y/n) [默认y]: \e[0m' confirm
-        confirm=${confirm,,}  # 将输入转换为小写
-        
-        # 如果输入为空，视为 'y'
-        if [[ -z "$confirm" ]]; then
-            confirm="y"
-        fi
+        read -p $'\e[1;3;33m您确定要卸载 sing-box 服务吗？(y/n) [默认 y]: \e[0m' confirm
+        confirm=${confirm,,}  # 转换为小写
+        [[ -z "$confirm" ]] && confirm="y"  # 默认值为 y
         case "$confirm" in
-            y) 
-                break  # 继续卸载
-                ;;
-            n) 
-                echo "取消卸载。"
-                return
-                ;;
-            *) 
-                echo "无效输入，请输入 y 或 n。"
-                ;;
+            y) break ;;  # 继续卸载
+            n) echo "取消卸载。"; return ;;
+            *) echo "无效输入，请输入 y 或 n。" ;;
         esac
     done
+
     # 停止并禁用 Cloudflare 隧道服务
     if systemctl is-active --quiet cloudflared; then
         echo -e "\e[1;3;33m正在停止 Cloudflare 隧道服务...\e[0m"
-        systemctl stop cloudflared 2>/dev/null
-        systemctl disable cloudflared 2>/dev/null
+        systemctl stop cloudflared >/dev/null 2>&1
+        systemctl disable cloudflared >/dev/null 2>&1
     fi
+
     # 停止现有的 cloudflared 进程
-    pid=$(pgrep -f cloudflared-linux)
-    if [ -n "$pid" ]; then
-        pkill -f cloudflared-linux 2>/dev/null
-    fi
+    pkill -f cloudflared-linux >/dev/null 2>&1
     sleep 2
+
     # 停止并禁用 sing-box 服务
-    systemctl stop sing-box 2>/dev/null
-    systemctl disable sing-box 2>/dev/null
+    systemctl stop sing-box >/dev/null 2>&1
+    systemctl disable sing-box >/dev/null 2>&1
+
     # 定义要删除的文件和目录
     files_to_remove=(
         "/etc/systemd/system/sing-box.service"
@@ -743,34 +734,25 @@ uninstall_singbox() {
         "/root/self-cert/private.key"
         "/root/self-cert/cert.pem"
     )
+    
     directories_to_remove=(
         "/root/self-cert/"
         "/root/sbox/"
     )
-    # 删除文件并检查是否成功
+
+    # 删除文件（隐藏错误信息）
     for file in "${files_to_remove[@]}"; do
-        if [ -e "$file" ]; then
-            rm "$file" > /dev/null 2>&1
-            if [ $? -ne 0 ]; then
-                echo "Failed to remove $file."
-            fi
-        fi
+        rm -f "$file" >/dev/null 2>&1
     done
-    # 删除目录并检查是否成功
+
+    # 删除目录（隐藏错误信息）
     for dir in "${directories_to_remove[@]}"; do
-        if [ -d "$dir" ]; then
-            rm -rf "$dir" > /dev/null 2>&1
-            if [ $? -ne 0 ]; then
-                echo "Failed to remove directory $dir."
-            fi
-        fi
+        rm -rf "$dir" >/dev/null 2>&1
     done
-   #  重新加载系统的单元文件配置
-    systemctl daemon-reload
-   echo -e "\e[1;3;32msing-box已成功卸载!\e[0m"
-echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
- echo ""
+
+    echo -e "\e[1;3;32m✔ sing-box 卸载完成！\e[0m"
 }
+
 # 安装sing-box
 install_singbox() {     
   while true; do
