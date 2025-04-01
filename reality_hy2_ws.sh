@@ -461,11 +461,11 @@ switch_kernel() {
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
     # 检测当前 sing-box 版本
-   current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    echo -e "\e[1;3;32m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
-    echo -e "\e[1;3;33m sing-box 正在切换中 ...\e[0m"
+    current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
+    echo -e "\e[1;3;31m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
+    echo -e "\e[1;3;33m sing-box 正在切换中...\e[0m"
 
-    # 直接调用 download_singbox 并指定具体版本
+    # 选择要下载的版本
     case $version_choice in
         1) download_sing-box latest_release; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新正式版
         2) download_sing-box latest_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新测试版
@@ -474,23 +474,18 @@ switch_kernel() {
         *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
     esac
 
-    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
-
-    # 确保配置文件存在
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo -e "\e[1;3;31m错误: 找不到配置文件 $CONFIG_FILE\e[0m"
+    # 启动 sing-box 服务
+    echo -e "\e[1;3;36m配置检查成功，正在启动 sing-box...\e[0m"
+    if setup_services "$CONFIG_FILE"; then
+        new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
+        echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
+        echo -e "\e[1;3;35m sing-box-$new_version 已成功启动！\e[0m"
+    else
+        echo -e "\e[1;3;31m❌ sing-box 启动失败，请检查日志！\e[0m"
         exit 1
     fi
-
-    # 启动服务
-    echo -e "\e[1;3;32m配置检查成功，正在启动 sing-box...\e[0m"
-    setup_services "$CONFIG_FILE" || {
-        echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
-        exit 1
-    }
-
-    echo -e "\e[1;3;32m✔ sing-box 已成功启动！\e[0m"
 }
+
 
 #生成协议链接
 show_client_configuration() {
