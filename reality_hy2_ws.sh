@@ -514,12 +514,7 @@ switch_kernel() {
     ln -sf "$target_path" /root/sbox/sing-box
 
     # 启动服务
-    setup_services "$CONFIG_FILE" || {
-        echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
-        exit 1
-    }
-
-    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
+    setup_services 
 }
 
 #生成协议链接
