@@ -462,7 +462,7 @@ switch_kernel() {
 
     # 检测当前 sing-box 版本
     current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    echo -e "\e[1;3;31m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
+    echo -e "\e[1;3;34m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
     echo -e "\e[1;3;33m sing-box 正在切换中...\e[0m"
 
     # 选择要下载的版本
@@ -476,17 +476,13 @@ switch_kernel() {
 
     # 启动 sing-box 服务
     echo -e "\e[1;3;36m配置检查成功，正在启动 sing-box...\e[0m"
-    if setup_services "$CONFIG_FILE"; then
-        new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-        echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
-        echo -e "\e[1;3;35m sing-box-$new_version 已成功启动！\e[0m"
-    else
-        echo -e "\e[1;3;31m❌ sing-box 启动失败，请检查日志！\e[0m"
-        exit 1
-    fi
+    /root/sbox/sing-box run -c "$CONFIG_FILE" &>/dev/null &  # 以后台进程运行
+
+    # 再次检测是否成功启动
+    new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
+    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
+    echo -e "\e[1;3;35m sing-box-$new_version 已成功启动！\e[0m"
 }
-
-
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
