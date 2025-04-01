@@ -1787,20 +1787,25 @@ detect_protocols() {
 
     # 需要更新的配置文件列表
     config_files=( "/root/sbox/sbconfig_server.json" "/root/sbox/sbconfig1_server.json" )
-
+  # 记录已修改的协议，防止重复执行
+    modified_protocols=()
     # 定义一个通用的修改协议函数
     modify_protocol() {
         local protocol_function=$1  # 传入修改协议的函数
         local protocol_name=$2  # 传入协议名称
+ # 如果协议已修改，则跳过
+    if [[ " ${modified_protocols[*]} " =~ " $protocol_name " ]]; then
+        echo -e "\e[1;3;31m$protocol_name 已修改，跳过重复操作。\e[0m"
+        return 0
+    fi
+        
         echo -e "\e[1;3;33m正在修改 $protocol_name 协议...\e[0m"
         for config in "${config_files[@]}"; do
             "$protocol_function" "$config" && restart_needed=true
         done
+        # 记录修改状态
+    modified_protocols+=("$protocol_name")
     }
-
-    # 记录已修改的协议
-    modified_protocols=()
-
     # 根据用户选择进行修改
     if [ "$modify_choice" -eq $((i + 2)) ]; then
         echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
@@ -1866,9 +1871,10 @@ detect_protocols() {
 
 # 修改vless协议
 modify_vless() {
+   VLESS_MODIFIED=false
     show_notice "开始修改 VLESS 配置"
     sleep 2
-
+    VLESS_MODIFIED=true
     # 配置文件列表
     config_files=(
         "/root/sbox/sbconfig_server.json"
