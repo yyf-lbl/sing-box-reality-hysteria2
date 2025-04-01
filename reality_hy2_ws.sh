@@ -448,12 +448,9 @@ download_sing-box() {
     ln -sf "$target_path" /root/sbox/sing-box
     echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
 }
-
-
-#切换内核
 #切换内核
 switch_kernel() {
-    echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
+ echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
     echo -e "\e[1;3;32m1. 最新正式版\e[0m"
     echo -e "\e[1;3;33m2. 最新测试版\e[0m"
     echo -e "\e[1;3;32m3. 旧正式版\e[0m"
@@ -474,12 +471,8 @@ switch_kernel() {
         *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
     esac
 
-    # 启动 sing-box 服务
-    echo -e "\e[1;3;36m配置检查成功，正在启动 sing-box...\e[0m"
-    /root/sbox/sing-box run -c "$CONFIG_FILE" &>/dev/null &  # 以后台进程运行
-
-    # 再次检测是否成功启动
-    new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
+    # 切换版本完成，调用 setup_services 启动服务
+    setup_services
     echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
     echo -e "\e[1;3;32m === sing-box-$new_version 已成功启动！===\e[0m"
 }
