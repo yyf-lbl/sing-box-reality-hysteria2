@@ -451,8 +451,7 @@ download_sing-box() {
 #切换内核
 switch_kernel() {
  # 检测当前使用的 sing-box 版本
-    current_version=$(/root/sbox/sing-box version 2>/dev/null)
-    
+    current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
     if [ $? -eq 0 ]; then
         echo -e "\e[1;3;33m当前正在使用的 sing-box 版本: $current_version\e[0m"
     else
