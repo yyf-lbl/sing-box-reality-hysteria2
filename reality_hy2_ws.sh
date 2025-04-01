@@ -403,7 +403,7 @@ download_sing-box() {
         target_path="$release_path/sing-box-${latest_version}"
 
         # 检查是否已经存在 sing-box 文件
-        if [ -f "$target_path" ]; then
+        if [ -f "$target_path/sing-box" ]; then
             echo -e "\e[1;3;32m已存在最新版本 sing-box-${latest_version}，跳过下载。\e[0m"
             return 0  # 如果文件已经存在，跳过下载
         fi
@@ -433,21 +433,22 @@ download_sing-box() {
     if curl -sLo "/root/${package}" "$url"; then
         if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
             tar -xzf "/root/${package}" -C /root
-            mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
+            mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path/sing-box"
             rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
         else
             mv "/root/${package}" "$target_path"
         fi
-        chmod +x "$target_path"
+        chmod +x "$target_path/sing-box"
     else
         echo -e "\e[1;3;31m下载失败，请检查网络连接。\e[0m"
         exit 1
     fi
 
     # 软链接到 sing-box 目录
-    ln -sf "$target_path" /root/sbox/sing-box
+    ln -sf "$target_path/sing-box" /root/sbox/sing-box
     echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
 }
+
 #切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
