@@ -400,7 +400,7 @@ download_sing-box() {
         latest_version=${latest_tag#v}
         package="sing-box-${latest_version}-linux-${arch}.tar.gz"
         url="https://github.com/SagerNet/sing-box/releases/download/${latest_tag}/${package}"
-        target_path="$release_path/sing-box-${latest_version}"
+        target_path="$release_path/sing-box"
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
@@ -416,7 +416,7 @@ download_sing-box() {
         fi
 
         url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_version}"
-        target_path="$old_version_path/sing-box-${old_version}"
+        target_path="$old_version_path/sing-box"
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
@@ -431,24 +431,18 @@ download_sing-box() {
     # 下载并设置执行权限
     echo -e "\e[1;3;32m下载 $version_type 版本: $latest_version\e[0m"
     if curl -sLo "/root/${package}" "$url"; then
-        if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
-            # 解压 tar.gz 文件
-            tar -xzf "/root/${package}" -C /root
-            mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
-            rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
-        else
-            # 如果是旧版本并且没有 tar.gz 格式，则直接移动文件
-            mv "/root/${package}" "$target_path"
-        fi
+        tar -xzf "/root/${package}" -C /root
+        mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
+        rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
         chmod +x "$target_path"
     else
         echo -e "\e[1;3;31m下载失败，请检查网络连接。\e[0m"
         exit 1
     fi
 
-    echo -e "\e[1;3;32m✔ 下载并解压完成：$version_type 版本\e[0m"
+    # 成功完成下载和解压
+    echo -e "\e[1;3;32m✔ 成功下载并解压 sing-box 到 $release_path\e[0m"
 }
-
 #切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
@@ -472,11 +466,10 @@ switch_kernel() {
         *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
     esac
 
-    target_version_path="/root/sbox/latest_version/$version_to_switch/sing-box"
-
-    # 检查目标版本的可执行文件是否存在
+    # 确保目标版本已经下载并解压
+    target_version_path="/root/sbox/latest_version/sing-box"
     if [ ! -f "$target_version_path" ]; then
-        echo -e "\e[1;3;31m目标版本的 sing-box 可执行文件未找到，请确认已下载此版本。\e[0m"
+        echo -e "\e[1;3;31m目标版本的 sing-box 可执行文件未找到，请先运行 download_sing-box 来下载此版本。\e[0m"
         exit 1
     fi
 
@@ -487,6 +480,7 @@ switch_kernel() {
     # 调用 setup_services 启动服务
     setup_services
 }
+
 
 #生成协议链接
 show_client_configuration() {
