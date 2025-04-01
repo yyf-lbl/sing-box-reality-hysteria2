@@ -448,7 +448,6 @@ download_sing-box() {
     ln -sf "$target_path/sing-box" /root/sbox/sing-box
     echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
 }
-
 #切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
