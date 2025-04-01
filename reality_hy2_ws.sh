@@ -400,14 +400,13 @@ download_sing-box() {
         latest_version=${latest_tag#v}
         package="sing-box-${latest_version}-linux-${arch}.tar.gz"
         url="https://github.com/SagerNet/sing-box/releases/download/${latest_tag}/${package}"
-        target_path="$release_path/sing-box-${latest_version}"
+        target_path="$release_path/sing-box-${latest_version}/sing-box"  # Make sure this points to the actual executable
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
             echo -e "\e[1;3;32m已存在最新版本 sing-box-${latest_version}，跳过下载。\e[0m"
             return 0  # 如果文件已经存在，跳过下载
         fi
-
     elif [[ "$version_type" == "old_release" || "$version_type" == "old_prerelease" ]]; then
         if [[ "$version_type" == "old_release" ]]; then
             old_version="1.10.2"
@@ -416,7 +415,7 @@ download_sing-box() {
         fi
 
         url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_version}"
-        target_path="$old_version_path/sing-box-${old_version}"
+        target_path="$old_version_path/sing-box-${old_version}/sing-box"  # Ensure correct path for old versions
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
@@ -433,7 +432,6 @@ download_sing-box() {
     if curl -sLo "/root/${package}" "$url"; then
         if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
             tar -xzf "/root/${package}" -C /root
-            # 移动到目标路径
             mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
             rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
         else
@@ -445,9 +443,10 @@ download_sing-box() {
         exit 1
     fi
 
-    echo -e "\e[1;3;32m✔ $version_type 版本下载完成！\e[0m"
+    # 软链接到 sing-box 目录
+    ln -sf "$target_path" /root/sbox/sing-box
+    echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
 }
-
 #切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
@@ -483,10 +482,12 @@ switch_kernel() {
 
     # 更新软链接
     ln -sf "$target_path" /root/sbox/sing-box
-    setup_services
     echo -e "\e[1;3;32m=== sing-box 版本切换成功 ===\e[0m"
-}
 
+    # 调用 setup_services 启动服务
+    setup_services
+    echo -e "\e[1;3;32m服务已启动！\e[0m"
+}
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
