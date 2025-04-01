@@ -461,7 +461,7 @@ switch_kernel() {
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
     # 检测当前 sing-box 版本
-    current_version=$(/root/sbox/sing-box -version 2>/dev/null | awk '{print $NF}')
+    current_version=$(/root/sbox/sing-box version 2>/dev/null | awk '{print $NF}')
     echo -e "\e[1;3;34m检测到 当前正在使用 sing-box 版本: $current_version。\e[0m"
     echo -e "\e[1;3;33m sing-box 正在切换中 ...\e[0m"
 
