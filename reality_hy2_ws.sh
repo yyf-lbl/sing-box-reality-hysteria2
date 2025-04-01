@@ -400,7 +400,7 @@ download_sing-box() {
         latest_version=${latest_tag#v}
         package="sing-box-${latest_version}-linux-${arch}.tar.gz"
         url="https://github.com/SagerNet/sing-box/releases/download/${latest_tag}/${package}"
-        target_path="$release_path/sing-box"
+        target_path="$release_path/sing-box-${latest_version}"
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
@@ -416,7 +416,7 @@ download_sing-box() {
         fi
 
         url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_version}"
-        target_path="$old_version_path/sing-box"
+        target_path="$old_version_path/sing-box-${old_version}"
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
@@ -431,18 +431,25 @@ download_sing-box() {
     # 下载并设置执行权限
     echo -e "\e[1;3;32m下载 $version_type 版本: $latest_version\e[0m"
     if curl -sLo "/root/${package}" "$url"; then
-        tar -xzf "/root/${package}" -C /root
-        mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
-        rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
+        if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
+            tar -xzf "/root/${package}" -C /root
+            mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
+            rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
+        else
+            mv "/root/${package}" "$target_path"
+        fi
         chmod +x "$target_path"
     else
         echo -e "\e[1;3;31m下载失败，请检查网络连接。\e[0m"
         exit 1
     fi
 
-    # 成功完成下载和解压
-    echo -e "\e[1;3;32m✔ 成功下载并解压 sing-box 到 $release_path\e[0m"
+    # 软链接到 sing-box 目录
+    ln -sf "$target_path" /root/sbox/sing-box
+    echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
 }
+
+
 #切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
@@ -452,35 +459,29 @@ switch_kernel() {
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
-    # 检测当前 sing-box 版本
-    current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    echo -e "\e[1;3;31m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
-    echo -e "\e[1;3;33m sing-box 正在切换中...\e[0m"
-
-    # 选择要下载的版本
+    # 直接调用 download_singbox 并指定具体版本
     case $version_choice in
-        1) version_to_switch="sing-box-1.11.6" ;;  # 最新正式版
-        2) version_to_switch="sing-box-1.12.0-alpha.23" ;;  # 最新测试版
-        3) version_to_switch="sing-box-1.10.2" ;;  # 旧正式版
-        4) version_to_switch="sing-box-1.11.0-alpha.19" ;;  # 旧测试版
+        1) download_sing-box latest_release; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新正式版
+        2) download_sing-box latest_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新测试版
+        3) download_sing-box old_release; CONFIG_FILE="/root/sbox/sbconfig_server.json" ;;  # 旧正式版
+        4) download_sing-box old_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 旧测试版
         *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
     esac
 
-    # 确保目标版本已经下载并解压
-    target_version_path="/root/sbox/latest_version/sing-box"
-    if [ ! -f "$target_version_path" ]; then
-        echo -e "\e[1;3;31m目标版本的 sing-box 可执行文件未找到，请先运行 download_sing-box 来下载此版本。\e[0m"
+    # 确保配置文件存在
+    if [ ! -f "$CONFIG_FILE" ]; then
+        echo -e "\e[1;3;31m错误: 找不到配置文件 $CONFIG_FILE\e[0m"
         exit 1
     fi
 
-    # 更新软链接到新版本
-    ln -sf "$target_version_path" /root/sbox/sing-box
-    echo -e "\e[1;3;32m✔ 成功切换到 $version_to_switch 版本\e[0m"
+    # 启动服务
+    setup_services "$CONFIG_FILE" || {
+        echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
+        exit 1
+    }
 
-    # 调用 setup_services 启动服务
-    setup_services
+    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
 }
-
 
 #生成协议链接
 show_client_configuration() {
