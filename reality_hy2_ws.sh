@@ -1792,8 +1792,8 @@ detect_protocols() {
     modify_protocol() {
         local protocol_function=$1  # 传入修改协议的函数
         local protocol_name=$2  # 传入协议名称
+        echo -e "\e[1;3;33m正在修改 $protocol_name 协议...\e[0m"
         for config in "${config_files[@]}"; do
-            echo -e "\e[1;3;33m正在修改 $protocol_name 协议...\e[0m"
             "$protocol_function" "$config" && restart_needed=true
         done
     }
