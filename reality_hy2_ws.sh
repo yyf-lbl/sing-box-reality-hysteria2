@@ -448,8 +448,6 @@ download_sing-box() {
     ln -sf "$target_path" /root/sbox/sing-box
     echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
 }
-
-
 #切换内核
 switch_kernel() {
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
@@ -459,13 +457,32 @@ switch_kernel() {
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
-    # 直接调用 download_singbox 并指定具体版本
+    # 选择版本类型并设置下载逻辑
     case $version_choice in
-        1) download_sing-box latest_release; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新正式版
-        2) download_sing-box latest_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新测试版
-        3) download_sing-box old_release; CONFIG_FILE="/root/sbox/sbconfig_server.json" ;;  # 旧正式版
-        4) download_sing-box old_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 旧测试版
-        *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
+        1) 
+            download_sing-box latest_release
+            CONFIG_FILE="/root/sbox/sbconfig1_server.json" 
+            version_type="latest_release"
+            ;;
+        2)
+            download_sing-box latest_prerelease
+            CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+            version_type="latest_prerelease"
+            ;;
+        3)
+            download_sing-box old_release
+            CONFIG_FILE="/root/sbox/sbconfig_server.json"
+            version_type="old_release"
+            ;;
+        4)
+            download_sing-box old_prerelease
+            CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+            version_type="old_prerelease"
+            ;;
+        *)
+            echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"
+            exit 1
+            ;;
     esac
 
     # 确保配置文件存在
@@ -473,6 +490,28 @@ switch_kernel() {
         echo -e "\e[1;3;31m错误: 找不到配置文件 $CONFIG_FILE\e[0m"
         exit 1
     fi
+
+    # 删除旧的软链接（如果存在）
+    if [ -L /root/sbox/sing-box ]; then
+        echo -e "\e[1;3;32m删除旧的软链接...\e[0m"
+        rm -f /root/sbox/sing-box
+    fi
+
+    # 根据版本类型设置目标路径
+    if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
+        target_path="/root/sbox/latest_version/sing-box-${latest_version}"
+    else
+        if [[ "$version_type" == "old_release" ]]; then
+            old_version="1.10.2"  # 旧正式版的版本号
+        elif [[ "$version_type" == "old_prerelease" ]]; then
+            old_version="1.11.0-alpha.19"  # 旧测试版的版本号
+        fi
+        target_path="/root/sbox/old_version/sing-box-${old_version}"
+    fi
+
+    # 创建新的软链接
+    echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
+    ln -sf "$target_path" /root/sbox/sing-box
 
     # 启动服务
     setup_services "$CONFIG_FILE" || {
