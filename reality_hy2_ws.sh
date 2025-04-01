@@ -276,7 +276,7 @@ download_singbox() {
     read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' version_choice
 
     arch=$(uname -m)
-    echo -e "\e[1;3;32m本机系统架构: $arch\e[0m"
+    echo -e "\e[1;3;32m=== 本机系统架构: $arch ===\e[0m"
 
     case ${arch} in
         x86_64) arch="amd64" ;;
@@ -308,7 +308,7 @@ download_singbox() {
                 mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box-$latest_release_version"
                 rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
                 chmod +x "$release_path/sing-box-$latest_release_version"
-                echo -e "\e[1;3;32m✔ 最新正式版已下载: $latest_release_version\e[0m"
+                echo -e "\e[1;3;32m  最新正式版已下载: $latest_release_version\e[0m"
             else
                 echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
             fi
@@ -322,7 +322,7 @@ download_singbox() {
                 mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$release_path/sing-box-$latest_prerelease_version"
                 rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
                 chmod +x "$release_path/sing-box-$latest_prerelease_version"
-                echo -e "\e[1;3;33m✔ 最新测试版已下载: $latest_prerelease_version\e[0m"
+                echo -e "\e[1;3;33m  最新测试版已下载: $latest_prerelease_version\e[0m"
             else
                 echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
             fi
@@ -337,10 +337,10 @@ download_singbox() {
         rm -f /root/sbox/sing-box
         if [ "$latest_choice" == "1" ]; then
             ln -sf "$release_path/sing-box-$latest_release_version" /root/sbox/sing-box
-            echo -e "\e[1;3;32m✔ 使用最新正式版: $latest_release_version\e[0m"
+            echo -e "\e[1;3;32m  使用最新正式版: $latest_release_version\e[0m"
         else
             ln -sf "$release_path/sing-box-$latest_prerelease_version" /root/sbox/sing-box
-            echo -e "\e[1;3;33m✔ 使用最新测试版: $latest_prerelease_version\e[0m"
+            echo -e "\e[1;3;33m  使用最新测试版: $latest_prerelease_version\e[0m"
         fi
 
     elif [ "$version_choice" == "2" ]; then
@@ -372,14 +372,14 @@ download_singbox() {
 
         if [ "$old_choice" == "1" ]; then
             ln -sf "$old_release_path" /root/sbox/sing-box
-            echo -e "\e[1;3;32m✔ 使用旧正式版: $old_release_version\e[0m"
+            echo -e "\e[1;3;32m   使用旧正式版: $old_release_version\e[0m"
         else
             ln -sf "$old_prerelease_path" /root/sbox/sing-box
-            echo -e "\e[1;3;33m✔ 使用旧测试版: $old_prerelease_version\e[0m"
+            echo -e "\e[1;3;33m   使用旧测试版: $old_prerelease_version\e[0m"
         fi
     fi
 
-    echo -e "\e[1;3;32m✔ 下载任务完成！\e[0m"
+    echo -e "\e[1;3;32m 下载任务完成！\e[0m"
 }
 # 下载singbox最新测试版内核和正式版
 download_sing-box() {
@@ -1739,23 +1739,24 @@ check_tunnel_status() {
 detect_protocols() {
     echo -e "\e[1;3;33m正在检测已安装的协议...\e[0m"
     sleep 3
-    # 获取已安装的协议类型
-    protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
-    echo -e "\e[1;3;33m已安装协议如下:\e[0m"
-    echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息，绿色斜体加粗
-    echo ""
     
+    # 获取已安装的协议类型（默认读取 sbconfig_server.json）
+    protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
+    
+    echo -e "\e[1;3;33m已安装协议如下:\e[0m"
+    echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息
+
     # 初始化选项数组
     options=()
     protocol_list=("vless" "vmess" "hysteria2" "tuic")
-    
+
     # 根据检测到的协议生成选项
     for protocol in "${protocol_list[@]}"; do
         if echo "$protocols" | grep -q -i "$protocol"; then
             options+=("${protocol^}")  # 将首字母大写
         fi
     done
-    
+
     # 输出可修改的协议选项
     if [ ${#options[@]} -eq 0 ]; then
         echo -e "\e[1;3;31m没有检测到可修改的协议。\e[0m"
@@ -1781,22 +1782,40 @@ detect_protocols() {
         fi
     done
     
+    # 记录是否需要重启服务
+    restart_needed=false
+
+    # 需要更新的配置文件列表
+    config_files=(
+        "/root/sbox/sbconfig_server.json"
+        "/root/sbox/sbconfig1_server.json"
+    )
+
+    # 定义一个通用的修改协议函数
+    modify_protocol() {
+        local protocol_function=$1  # 传入修改协议的函数
+        for config in "${config_files[@]}"; do
+            "$protocol_function" "$config" && restart_needed=true
+        done
+    }
+
     # 根据用户选择进行修改
     if [ "$modify_choice" -eq $((i + 2)) ]; then
         echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
-           echo ""
-        # 这里添加代码以修改所有协议
         for protocol in "${options[@]}"; do
             echo -e "\e[1;3;32m请按照提示进行修改...\e[0m"
             case $protocol in
                 "Vless")
-                    modify_vless
+                    modify_protocol modify_vless
+                    ;;
+                "Vmess")
+                    modify_protocol modify_vmess
                     ;;
                 "Hysteria2")
-                    modify_hysteria2
+                    modify_protocol modify_hysteria2
                     ;;
                 "Tuic")
-                    modify_tuic  # 需要定义此函数
+                    modify_protocol modify_tuic
                     ;;
             esac
         done
@@ -1805,17 +1824,35 @@ detect_protocols() {
         echo -e "\e[1;3;33m正在修改 $selected_protocol 协议...\e[0m"
         case $selected_protocol in
             "Vless")
-                modify_vless
+                modify_protocol modify_vless
+                ;;
+            "Vmess")
+                modify_protocol modify_vmess
                 ;;
             "Hysteria2")
-                modify_hysteria2
+                modify_protocol modify_hysteria2
                 ;;
             "Tuic")
-                modify_tuic  
+                modify_protocol modify_tuic
                 ;;
         esac
     fi
+
+    # 如果修改了协议，则重新启动服务
+    if [ "$restart_needed" = true ]; then
+        echo -e "\e[1;3;33m正在应用新配置...\e[0m"
+        for config in "${config_files[@]}"; do
+            setup_services "$config" || {
+                echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
+                exit 1
+            }
+        done
+        echo -e "\e[1;3;32m✔ 配置修改成功，sing-box 已重新启动！\e[0m"
+    else
+        echo -e "\e[1;3;32m✔ 没有进行任何修改，服务未重启。\e[0m"
+    fi
 }
+
 # 修改vless协议
 modify_vless() {
     show_notice "开始修改 VLESS 配置"
@@ -2032,6 +2069,7 @@ case $choice in
         download_cloudflared
         install_singbox
         setup_services
+        show_client_configuration
         sleep 2
         ;;
     2)
@@ -2041,17 +2079,7 @@ case $choice in
        # 主逻辑
        detect_protocols
        # 重启服务并验证
-       echo -e "\e[1;3;33m配置修改完成，正在重新启动 sing-box 服务...\e[0m"
-       systemctl restart sing-box
-       systemctl restart cloudflared > /dev/null 2>&1
-        sleep 2
-         if [ $? -eq 0 ]; then
-             echo -e "\e[1;3;32msing-box 服务重启成功\e[0m"
-         else
-            echo -e "\e[1;3;31msing-box 服务重启失败，请检查日志\e[0m"
-            # 恢复备份
-            mv /root/sbox/sbconfig_server_backup.json /root/sbox/sbconfig_server.json
-         fi
+       
            show_client_configuration
         ;;
     4)  
