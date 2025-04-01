@@ -1798,39 +1798,53 @@ detect_protocols() {
         done
     }
 
+    # 记录已修改的协议
+    modified_protocols=()
+
     # 根据用户选择进行修改
     if [ "$modify_choice" -eq $((i + 2)) ]; then
         echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
         for protocol in "${options[@]}"; do
-            case $protocol in
-                "Vless")
-                    modify_protocol modify_vless "VLESS"
-                    ;;
-                "Vmess")
-                    modify_protocol modify_vmess "VMESS"
-                    ;;
-                "Hysteria2")
-                    modify_protocol modify_hysteria2 "Hysteria2"
-                    ;;
-                "Tuic")
-                    modify_protocol modify_tuic "TUIC"
-                    ;;
-            esac
+            # 仅当该协议尚未被修改时才修改
+            if [[ ! " ${modified_protocols[@]} " =~ " $protocol " ]]; then
+                case $protocol in
+                    "Vless")
+                        modify_protocol modify_vless "VLESS"
+                        modified_protocols+=("Vless")  # 标记为已修改
+                        ;;
+                    "Vmess")
+                        modify_protocol modify_vmess "VMESS"
+                        modified_protocols+=("Vmess")
+                        ;;
+                    "Hysteria2")
+                        modify_protocol modify_hysteria2 "Hysteria2"
+                        modified_protocols+=("Hysteria2")
+                        ;;
+                    "Tuic")
+                        modify_protocol modify_tuic "TUIC"
+                        modified_protocols+=("Tuic")
+                        ;;
+                esac
+            fi
         done
     else
         selected_protocol=${options[$((modify_choice - 1))]}
         case $selected_protocol in
             "Vless")
                 modify_protocol modify_vless "VLESS"
+                modified_protocols+=("Vless")
                 ;;
             "Vmess")
                 modify_protocol modify_vmess "VMESS"
+                modified_protocols+=("Vmess")
                 ;;
             "Hysteria2")
                 modify_protocol modify_hysteria2 "Hysteria2"
+                modified_protocols+=("Hysteria2")
                 ;;
             "Tuic")
                 modify_protocol modify_tuic "TUIC"
+                modified_protocols+=("Tuic")
                 ;;
         esac
     fi
