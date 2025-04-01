@@ -404,7 +404,7 @@ download_sing-box() {
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
-            echo -e "\e[1;3;32m已存在最新版本 sing-box-${latest_version}，跳过下载。\e[0m"
+            echo -e "\e[1;3;32m已存在最新版本 sing-box-${latest_version} \e[0m"
             return 0  # 如果文件已经存在，跳过下载
         fi
 
@@ -420,7 +420,7 @@ download_sing-box() {
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
-            echo -e "\e[1;3;32m已存在旧版本 sing-box-${old_version}，跳过下载。\e[0m"
+            echo -e "\e[1;3;32m已存在旧版本 sing-box-${old_version} \e[0m"
             return 0  # 如果文件已经存在，跳过下载
         fi
     else
@@ -429,7 +429,7 @@ download_sing-box() {
     fi
 
     # 下载并设置执行权限
-    echo -e "\e[1;3;32m下载 $version_type 版本: $latest_version\e[0m"
+    echo -e "\e[1;3;32m下载 sing-box 版本: $latest_version\e[0m"
     if curl -sLo "/root/${package}" "$url"; then
         if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
             tar -xzf "/root/${package}" -C /root
@@ -452,9 +452,9 @@ download_sing-box() {
 switch_kernel() {
  # 检测当前 sing-box 版本
     current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    echo -e "\e[1;3;31m检测到当前正在运行 sing-box 版本: $current_version。\e[0m"
+    echo -e "\e[1;3;32m=== 当前正在运行 sing-box 版本: $current_version ===\e[0m"
     echo ""
-    echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
+    echo -e "\e[1;3;33m请选择要切换的 sing-box 版本:\e[0m"
     echo -e "\e[1;3;32m1. 最新正式版\e[0m"
     echo -e "\e[1;3;33m2. 最新测试版\e[0m"
     echo -e "\e[1;3;32m3. 旧正式版\e[0m"
@@ -463,7 +463,7 @@ switch_kernel() {
 
    
     echo -e "\e[1;3;33m sing-box 正在切换中...\e[0m"
-
+  sleep 2
     # 选择要下载的版本
    case $version_choice in
         1) 
@@ -500,7 +500,7 @@ switch_kernel() {
 
     # 删除旧的软链接（如果存在）
     if [ -L /root/sbox/sing-box ]; then
-        echo -e "\e[1;3;32m删除旧的软链接...\e[0m"
+       # echo -e "\e[1;3;32m删除旧的软链接...\e[0m"
         rm -f /root/sbox/sing-box
     fi
 
@@ -517,7 +517,7 @@ switch_kernel() {
     fi
 
     # 创建新的软链接
-    echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
+   # echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
     ln -sf "$target_path" /root/sbox/sing-box
 
     # 启动服务
@@ -526,7 +526,7 @@ switch_kernel() {
         exit 1
     }
 
-    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
+    echo -e "\e[1;3;32m=== sing-box 版本切换成功 ===\e[0m"
 }
 #生成协议链接
 show_client_configuration() {
