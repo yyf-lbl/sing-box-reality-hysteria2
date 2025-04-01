@@ -637,7 +637,7 @@ restart_tunnel() {
     else
         echo -e "\e[1;3;32m正在重新启动临时隧道...\e[0m"
         echo ""
-        pid=$(pgrep -f cloudflared-linux)
+        pid=$(pgrep -f cloudflared)
         if [ -n "$pid" ]; then
             echo -e "\e[1;3;33m终止现有进程...\e[0m"
             pkill -f cloudflared 2>/dev/null
@@ -1527,7 +1527,7 @@ fi
 setup_services() {
     # 设置路径变量
     SBOX_DIR="/root/sbox"
-    CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
+    CLOUDFLARED_PATH="$SBOX_DIR/cloudflared"
     CONFIG_PATH="$SBOX_DIR/tunnel.yml"
     JSON_PATH="$SBOX_DIR/tunnel.json"
     LOG_PATH="$SBOX_DIR/argo_run.log"
