@@ -215,7 +215,7 @@ restart_singbox() {
         systemctl restart sing-box
 
         if systemctl is-active --quiet sing-box; then
-            echo -e "\e[1;3;32m 😊 sing-box-$SING_BOX_VERSION 已成功重启！😊\e[0m"
+            echo -e "\e[1;3;32m === sing-box-$SING_BOX_VERSION 已成功重启！===\e[0m"
         else
             echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
         fi
