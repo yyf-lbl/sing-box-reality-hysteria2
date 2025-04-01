@@ -450,14 +450,6 @@ download_sing-box() {
 }
 #切换内核
 switch_kernel() {
- # 检测当前使用的 sing-box 版本
-    current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    if [ $? -eq 0 ]; then
-        echo -e "\e[1;3;33m当前正在使用的 sing-box 版本: $current_version\e[0m"
-    else
-        echo -e "\e[1;3;33m未能检测到当前正在使用的 sing-box 版本。\e[0m"
-    fi
-    echo ''
     echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
     echo -e "\e[1;3;32m1. 最新正式版\e[0m"
     echo -e "\e[1;3;33m2. 最新测试版\e[0m"
@@ -529,6 +521,7 @@ switch_kernel() {
 
     echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
 }
+
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
