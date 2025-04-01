@@ -1,5 +1,4 @@
-#!/bin/bash
-   
+#!/bin/bash  
 # 创建快捷指令
 add_alias() {
     config_file=$1
@@ -183,6 +182,47 @@ EOF
   fi
 }
 
+#重启sing-box服务
+restart_singbox() {
+    # 获取 sing-box 配置文件路径
+    SBOX_DIR="/root/sbox"
+    CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+    SING_BOX_BIN="$SBOX_DIR/sing-box"
+
+    # 检查 sing-box 是否安装
+    if [ ! -f "$SING_BOX_BIN" ]; then
+        echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
+        exit 1
+    fi
+
+    # 获取 sing-box 版本
+    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
+
+    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
+        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+    else
+        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+    fi
+
+    echo -e "\e[1;3;35m正在重启sing-box服务...\e[0m"
+    sleep 2
+    # 检查 sing-box 配置文件是否有效
+    if $SING_BOX_BIN check -c "$CONFIG_FILE"; then
+        echo -e "\e[1;3;33m配置检查成功，正在重启 sing-box...\e[0m"
+
+        # 重启 sing-box 服务
+        systemctl daemon-reload
+        systemctl restart sing-box
+
+        if systemctl is-active --quiet sing-box; then
+            echo -e "\e[1;3;32msing-box ($SING_BOX_VERSION) 已成功重启！\e[0m"
+        else
+            echo -e "\e[1;3;31msing-box 重启失败！\e[0m"
+        fi
+    else
+        echo -e "\e[1;3;31m配置错误，sing-box 无法重启！\e[0m"
+    fi
+}
 # 下载 cloudflared 官方版
 download_cloudflared() {
     official_dir="/root/sbox/"
@@ -228,12 +268,11 @@ download_cloudflared() {
 
     echo -e "\e[1;35m======================\e[0m"
 }
-
-# 下载singbox最新测试版内核和正式版
+# 下载singbox
 download_singbox() {
     echo -e "\e[1;3;33m请选择要下载的版本:\e[0m"
-    echo -e "\e[1;3;36m1. 下载最新版本 (正式版 + 测试版)\e[0m"
-    echo -e "\e[1;3;36m2. 下载旧版本 (正式版 + 测试版)\e[0m"
+    echo -e "\e[1;3;32m1. 更新最新版本 (正式版 + 测试版)\e[0m"
+    echo -e "\e[1;3;32m2. 使用旧版本 (正式版 + 测试版)\e[0m"
     read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' version_choice
 
     arch=$(uname -m)
@@ -245,184 +284,198 @@ download_singbox() {
         armv7l) arch="armv7" ;;
     esac
 
-    release_path="/root/sbox"
-    prerelease_path="/root/sbox/prerelease"
-    mkdir -p "$release_path" "$prerelease_path"
+    release_path="/root/sbox/latest_version"
+    old_version_path="/root/sbox/old_version"
+    mkdir -p "$release_path" "$old_version_path"
 
     if [ "$version_choice" == "1" ]; then
-        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
-            jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
+        # 获取最新正式版 & 测试版版本号
+        latest_release_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == false) | .tag_name' | sort -V | tail -n 1)
         latest_release_version=${latest_release_tag#v}
-
-        latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | \
-            jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
+        latest_prerelease_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r '.[] | select(.prerelease == true) | .tag_name' | sort -V | tail -n 1)
         latest_prerelease_version=${latest_prerelease_tag#v}
 
-        echo -e "\e[1;3;32m即将下载最新正式版: $latest_release_version\e[0m"
         release_package="sing-box-${latest_release_version}-linux-${arch}.tar.gz"
         release_url="https://github.com/SagerNet/sing-box/releases/download/${latest_release_tag}/${release_package}"
-      
-
-        if curl -sLo "/root/${release_package}" "$release_url"; then
-            tar -xzf "/root/${release_package}" -C /root
-            mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box"
-            rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
-            chmod +x "$release_path/sing-box"
-            echo -e "\e[1;3;32m✔ 最新正式版 ($latest_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
-        else
-            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
-            exit 1
-        fi
-
-        echo -e "\e[1;3;33m即将下载最新测试版: $latest_prerelease_version\e[0m"
         prerelease_package="sing-box-${latest_prerelease_version}-linux-${arch}.tar.gz"
         prerelease_url="https://github.com/SagerNet/sing-box/releases/download/${latest_prerelease_tag}/${prerelease_package}"
-    
 
-        if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
-            tar -xzf "/root/${prerelease_package}" -C /root
-            mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$prerelease_path/sing-box"
-            rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
-            chmod +x "$prerelease_path/sing-box"
-            echo -e "\e[1;3;33m✔ 最新测试版 ($latest_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+        # 下载正式版（如果不存在）
+        if [ ! -f "$release_path/sing-box-$latest_release_version" ]; then
+            echo -e "\e[1;3;32m下载最新正式版: $latest_release_version\e[0m"
+            if curl -sLo "/root/${release_package}" "$release_url"; then
+                tar -xzf "/root/${release_package}" -C /root
+                mv "/root/sing-box-${latest_release_version}-linux-${arch}/sing-box" "$release_path/sing-box-$latest_release_version"
+                rm -r "/root/${release_package}" "/root/sing-box-${latest_release_version}-linux-${arch}"
+                chmod +x "$release_path/sing-box-$latest_release_version"
+                echo -e "\e[1;3;32m✔ 最新正式版已下载: $latest_release_version\e[0m"
+            else
+                echo -e "\e[1;3;31m✖ 正式版下载失败，请检查网络连接。\e[0m"
+            fi
+        fi
+
+        # 下载测试版（如果不存在）
+        if [ ! -f "$release_path/sing-box-test-$latest_prerelease_version" ]; then
+            echo -e "\e[1;3;33m下载最新测试版: $latest_prerelease_version\e[0m"
+            if curl -sLo "/root/${prerelease_package}" "$prerelease_url"; then
+                tar -xzf "/root/${prerelease_package}" -C /root
+                mv "/root/sing-box-${latest_prerelease_version}-linux-${arch}/sing-box" "$release_path/sing-box-$latest_prerelease_version"
+                rm -r "/root/${prerelease_package}" "/root/sing-box-${latest_prerelease_version}-linux-${arch}"
+                chmod +x "$release_path/sing-box-$latest_prerelease_version"
+                echo -e "\e[1;3;33m✔ 最新测试版已下载: $latest_prerelease_version\e[0m"
+            else
+                echo -e "\e[1;3;31m✖ 测试版下载失败，请检查网络连接。\e[0m"
+            fi
+        fi
+        echo -e "\e[1;35m======================\e[0m"
+        # 选择使用哪个版本
+        echo -e "\e[1;3;33m请选择要使用的版本启动服务:\e[0m"
+        echo -e "\e[1;3;32m1. 最新正式版 ($latest_release_version)\e[0m"
+        echo -e "\e[1;3;33m2. 最新测试版 ($latest_prerelease_version)\e[0m"
+        read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' latest_choice
+
+        rm -f /root/sbox/sing-box
+        if [ "$latest_choice" == "1" ]; then
+            ln -sf "$release_path/sing-box-$latest_release_version" /root/sbox/sing-box
+            echo -e "\e[1;3;32m✔ 使用最新正式版: $latest_release_version\e[0m"
         else
-            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
-            exit 1
+            ln -sf "$release_path/sing-box-$latest_prerelease_version" /root/sbox/sing-box
+            echo -e "\e[1;3;33m✔ 使用最新测试版: $latest_prerelease_version\e[0m"
         fi
 
     elif [ "$version_choice" == "2" ]; then
+        rm -f /root/sbox/sing-box
+
         old_release_version="1.10.2"
         old_prerelease_version="1.11.0-alpha.19"
+
+        old_release_path="$old_version_path/sing-box-$old_release_version"
+        old_prerelease_path="$old_version_path/sing-box-$old_prerelease_version"
 
         old_release_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_release_version}"
         old_prerelease_url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_prerelease_version}"
 
-        echo -e "\e[1;3;32m即将下载旧的正式版: $old_release_version\e[0m"
-     
-        if curl -sLo "$release_path/sing-box" "$old_release_url"; then
-            chmod +x "$release_path/sing-box"
-            echo -e "\e[1;3;32m✔ 旧正式版 ($old_release_version) 已下载并安装到: $release_path/sing-box\e[0m"
-        else
-            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
-            exit 1
+        if [ ! -f "$old_release_path" ]; then
+            echo -e "\e[1;3;32m下载旧正式版: $old_release_version\e[0m"
+            curl -sLo "$old_release_path" "$old_release_url" && chmod +x "$old_release_path"
         fi
 
-        echo -e "\e[1;3;33m即将下载旧的测试版: $old_prerelease_version\e[0m"
-    
-        if curl -sLo "$prerelease_path/sing-box" "$old_prerelease_url"; then
-            chmod +x "$prerelease_path/sing-box"
-            echo -e "\e[1;3;33m✔ 旧测试版 ($old_prerelease_version) 已下载并安装到: $prerelease_path/sing-box\e[0m"
+        if [ ! -f "$old_prerelease_path" ]; then
+            echo -e "\e[1;3;33m下载旧测试版: $old_prerelease_version\e[0m"
+            curl -sLo "$old_prerelease_path" "$old_prerelease_url" && chmod +x "$old_prerelease_path"
+        fi
+        echo -e "\e[1;35m======================\e[0m"
+        echo -e "\e[1;3;33m请选择要使用的旧版本启动服务:\e[0m"
+        echo -e "\e[1;3;32m1. 旧正式版 ($old_release_version)\e[0m"
+        echo -e "\e[1;3;33m2. 旧测试版 ($old_prerelease_version)\e[0m"
+        read -p $'\e[1;3;33m请输入选项 (1-2): \e[0m' old_choice
+
+        if [ "$old_choice" == "1" ]; then
+            ln -sf "$old_release_path" /root/sbox/sing-box
+            echo -e "\e[1;3;32m✔ 使用旧正式版: $old_release_version\e[0m"
         else
-            echo -e "\e[1;3;31m✖ 下载失败，请检查网络连接。\e[0m"
-            exit 1
+            ln -sf "$old_prerelease_path" /root/sbox/sing-box
+            echo -e "\e[1;3;33m✔ 使用旧测试版: $old_prerelease_version\e[0m"
+        fi
+    fi
+
+    echo -e "\e[1;3;32m✔ 下载任务完成！\e[0m"
+}
+# 下载singbox最新测试版内核和正式版
+download_sing-box() {
+    local version_type="$1"
+    local arch=$(uname -m)
+    case ${arch} in
+        x86_64) arch="amd64" ;;
+        aarch64) arch="arm64" ;;
+        armv7l) arch="armv7" ;;
+    esac
+
+    release_path="/root/sbox/latest_version"
+    old_version_path="/root/sbox/old_version"
+    mkdir -p "$release_path" "$old_version_path"
+
+    if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
+        latest_tag=$(curl -s "https://api.github.com/repos/SagerNet/sing-box/releases" | jq -r ".[] | select(.prerelease == $( [ "$version_type" == "latest_prerelease" ] && echo "true" || echo "false" )) | .tag_name" | sort -V | tail -n 1)
+        latest_version=${latest_tag#v}
+        package="sing-box-${latest_version}-linux-${arch}.tar.gz"
+        url="https://github.com/SagerNet/sing-box/releases/download/${latest_tag}/${package}"
+        target_path="$release_path/sing-box-${latest_version}"
+
+        # 检查是否已经存在 sing-box 文件
+        if [ -f "$target_path" ]; then
+            echo -e "\e[1;3;32m已存在最新版本 sing-box-${latest_version}，跳过下载。\e[0m"
+            return 0  # 如果文件已经存在，跳过下载
         fi
 
+    elif [[ "$version_type" == "old_release" || "$version_type" == "old_prerelease" ]]; then
+        if [[ "$version_type" == "old_release" ]]; then
+            old_version="1.10.2"
+        elif [[ "$version_type" == "old_prerelease" ]]; then
+            old_version="1.11.0-alpha.19"
+        fi
+
+        url="https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-${old_version}"
+        target_path="$old_version_path/sing-box-${old_version}"
+
+        # 检查是否已经存在 sing-box 文件
+        if [ -f "$target_path" ]; then
+            echo -e "\e[1;3;32m已存在旧版本 sing-box-${old_version}，跳过下载。\e[0m"
+            return 0  # 如果文件已经存在，跳过下载
+        fi
     else
-        echo -e "\e[1;3;31m无效选项，请重新运行脚本。\e[0m"
+        echo -e "\e[1;3;31m无效的下载选项。\e[0m"
         exit 1
     fi
 
-    echo -e "\e[1;3;32m下载已完成！\e[0m"
-}
-
-#singbox 内核切换
-switch_kernel() {
-    # 获取当前 sing-box 版本
-    if [[ -f /root/sbox/sing-box ]]; then
-        current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1)
-    else
-        current_version="未找到 sing-box"
-    fi
-
-    # 检测当前符号链接指向的路径
-    current_link_target=$(readlink /root/sbox/sing-box)
-
-    echo -e "\e[1;3;31m=================\e[0m"
-    echo -e "\e[1;3;32m当前 sing-box 版本: $current_version\e[0m"
-
-    if [[ $current_link_target == "/root/sbox/release/sing-box" ]]; then
-        echo -e "\e[1;3;32m当前正在使用最新的 sing-box 正式版\e[0m"
-    elif [[ $current_link_target == "/root/sbox/prerelease/sing-box" ]]; then
-        echo -e "\e[1;3;33m当前正在使用最新的 sing-box 测试版\e[0m"
-    elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.10.2" ]]; then
-        echo -e "\e[1;3;34m当前正在使用旧正式版 (1.10.2)\e[0m"
-    elif [[ $current_link_target == "/root/sbox/old_version/sing-box-1.11.0-alpha.19" ]]; then
-        echo -e "\e[1;3;35m当前正在使用旧测试版 (1.11.0-alpha.19)\e[0m"
-    else
-        echo -e "\e[1;3;31m当前 sing-box 版本未知。\e[0m"
-    fi
-    echo -e "\e[1;3;31m=================\e[0m"
-
-    # 选择切换版本
-    while true; do
-        echo -e "\e[1;3;38;2;228;76;228m是否需要切换 sing-box 内核？\e[0m"
-        echo -e "\e[1;3;36m1) 切换到测试版\e[0m"
-        echo -e "\e[1;3;32m2) 切换到正式版\e[0m"
-        echo -e "\e[1;3;34m3) 切换到旧正式版 (1.10.2)\e[0m"
-        echo -e "\e[1;3;35m4) 切换到旧测试版 (1.11.0-alpha.19)\e[0m"
-        echo -e "\e[1;3;31m0) 不切换退出\e[0m"
-        echo -ne "\e[1;3;33m请输入选项:\e[0m"
-        read -p " " choice
-
-        case $choice in
-            1)
-                ln -sf /root/sbox/prerelease/sing-box /root/sbox/sing-box
-                echo -e "\e[1;3;33m已切换到测试版内核。\e[0m"
-                ;;
-            2)
-                ln -sf /root/sbox/release/sing-box /root/sbox/sing-box
-                echo -e "\e[1;3;32m已切换到正式版内核。\e[0m"
-                ;;
-            3)
-                if [[ ! -f /root/sbox/old_version/sing-box-1.10.2 ]]; then
-                    echo -e "\e[1;3;33m未找到旧正式版 (1.10.2)，正在下载...\e[0m"
-                    mkdir -p /root/sbox/old_version
-                    wget -q -O /root/sbox/old_version/sing-box-1.10.2 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.10.2
-                    chmod +x /root/sbox/old_version/sing-box-1.10.2
-                fi
-                ln -sf /root/sbox/old_version/sing-box-1.10.2 /root/sbox/sing-box
-                echo -e "\e[1;3;34m已切换到旧正式版 (1.10.2)。\e[0m"
-                ;;
-            4)
-                if [[ ! -f /root/sbox/old_version/sing-box-1.11.0-alpha.19 ]]; then
-                    echo -e "\e[1;3;33m未找到旧测试版 (1.11.0-alpha.19)，正在下载...\e[0m"
-                    mkdir -p /root/sbox/old_version
-                    wget -q -O /root/sbox/old_version/sing-box-1.11.0-alpha.19 https://github.com/yyf-lbl/sing-box-reality-hysteria2/releases/download/sing-box/sing-box-1.11.0-alpha.19
-                    chmod +x /root/sbox/old_version/sing-box-1.11.0-alpha.19
-                fi
-                ln -sf /root/sbox/old_version/sing-box-1.11.0-alpha.19 /root/sbox/sing-box
-                echo -e "\e[1;3;35m已切换到旧测试版 (1.11.0-alpha.19)。\e[0m"
-                ;;
-            0)
-                echo -e "\e[1;3;36m未进行任何更改，退出。\e[0m"
-                break
-                ;;
-            *)
-                echo -e "\e[1;3;31m无效选项，请重新输入。\e[0m"
-                continue
-                ;;
-        esac
-
-        # 获取新版本号
-        new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1)
-        echo -e "\e[1;3;32m当前 sing-box 版本: $new_version\e[0m"
-
-        # 重启 sing-box
-        systemctl stop sing-box
-        pkill -f sing-box
-        sleep 2
-        systemctl restart sing-box
-        if systemctl is-active --quiet sing-box; then
-            echo -e "\e[1;3;32msing-box 服务已成功重启。\e[0m"
+    # 下载并设置执行权限
+    echo -e "\e[1;3;32m下载 $version_type 版本: $latest_version\e[0m"
+    if curl -sLo "/root/${package}" "$url"; then
+        if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
+            tar -xzf "/root/${package}" -C /root
+            mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
+            rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
         else
-            echo -e "\e[1;3;31msing-box 服务重启失败。\e[0m"
+            mv "/root/${package}" "$target_path"
         fi
-        break
-    done
+        chmod +x "$target_path"
+    else
+        echo -e "\e[1;3;31m下载失败，请检查网络连接。\e[0m"
+        exit 1
+    fi
 
-    echo -e "\e[1;35m======================\e[0m"
+    # 软链接到 sing-box 目录
+    ln -sf "$target_path" /root/sbox/sing-box
+    echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
 }
+#切换内核
+switch_kernel() {
+ echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
+    echo -e "\e[1;3;32m1. 最新正式版\e[0m"
+    echo -e "\e[1;3;33m2. 最新测试版\e[0m"
+    echo -e "\e[1;3;32m3. 旧正式版\e[0m"
+    echo -e "\e[1;3;33m4. 旧测试版\e[0m"
+    read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
 
+    # 检测当前 sing-box 版本
+    current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
+    echo -e "\e[1;3;34m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
+    echo -e "\e[1;3;33m sing-box 正在切换中...\e[0m"
+
+    # 选择要下载的版本
+    case $version_choice in
+        1) download_sing-box latest_release; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新正式版
+        2) download_sing-box latest_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新测试版
+        3) download_sing-box old_release; CONFIG_FILE="/root/sbox/sbconfig_server.json" ;;  # 旧正式版
+        4) download_sing-box old_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 旧测试版
+        *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
+    esac
+
+    # 切换版本完成，调用 setup_services 启动服务
+    setup_services
+    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
+    echo -e "\e[1;3;32m === sing-box-$new_version 已成功启动！===\e[0m"
+}
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
@@ -586,50 +639,44 @@ EOF
 
 #卸载sing-box程序
 uninstall_singbox() {
- echo -e "\e[1;3;31m正在卸载sing-box服务...\e[0m"
+    echo -e "\e[1;3;31m正在卸载 sing-box 服务...\e[0m"
     echo ""
+
     # 询问用户是否确认卸载
     while true; do
-         read -p $'\e[1;3;33m您确定要卸载sing-box服务吗？(y/n) [默认y]: \e[0m' confirm
-        confirm=${confirm,,}  # 将输入转换为小写
-        
-        # 如果输入为空，视为 'y'
-        if [[ -z "$confirm" ]]; then
-            confirm="y"
-        fi
+        read -p $'\e[1;3;33m您确定要卸载 sing-box 服务吗？(y/n) [默认 y]: \e[0m' confirm
+        confirm=${confirm,,}  # 转换为小写
+        [[ -z "$confirm" ]] && confirm="y"  # 默认值为 y
         case "$confirm" in
-            y) 
-                break  # 继续卸载
-                ;;
-            n) 
-                echo "取消卸载。"
-                return
-                ;;
-            *) 
-                echo "无效输入，请输入 y 或 n。"
-                ;;
+            y) break ;;  # 继续卸载
+            n) echo "取消卸载。"; return ;;
+            *) echo "无效输入，请输入 y 或 n。" ;;
         esac
     done
+
     # 停止并禁用 Cloudflare 隧道服务
     if systemctl is-active --quiet cloudflared; then
         echo -e "\e[1;3;33m正在停止 Cloudflare 隧道服务...\e[0m"
-        systemctl stop cloudflared 2>/dev/null
-        systemctl disable cloudflared 2>/dev/null
+        systemctl stop cloudflared >/dev/null 2>&1
+        systemctl disable cloudflared >/dev/null 2>&1
     fi
+
     # 停止现有的 cloudflared 进程
-    pid=$(pgrep -f cloudflared-linux)
-    if [ -n "$pid" ]; then
-        pkill -f cloudflared-linux 2>/dev/null
-    fi
+    pkill -f cloudflared-linux >/dev/null 2>&1
     sleep 2
+
     # 停止并禁用 sing-box 服务
-    systemctl stop sing-box 2>/dev/null
-    systemctl disable sing-box 2>/dev/null
+    systemctl stop sing-box >/dev/null 2>&1
+    systemctl disable sing-box >/dev/null 2>&1
+
     # 定义要删除的文件和目录
     files_to_remove=(
         "/etc/systemd/system/sing-box.service"
         "/etc/systemd/system/cloudflared.service"
         "/root/sbox/sbconfig_server.json"
+        "/root/sbox/sbconfig1_server.json"
+        "/root/sbox/latest_version"
+        "/root/sbox/old_version"
         "/root/sbox/sing-box"
         "/root/sbox/cloudflared-linux"
         "/root/sbox/argo.txt.b64"
@@ -637,37 +684,27 @@ uninstall_singbox() {
         "/root/self-cert/private.key"
         "/root/self-cert/cert.pem"
     )
+    
     directories_to_remove=(
         "/root/self-cert/"
         "/root/sbox/"
     )
-    # 删除文件并检查是否成功
+
+    # 删除文件（隐藏错误信息）
     for file in "${files_to_remove[@]}"; do
-        if [ -e "$file" ]; then
-            rm "$file" > /dev/null 2>&1
-            if [ $? -ne 0 ]; then
-                echo "Failed to remove $file."
-            fi
-        fi
+        rm -f "$file" >/dev/null 2>&1
     done
-    # 删除目录并检查是否成功
+
+    # 删除目录（隐藏错误信息）
     for dir in "${directories_to_remove[@]}"; do
-        if [ -d "$dir" ]; then
-            rm -rf "$dir" > /dev/null 2>&1
-            if [ $? -ne 0 ]; then
-                echo "Failed to remove directory $dir."
-            fi
-        fi
+        rm -rf "$dir" >/dev/null 2>&1
     done
-   #  重新加载系统的单元文件配置
-    systemctl daemon-reload
-   echo -e "\e[1;3;32msing-box已成功卸载!\e[0m"
-echo -e "\e[1;3;32m所有sing-box配置文件已完全移除\e[0m"
- echo ""
+
+    echo -e "\e[1;3;32m✔ sing-box 卸载完成！\e[0m"
 }
+
 # 安装sing-box
-install_singbox() { 
-    
+install_singbox() {     
   while true; do
     echo -e "\e[1;3;33m请选择要安装的协议（输入数字，多个选择用空格分隔）:\e[0m"
     echo -e "\e[1;3;33m1) vless-Reality\e[0m"
@@ -676,16 +713,11 @@ install_singbox() {
     echo -e "\e[1;3;33m4) Tuic\e[0m"
     read -p $'\e[1;3;33m请输入你的选择: \e[0m' choices
     echo ""  
-    # 检查输入是否为空
     if [[ -z "$choices" ]]; then
         echo "输入不能为空，请重新输入。"
         continue
     fi
-
-    # 将用户输入的选择转为数组
     read -a selected_protocols <<< "$choices"
-    
-    # 检查输入的选择是否有效
     valid=true
     for choice in "${selected_protocols[@]}"; do
         if [[ ! "$choice" =~ ^[1-4]$ ]]; then
@@ -702,28 +734,17 @@ install_singbox() {
         break  # 有效选择后退出循环
     fi
 done
-
-    # 初始化配置变量
     listen_port=443
     vmess_port=15555
     hy_listen_port=8443
     tuic_listen_port=8080
-# json配置部分
-# 定义要测试的 DNS
 dns_servers=("1.1.1.1" "8.8.8.8" "9.9.9.9")
 dns_names=("cloudflare" "google" "quad9")
-
-# 初始化变量
 latencies=()
 min_latency=9999
 fastest_dns=""
-
-# 测试每个 DNS 的延迟
 for i in "${!dns_servers[@]}"; do
-    # 使用 ping 测试延迟
     latency=$(ping -c 1 -W 1 "${dns_servers[i]}" 2>/dev/null | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
-    
-    # 检查是否成功获取延迟值
     if [[ $latency =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
         latencies[i]=$latency
       echo -e "\033[1;3;35m${dns_names[i]} DNS 延迟: ${latency}ms\033[0m"
@@ -732,21 +753,16 @@ for i in "${!dns_servers[@]}"; do
         echo "${dns_names[i]} DNS latency: Unreachable"
     fi
 done
-
-# 找出最快的 DNS
 for i in "${!latencies[@]}"; do
     if (( $(echo "${latencies[i]} < $min_latency" | bc -l) )); then
         min_latency=${latencies[i]}
         fastest_dns=${dns_names[i]}
     fi
 done
-
-# 输出结果
 if [[ -n $fastest_dns ]]; then
    echo -e "\033[1;3;33m最快的 DNS 是 ${fastest_dns}，延迟为 ${min_latency} 毫秒。\033[0m"
 else
     echo -e "\033[1;3;31m找不到可访问的DNS。\033[0m"
-
 fi
 config="{
   \"log\": {
@@ -902,6 +918,160 @@ config="{
       \"store_fakeip\": true
     }
   }
+} "
+  config1="{
+  \"log\": {
+    \"disabled\": false,
+    \"level\": \"info\",
+    \"output\": \"/root/sbox/sb.log\",
+    \"timestamp\": true
+  },
+  \"dns\": {
+    \"servers\": [
+      {
+        \"tag\": \"cloudflare\",
+        \"address\": \"https:\/\/1.1.1.1\/dns-query\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"google\",
+        \"address\": \"tls:\/\/8.8.8.8\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      },
+      {
+        \"tag\": \"quad9\",
+        \"address\": \"https:\/\/9.9.9.9\/dns-query\",
+        \"strategy\": \"ipv4_only\",
+        \"detour\": \"direct\"
+      }
+    ],
+    \"rules\": [
+      {
+        \"domain_suffix\": \"google.com\",
+        \"server\": \"google\"
+      },
+      {
+        \"domain_suffix\": \"cloudflare.com\",
+        \"server\": \"cloudflare\"
+      },
+      {
+        \"domain_suffix\": \"quad9.net\",
+        \"server\": \"quad9\"
+      }
+    ],
+    \"final\": \"$fastest_dns\",
+    \"strategy\": \"ipv4_only\",
+    \"disable_cache\": false,
+    \"disable_expire\": false
+  },
+  \"inbounds\": [],
+  \"outbounds\": [
+    {
+      \"type\": \"direct\",
+      \"tag\": \"direct\"
+    }
+  ],
+  \"endpoints\": [
+    {
+      \"type\": \"wireguard\",
+      \"tag\": \"warp-ep\",
+      \"mtu\": 1280,
+      \"address\": [
+        \"172.16.0.2\/32\",
+        \"2606:4700:110:8a36:df92:102a:9602:fa18\/128\"
+      ],
+      \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
+      \"peers\": [
+        {
+          \"address\": \"engage.cloudflareclient.com\",
+          \"port\": 2408,
+          \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5\/1SUtzH0JuVo51h2wPfgyo=\",
+          \"allowed_ips\": [
+            \"0.0.0.0\/0\",
+            \"::\/0\"
+          ],
+          \"reserved\": [6, 146, 6]
+        }
+      ]
+    }
+  ],
+  \"route\": {
+    \"rule_set\": [
+      {
+        \"tag\": \"geosite-openai\",
+        \"type\": \"remote\",
+        \"format\": \"binary\",
+        \"url\": \"https:\/\/raw.githubusercontent.com\/MetaCubeX\/meta-rules-dat\/sing\/geo\/geosite\/openai.srs\",
+        \"update_interval\": \"1d\"
+      }
+    ],
+    \"rules\": [
+      {
+        \"action\": \"sniff\"
+      },
+      {
+        \"action\": \"resolve\",
+        \"domain\": [
+          \"api.statsig.com\",
+          \"browser-intake-datadoghq.com\",
+          \"cdn.openai.com\",
+          \"chat.openai.com\",
+          \"auth.openai.com\",
+          \"chat.openai.com.cdn.cloudflare.net\",
+          \"ios.chat.openai.com\",
+          \"o33249.ingest.sentry.io\",
+          \"openai-api.arkoselabs.com\",
+          \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
+          \"openaicomproductionae4b.blob.core.windows.net\",
+          \"production-openaicom-storage.azureedge.net\",
+          \"static.cloudflareinsights.com\"
+        ],
+        \"domain_suffix\": [
+          \".algolia.net\",
+          \".auth0.com\",
+          \".chatgpt.com\",
+          \".challenges.cloudflare.com\",
+          \".client-api.arkoselabs.com\",
+          \".events.statsigapi.net\",
+          \".featuregates.org\",
+          \".identrust.com\",
+          \".intercom.io\",
+          \".intercomcdn.com\",
+          \".launchdarkly.com\",
+          \".oaistatic.com\",
+          \".oaiusercontent.com\",
+          \".observeit.net\",
+          \".openai.com\",
+          \".openaiapi-site.azureedge.net\",
+          \".openaicom.imgix.net\",
+          \".segment.io\",
+          \".sentry.io\",
+          \".stripe.com\"
+        ],
+        \"strategy\": \"prefer_ipv4\"
+      },
+      {
+        \"action\": \"resolve\",
+        \"rule_set\": [\"geosite-openai\"],
+        \"strategy\": \"prefer_ipv6\"
+      },
+      {
+        \"domain\": [\"api.openai.com\"],
+        \"rule_set\": [\"geosite-openai\"],
+        \"outbound\": \"warp-ep\"
+      }
+    ]
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"enabled\": true,
+      \"path\": \"\/root\/sbox\/cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
+  }
 }"
 
     for choice in $choices; do
@@ -951,6 +1121,34 @@ fi
                 echo -e "\e[1;3;32m使用的域名：$server_name\e[0m"
                 echo ""
                 config=$(echo "$config" | jq --arg listen_port "$listen_port" \
+                    --arg server_name "$server_name" \
+                    --arg private_key "$private_key" \
+                    --arg short_id "$short_id" \
+                    --arg uuid "$uuid" \
+                    '.inbounds += [{
+                        "type": "vless",
+                        "tag": "vless-in",
+                        "listen": "::",
+                        "listen_port": ($listen_port | tonumber),
+                        "users": [{
+                            "uuid": $uuid,
+                            "flow": "xtls-rprx-vision"
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "server_name": $server_name,
+                            "reality": {
+                                "enabled": true,
+                                "handshake": {
+                                    "server": $server_name,
+                                    "server_port": 443
+                                },
+                                "private_key": $private_key,
+                                "short_id": [$short_id]
+                            }
+                        }
+                    }]')
+                    config1=$(echo "$config1" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
                     --arg short_id "$short_id" \
@@ -1061,16 +1259,11 @@ done
 
     # 处理 Argo 的配置
     if [[ $argo_auth =~ TunnelSecret ]]; then
-        # 创建 JSON 凭据文件
         echo "$argo_auth" > /root/sbox/tunnel.json
-
-        # 生成 tunnel.yml 文件
  cat > /root/sbox/tunnel.yml << EOF
-
 tunnel: $(echo "$argo_auth" | jq -r '.TunnelID')
 credentials-file: /root/sbox/tunnel.json
 protocol: http2
-
 ingress:
   - hostname: $argo_domain
     service: http://localhost:$vmess_port
@@ -1078,34 +1271,24 @@ ingress:
       noTLSVerify: true
   - service: "http_status:404"
 EOF
-
-      #  echo "生成的 tunnel.yml 文件内容:"
-      #  cat /root/sbox/tunnel.yml
-        # 启动固定隧道
        /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1 &
        echo "" 
         echo -e "\e[1;3;32mCloudflared 固定隧道功能已启动！\e[0m"
     echo ""
     fi
 else
-    # 用户选择使用临时隧道
 pid=$(pgrep -f cloudflared)
 if [ -n "$pid" ]; then
-    # 终止现有进程
     pkill -f cloudflared 2>/dev/null
 fi
-
-    # 启动临时隧道
 nohup /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo.log 2>&1 &
 sleep 2
 echo -e "\e[1;3;33m等待 Cloudflare Argo 生成地址...\e[0m"
 sleep 5
 echo ""
-#连接到域名
 argo=$(cat /root/sbox/argo.log | grep trycloudflare.com | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
 echo "$argo" | base64 > /root/sbox/argo.txt.b64
 fi
-# 生成vmess配置文件
 config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
@@ -1123,8 +1306,24 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
+                    config1=$(echo "$config1" | jq --arg vmess_port "$vmess_port" \
+                    --arg vmess_uuid "$vmess_uuid" \
+                    --arg ws_path "$ws_path" \
+                    '.inbounds += [{
+                        "type": "vmess",
+                        "tag": "vmess-in",
+                        "listen": "::",
+                        "listen_port": ($vmess_port | tonumber),
+                        "users": [{
+                            "uuid": $vmess_uuid
+                        }],
+                        "transport": {
+                            "type": "ws",
+                            "path": $ws_path,
+                            "early_data_header_name": "Sec-WebSocket-Protocol"
+                        }
+                    }]')
                 ;;
-
             3)
                 show_notice "★ ★ ★ 开始配置Hysteria2协议 ★ ★ ★"
                 sleep 2
@@ -1133,20 +1332,15 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                 hy_password=$(/root/sbox/sing-box generate rand --hex 8)
                 echo -e "\e[1;3;32m随机生成的hy2密码: $hy_password\e[0m"
                 sleep 1
-                # 提示用户输入自定义端口，或者选择随机生成端口
 read -p $'\e[1;3;33m请输入 Hysteria2 监听端口 (默认端口: 8443)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' hy_listen_port_input
 sleep 1
-
-# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
 if [[ "$hy_listen_port_input" == "y" || "$hy_listen_port_input" == "Y" ]]; then
     hy_listen_port=$((RANDOM % 55536 + 10000))
     echo -e "\e[1;3;32m自动生成的 Hysteria2 端口: $hy_listen_port\e[0m"
-# 如果用户输入了自定义端口且输入有效，使用自定义端口
 elif [[ "$hy_listen_port_input" =~ ^[0-9]+$ ]] && [ "$hy_listen_port_input" -ge 10000 ] && [ "$hy_listen_port_input" -le 65535 ]; then
     hy_listen_port=$hy_listen_port_input
     echo -e "\e[1;3;32m使用自定义的 Hysteria2 端口: $hy_listen_port\e[0m"
 else
-    # 否则使用默认的已设置端口
     echo -e "\e[1;3;32m使用默认的 Hysteria2 端口: $hy_listen_port\e[0m"
 fi
                 sleep 1
@@ -1159,6 +1353,23 @@ fi
                 echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
                 echo ""
                 config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
+                    --arg hy_password "$hy_password" \
+                    '.inbounds += [{
+                        "type": "hysteria2",
+                        "tag": "hy2-in",
+                        "listen": "::",
+                        "listen_port": ($hy_listen_port | tonumber),
+                        "users": [{
+                            "password": $hy_password
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "alpn": ["h3"],
+                            "certificate_path": "/root/self-cert/cert.pem",
+                            "key_path": "/root/self-cert/private.key"
+                        }
+                    }]')
+                    config1=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
                         "type": "hysteria2",
@@ -1189,20 +1400,15 @@ fi
     tuic_uuid=$(/root/sbox/sing-box generate uuid)  # 生成 uuid
     echo -e "\e[1;3;33m随机生成Tuic-UUID：$tuic_uuid\e[0m"
     sleep 1
-    # 提示用户输入自定义端口，或者选择随机生成端口
 read -p $'\e[1;3;33m请输入 TUIC 监听端口 (默认端口: 8080)，或输入 y 生成随机端口, 直接回车使用默认端口: \e[0m' tuic_listen_port_input
 sleep 1
-
-# 如果用户输入 y 或 Y，则随机生成端口（范围为10000到65535）
 if [[ "$tuic_listen_port_input" == "y" || "$tuic_listen_port_input" == "Y" ]]; then
     tuic_listen_port=$((RANDOM % 55536 + 10000))
     echo -e "\e[1;3;32m自动生成的 TUIC 端口: $tuic_listen_port\e[0m"
-# 如果用户输入了自定义端口且输入有效，使用自定义端口
 elif [[ "$tuic_listen_port_input" =~ ^[0-9]+$ ]] && [ "$tuic_listen_port_input" -ge 10000 ] && [ "$tuic_listen_port_input" -le 65535 ]; then
     tuic_listen_port=$tuic_listen_port_input
     echo -e "\e[1;3;32m使用自定义的 TUIC 端口: $tuic_listen_port\e[0m"
 else
-    # 否则使用默认的已设置端口
     echo -e "\e[1;3;32m使用默认的 TUIC 端口: $tuic_listen_port\e[0m"
 fi
     sleep 1
@@ -1214,7 +1420,6 @@ fi
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
     echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
     echo ""
-
     config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
         --arg tuic_uuid "$tuic_uuid" \
@@ -1235,37 +1440,77 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
-
+        config1=$(echo "$config1" | jq --arg tuic_listen_port "$tuic_listen_port" \
+        --arg tuic_password "$tuic_password" \
+        --arg tuic_uuid "$tuic_uuid" \
+        '.inbounds += [{
+            "type": "tuic",
+            "tag": "tuic-in",
+            "listen": "::",
+            "listen_port": ($tuic_listen_port | tonumber),
+            "users": [{
+                "uuid": $tuic_uuid,
+                "password": $tuic_password
+            }],
+            "congestion_control": "bbr",
+            "tls": {
+                "enabled": true,
+                "alpn": ["h3"],
+                "certificate_path": "/root/self-cert/cert.pem",
+                "key_path": "/root/self-cert/private.key"
+            }
+        }]')
     ;;
-
               *)
                 echo "无效选择: $choice"
                 ;;    
         esac
     done
-    # 生成最终配置文件
     echo "$config" > /root/sbox/sbconfig_server.json
-  #  echo "配置文件已生成：/root/sbox/sbconfig_server.json"
+    echo "$config1" > /root/sbox/sbconfig1_server.json
+   # echo "配置文件已生成：/root/sbox/sbconfig_server.json"
+   # echo "配置文件已生成：/root/sbox/sbconfig1_server.json"
 }
 #创建sing-box和cloudflare服务文件并启动
 setup_services() {
-    # 获取 vmess 端口
-    local vmess_port=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' /root/sbox/sbconfig_server.json)
-    local CLOUDFLARED_PATH="/root/sbox/cloudflared-linux"
-    local CONFIG_PATH="/root/sbox/tunnel.yml"
-    local JSON_PATH="/root/sbox/tunnel.json"
-    local LOG_PATH="/root/sbox/argo_run.log"
-    # 创建 sing-box 服务文件
+    # 设置路径变量
+    SBOX_DIR="/root/sbox"
+    CLOUDFLARED_PATH="$SBOX_DIR/cloudflared-linux"
+    CONFIG_PATH="$SBOX_DIR/tunnel.yml"
+    JSON_PATH="$SBOX_DIR/tunnel.json"
+    LOG_PATH="$SBOX_DIR/argo_run.log"
+    
+    # 直接使用 /root/sbox/sing-box，因为 download_singbox() 已经确保它是用户选择的版本
+    SING_BOX_BIN="$SBOX_DIR/sing-box"
+
+    # 获取 sing-box 版本
+   if [ -f "$SING_BOX_BIN" ]; then
+    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+(-[a-zA-Z0-9\.]+)?')
+    echo -e "\e[1;3;32m检测到 sing-box 版本: $SING_BOX_VERSION\e[0m"
+else
+    echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
+    exit 1
+fi
+    # 选择配置文件（按照版本自动适配）
+    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
+        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+    else
+        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+    fi
+ 
+
+    # 获取 vmess 端口（如果有）
+    VMESS_PORT=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' "$CONFIG_FILE")
+
+    # **创建 sing-box systemd 服务**
     cat > /etc/systemd/system/sing-box.service <<EOF
 [Unit]
 After=network.target nss-lookup.target
 
 [Service]
 User=root
-WorkingDirectory=/root
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-AmbientCapabilities=CAP_NET_ADMIN CAP_NET_BIND_SERVICE CAP_NET_RAW
-ExecStart=/root/sbox/sing-box run -c /root/sbox/sbconfig_server.json
+WorkingDirectory=$SBOX_DIR
+ExecStart=$SING_BOX_BIN run -c $CONFIG_FILE
 ExecReload=/bin/kill -HUP \$MAINPID
 Restart=on-failure
 RestartSec=10
@@ -1275,8 +1520,8 @@ LimitNOFILE=infinity
 WantedBy=multi-user.target
 EOF
 
-    # 如果存在 vmess 类型的配置，则创建 Cloudflare 服务文件
-    if [ -n "$vmess_port" ]; then
+    # **如果有 vmess 端口，创建 Cloudflare Tunnel systemd 服务**
+    if [ -n "$VMESS_PORT" ] && [ ! -f /etc/systemd/system/cloudflared.service ]; then
         cat > /etc/systemd/system/cloudflared.service <<EOF
 [Unit]
 Description=Cloudflare Tunnel
@@ -1284,67 +1529,51 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStartPre=/bin/bash -c 'if pgrep -x "cloudflared" > /dev/null; then echo -e "\e[32m\e[3mCloudflared is already running\e[0m"; exit 0; fi'
-ExecStart=/bin/bash -c 'if [ -f "/root/sbox/tunnel.yml" ] || [ -f "/root/sbox/tunnel.json" ]; then /root/sbox/cloudflared tunnel --config /root/sbox/tunnel.yml run > /root/sbox/argo_run.log 2>&1; else /root/sbox/cloudflared tunnel --url http://localhost:$vmess_port --no-autoupdate --edge-ip-version auto --protocol http2 > /root/sbox/argo_run.log 2>&1; fi'
+ExecStart=/bin/bash -c 'if [ -f "$CONFIG_PATH" ] || [ -f "$JSON_PATH" ]; then $CLOUDFLARED_PATH tunnel --config $CONFIG_PATH run > $LOG_PATH 2>&1; else $CLOUDFLARED_PATH tunnel --url http://localhost:$VMESS_PORT --no-autoupdate --edge-ip-version auto --protocol http2 > $LOG_PATH 2>&1; fi'
 Restart=always
 RestartSec=5s
 User=root
-StandardOutput=append:/root/sbox/argo_run.log
-StandardError=append:/root/sbox/argo_run.log
+StandardOutput=append:$LOG_PATH
+StandardError=append:$LOG_PATH
 
 [Install]
 WantedBy=multi-user.target
-
 EOF
     fi
 
-    # 检查配置并启动服务
-    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-        echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box 服务...\e[0m"
-        # 重新加载系统服务管理器
+    # **启动 sing-box**
+    if $SING_BOX_BIN check -c "$CONFIG_FILE"; then
+        echo -e "\e[1;3;33m配置检查成功，正在启动 sing-box...\e[0m"
         systemctl daemon-reload
-        # 启动并设置服务开机自启  
-        systemctl start sing-box
+        systemctl restart sing-box
         systemctl enable sing-box > /dev/null 2>&1
 
         if systemctl is-active --quiet sing-box; then
-            echo -e "\e[1;3;32msing-box 服务已成功启动！\e[0m"
-        else
-            echo -e "\e[1;3;31msing-box 服务启动失败！\e[0m"
-        fi
+            echo -e "\e[1;3;32msing-box-$SING_BOX_VERSION 已成功启动！\e[0m"
 
-        # 如果 Cloudflare 服务文件存在，启动 Cloudflare 服务
-        if [ -n "$vmess_port" ]; then
-            systemctl start cloudflared
-            systemctl enable cloudflared > /dev/null 2>&1
+            # **如果有 vmess 端口，启动 Cloudflare Tunnel**
+            if [ -n "$VMESS_PORT" ]; then
+                systemctl restart cloudflared
+                systemctl enable cloudflared > /dev/null 2>&1
 
-            if systemctl is-active --quiet cloudflared; then
-                echo -e "\e[1;3;32mCloudflare Tunnel 服务已成功启动！\e[0m"
-            else
-                echo -e "\e[1;3;31mCloudflare Tunnel 服务启动失败！\e[0m"
+                if systemctl is-active --quiet cloudflared; then
+                    echo -e "\e[1;3;32mCloudflare Tunnel 已成功启动！\e[0m"
+                    
+                   echo -e "\e[1;35m======================\e[0m"
+                else
+                    echo -e "\e[1;3;31mCloudflare Tunnel 启动失败！\e[0m"
+                    
+                      echo -e "\e[1;35m======================\e[0m"
+                fi
             fi
+        else
+            echo -e "\e[1;3;31msing-box 启动失败！\e[0m"
         fi
+    else
+        echo -e "\e[1;3;31m配置错误，sing-box 未启动！\e[0m"
+    fi
+}
 
-        show_client_configuration
-    else
-        echo -e "\e[1;3;33m配置错误，sing-box 服务未启动！\e[0m"
-    fi
-}
-# 重启服务
-sbox_services() {
-    # 启动 sing-box 服务
-    if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-        pkill -f sing-box  # 杀掉现有的 sing-box 进程
-        systemctl daemon-reload  # 重新加载 systemd 配置
-        systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
-        systemctl start sing-box  # 启动 sing-box 服务
-        # 打印成功信息，绿色加粗斜体
-        echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
-    else
-        echo "Error in configuration. Aborting"
-        return 1  # 返回错误状态
-    fi
-}
 #重新安装sing-box和cloudflare
 reinstall_sing_box() {
     show_notice "将重新安装中..."
@@ -1726,15 +1955,15 @@ echo -e "\e[1;3;34m4. 显示客户端配置\e[0m"  # 蓝色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;31m5. 卸载Sing-box\e[0m"  # 红色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;32m6. 更新Sing-box内核\e[0m"  # 绿色斜体加粗
+echo -e "\e[1;3;32m6. 更新或切换内核\e[0m"  # 绿色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;36m7. 手动重启cloudflared\e[0m"  # 青色斜体加粗
 echo  "==============="
 echo -e "\e[1;3;32m8. 手动重启SingBox服务\e[0m"  # 绿色斜体加粗
 echo  "==============="
-echo -e "\e[1;3;35m9. 切换sing-box内核\e[0m"
+echo -e "\e[1;3;32m9. 实时查看系统服务状态\e[0m"
 echo  "==============="
-echo -e "\e[1;3;32m10. 实时查看系统服务状态\e[0m"
+echo -e "\e[1;3;32m10.切换sing-box内核\e[0m"
 echo  "==============="
 echo -e "\e[1;3;31m0. 退出脚本\e[0m"  # 红色斜体加粗
 echo  "==============="
@@ -1777,36 +2006,24 @@ case $choice in
         show_client_configuration
         ;;	
     5)
- 
         uninstall_singbox
         ;;
     6)
-        show_notice "正在更新内核..."
+        show_notice "正在等待执行..."
         download_singbox
-        sbox_services
+        setup_services
         ;;
     7)
         restart_tunnel
         ;;
-    8) 
-         if /root/sbox/sing-box check -c /root/sbox/sbconfig_server.json; then
-        pkill -f sing-box  # 杀掉现有的 sing-box 进程
-        systemctl daemon-reload  # 重新加载 systemd 配置
-        systemctl enable sing-box > /dev/null 2>&1  # 设置 sing-box 服务开机启动
-        systemctl start sing-box  # 启动 sing-box 服务
-        # 打印成功信息，绿色加粗斜体
-        echo -e "\e[1;3;32m启动成功，sing-box 服务已启动！\e[0m"
-    else
-        echo "Error in configuration. Aborting"
-        return 1  # 返回错误状态
-    fi
+    8)       
+     restart_singbox
         ;;
-    9)
-     switch_kernel
-      ;;
-      
-    10) 
+    9) 
       check_tunnel_status
+      ;;
+    10) 
+      switch_kernel
       ;;
       
     0)
@@ -1814,7 +2031,6 @@ case $choice in
         exit 0
         ;;
      *)
-   
         echo -e "\033[31m\033[1;3m无效的选项,请重新输入!\033[0m"
         echo ""
         ;;
