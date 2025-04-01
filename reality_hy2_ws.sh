@@ -450,7 +450,7 @@ download_sing-box() {
 }
 #切换内核
 switch_kernel() {
- echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
+    echo -e "\e[1;3;33m请选择要使用的 sing-box 版本:\e[0m"
     echo -e "\e[1;3;32m1. 最新正式版\e[0m"
     echo -e "\e[1;3;33m2. 最新测试版\e[0m"
     echo -e "\e[1;3;32m3. 旧正式版\e[0m"
@@ -459,7 +459,7 @@ switch_kernel() {
 
     # 检测当前 sing-box 版本
     current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    echo -e "\e[1;3;34m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
+    echo -e "\e[1;3;31m检测到当前正在使用 sing-box 版本: $current_version。\e[0m"
     echo -e "\e[1;3;33m sing-box 正在切换中...\e[0m"
 
     # 选择要下载的版本
@@ -473,8 +473,7 @@ switch_kernel() {
 
     # 切换版本完成，调用 setup_services 启动服务
     setup_services
-    echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
-    echo -e "\e[1;3;32m === sing-box-$new_version 已成功启动！===\e[0m"
+    echo -e "\e[1;3;32m=== sing-box 版本切换成功 ===\e[0m"
 }
 #生成协议链接
 show_client_configuration() {
