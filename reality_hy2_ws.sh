@@ -1786,15 +1786,14 @@ detect_protocols() {
     restart_needed=false
 
     # 需要更新的配置文件列表
-    config_files=(
-        "/root/sbox/sbconfig_server.json"
-        "/root/sbox/sbconfig1_server.json"
-    )
+    config_files=( "/root/sbox/sbconfig_server.json" "/root/sbox/sbconfig1_server.json" )
 
     # 定义一个通用的修改协议函数
     modify_protocol() {
         local protocol_function=$1  # 传入修改协议的函数
+        local protocol_name=$2  # 传入协议名称
         for config in "${config_files[@]}"; do
+            echo -e "\e[1;3;33m正在修改 $protocol_name 协议...\e[0m"
             "$protocol_function" "$config" && restart_needed=true
         done
     }
@@ -1803,37 +1802,35 @@ detect_protocols() {
     if [ "$modify_choice" -eq $((i + 2)) ]; then
         echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
         for protocol in "${options[@]}"; do
-            echo -e "\e[1;3;32m请按照提示进行修改...\e[0m"
             case $protocol in
                 "Vless")
-                    modify_protocol modify_vless
+                    modify_protocol modify_vless "VLESS"
                     ;;
                 "Vmess")
-                    modify_protocol modify_vmess
+                    modify_protocol modify_vmess "VMESS"
                     ;;
                 "Hysteria2")
-                    modify_protocol modify_hysteria2
+                    modify_protocol modify_hysteria2 "Hysteria2"
                     ;;
                 "Tuic")
-                    modify_protocol modify_tuic
+                    modify_protocol modify_tuic "TUIC"
                     ;;
             esac
         done
     else
         selected_protocol=${options[$((modify_choice - 1))]}
-        echo -e "\e[1;3;33m正在修改 $selected_protocol 协议...\e[0m"
         case $selected_protocol in
             "Vless")
-                modify_protocol modify_vless
+                modify_protocol modify_vless "VLESS"
                 ;;
             "Vmess")
-                modify_protocol modify_vmess
+                modify_protocol modify_vmess "VMESS"
                 ;;
             "Hysteria2")
-                modify_protocol modify_hysteria2
+                modify_protocol modify_hysteria2 "Hysteria2"
                 ;;
             "Tuic")
-                modify_protocol modify_tuic
+                modify_protocol modify_tuic "TUIC"
                 ;;
         esac
     fi
