@@ -1738,132 +1738,94 @@ check_tunnel_status() {
 # 检测协议并提供修改选项
 detect_protocols() {
     echo -e "\e[1;3;33m正在检测已安装的协议...\e[0m"
-    sleep 3
-    
-    # 获取已安装的协议类型（默认读取 sbconfig_server.json）
-    protocols=$(jq -r '.inbounds[] | .type' /root/sbox/sbconfig_server.json)
-    
+    sleep 2
+
+    # 读取已安装协议
+    protocols=$(jq -r '.inbounds[]?.type' /root/sbox/sbconfig_server.json 2>/dev/null)
+
+    if [ -z "$protocols" ]; then
+        echo -e "\e[1;3;31m未检测到任何协议。\e[0m"
+        return 1
+    fi
+
     echo -e "\e[1;3;33m已安装协议如下:\e[0m"
-    echo -e "\e[1;3;32m$protocols\e[0m"  # 输出协议信息
+    echo -e "\e[1;3;32m$protocols\e[0m"
 
-    # 初始化选项数组
+    # 预设支持的协议列表
+    declare -A protocol_funcs=(
+        ["vless"]="modify_vless"
+        ["vmess"]="modify_vmess"
+        ["hysteria2"]="modify_hysteria2"
+        ["tuic"]="modify_tuic"
+    )
+
+    # 生成可选协议
     options=()
-    protocol_list=("vless" "vmess" "hysteria2" "tuic")
-
-    # 根据检测到的协议生成选项
-    for protocol in "${protocol_list[@]}"; do
-        if echo "$protocols" | grep -q -i "$protocol"; then
-            options+=("${protocol^}")  # 将首字母大写
+    for proto in "${!protocol_funcs[@]}"; do
+        if echo "$protocols" | grep -Eiq "^$proto$"; then
+            options+=("$proto")
         fi
     done
 
-    # 输出可修改的协议选项
     if [ ${#options[@]} -eq 0 ]; then
-        echo -e "\e[1;3;31m没有检测到可修改的协议。\e[0m"
-        return 1  # 返回非零值表示未找到协议
+        echo -e "\e[1;3;31m没有可修改的协议。\e[0m"
+        return 1
     fi
 
-    echo -e "\e[1;3;33m请选择要修改的协议：\e[0m"
+    # 显示选项
+    echo -e "\e[1;3;33m请选择要修改的协议:\e[0m"
     for i in "${!options[@]}"; do
         echo -e "\e[1;3;32m$((i + 1))) ${options[i]}\e[0m"
     done
-    
-    # 添加“全部修改”选项
     echo -e "\e[1;3;32m$((i + 2))) 全部修改\e[0m"
-    
-    # 读取用户输入
+
+    # 获取用户输入
     while true; do
-        echo -e -n "\e[1;3;33m请输入选项 :\e[0m "
-        read modify_choice
-        if [[ "$modify_choice" =~ ^[1-9][0-9]*$ ]] && [ "$modify_choice" -le $((i + 2)) ]; then
+        echo -e -n "\e[1;3;33m请输入选项 (可用逗号分隔多个，如 1,2) :\e[0m "
+        read -r modify_choice
+        IFS=',' read -ra choices <<< "$modify_choice"
+
+        valid=true
+        for choice in "${choices[@]}"; do
+            if ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#options[@]} + 1 )); then
+                valid=false
+                break
+            fi
+        done
+
+        if $valid; then
             break
         else
             echo -e "\e[1;3;31m无效选项，请重新输入。\e[0m"
         fi
     done
-    
-    # 记录是否需要重启服务
-    restart_needed=false
 
-    # 需要更新的配置文件列表
-    config_files=( "/root/sbox/sbconfig_server.json" "/root/sbox/sbconfig1_server.json" )
-  # 记录已修改的协议，防止重复执行
-    modified_protocols=()
-    # 定义一个通用的修改协议函数
-    modify_protocol() {
-        local protocol_function=$1  # 传入修改协议的函数
-        local protocol_name=$2  # 传入协议名称
- # 如果协议已修改，则跳过
-    if [[ " ${modified_protocols[*]} " =~ " $protocol_name " ]]; then
-        echo -e "\e[1;3;31m$protocol_name 已修改，跳过重复操作。\e[0m"
-        return 0
-    fi
-        
-        echo -e "\e[1;3;33m正在修改 $protocol_name 协议...\e[0m"
-        for config in "${config_files[@]}"; do
-            "$protocol_function" "$config" && restart_needed=true
-        done
-        # 记录修改状态
-    modified_protocols+=("$protocol_name")
-    }
-    # 根据用户选择进行修改
-    if [ "$modify_choice" -eq $((i + 2)) ]; then
-        echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
-        for protocol in "${options[@]}"; do
-            # 仅当该协议尚未被修改时才修改
-            if [[ ! " ${modified_protocols[@]} " =~ " $protocol " ]]; then
-                case $protocol in
-                    "Vless")
-                        modify_protocol modify_vless "VLESS"
-                        modified_protocols+=("Vless")  # 标记为已修改
-                        ;;
-                    "Vmess")
-                        modify_protocol modify_vmess "VMESS"
-                        modified_protocols+=("Vmess")
-                        ;;
-                    "Hysteria2")
-                        modify_protocol modify_hysteria2 "Hysteria2"
-                        modified_protocols+=("Hysteria2")
-                        ;;
-                    "Tuic")
-                        modify_protocol modify_tuic "TUIC"
-                        modified_protocols+=("Tuic")
-                        ;;
-                esac
-            fi
-        done
-    else
-        selected_protocol=${options[$((modify_choice - 1))]}
-        case $selected_protocol in
-            "Vless")
-                modify_protocol modify_vless "VLESS"
-                modified_protocols+=("Vless")
-                ;;
-            "Vmess")
-                modify_protocol modify_vmess "VMESS"
-                modified_protocols+=("Vmess")
-                ;;
-            "Hysteria2")
-                modify_protocol modify_hysteria2 "Hysteria2"
-                modified_protocols+=("Hysteria2")
-                ;;
-            "Tuic")
-                modify_protocol modify_tuic "TUIC"
-                modified_protocols+=("Tuic")
-                ;;
-        esac
-    fi
+    # 记录是否修改
+    modified=false
 
-    # 如果修改了协议，则重新启动服务
-    if [ "$restart_needed" = true ]; then
+    # 执行修改
+    for choice in "${choices[@]}"; do
+        if [ "$choice" -eq $(( ${#options[@]} + 1 )) ]; then
+            echo -e "\e[1;3;33m正在修改所有协议...\e[0m"
+            for proto in "${options[@]}"; do
+                echo -e "\e[1;3;33m修改 $proto 协议...\e[0m"
+                "${protocol_funcs[$proto]}" && modified=true
+            done
+            break
+        else
+            proto="${options[$((choice - 1))]}"
+            echo -e "\e[1;3;33m修改 $proto 协议...\e[0m"
+            "${protocol_funcs[$proto]}" && modified=true
+        fi
+    done
+
+    # 重新启动服务
+    if $modified; then
         echo -e "\e[1;3;33m正在应用新配置...\e[0m"
-        for config in "${config_files[@]}"; do
-            setup_services "$config" || {
-                echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
-                exit 1
-            }
-        done
-        echo -e "\e[1;3;32m✔ 配置修改成功，sing-box 已重新启动！\e[0m"
+        setup_services && echo -e "\e[1;3;32m✔ 配置修改成功，sing-box 已重新启动！\e[0m" || {
+            echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
+            exit 1
+        }
     else
         echo -e "\e[1;3;32m✔ 没有进行任何修改，服务未重启。\e[0m"
     fi
