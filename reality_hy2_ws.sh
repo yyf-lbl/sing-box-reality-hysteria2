@@ -1536,13 +1536,13 @@ setup_services() {
     SING_BOX_BIN="$SBOX_DIR/sing-box"
 
     # 获取 sing-box 版本
- #  if [ -f "$SING_BOX_BIN" ]; then
-   # SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+(-[a-zA-Z0-9\.]+)?')
-  #  echo -e "\e[1;3;32m检测到 sing-box 版本: $SING_BOX_VERSION\e[0m"
-#else
-  #  echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
-#    exit 1
-#fi
+   if [ -f "$SING_BOX_BIN" ]; then
+    SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+(-[a-zA-Z0-9\.]+)?')
+   # echo -e "\e[1;3;32m检测到 sing-box 版本: $SING_BOX_VERSION\e[0m"
+else
+    echo -e "\e[1;3;31m错误: sing-box 未找到！请先运行 download_singbox()\e[0m"
+   exit 1
+fi
     # 选择配置文件（按照版本自动适配）
     if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
         CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
