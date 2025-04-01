@@ -481,7 +481,7 @@ switch_kernel() {
     # 再次检测是否成功启动
     new_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
     echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
-    echo -e "\e[1;3;35m sing-box-$new_version 已成功启动！\e[0m"
+    echo -e "\e[1;3;32m === sing-box-$new_version 已成功启动！===\e[0m"
 }
 #生成协议链接
 show_client_configuration() {
