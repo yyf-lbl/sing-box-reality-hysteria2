@@ -464,17 +464,41 @@ switch_kernel() {
 
     # 选择要下载的版本
     case $version_choice in
-        1) download_sing-box latest_release; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新正式版
-        2) download_sing-box latest_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 最新测试版
-        3) download_sing-box old_release; CONFIG_FILE="/root/sbox/sbconfig_server.json" ;;  # 旧正式版
-        4) download_sing-box old_prerelease; CONFIG_FILE="/root/sbox/sbconfig1_server.json" ;;  # 旧测试版
-        *) echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"; exit 1 ;;
+        1) 
+            download_sing-box latest_release 
+            CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+            new_version=$latest_release_version
+            ;;
+        2) 
+            download_sing-box latest_prerelease 
+            CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+            new_version=$latest_prerelease_version
+            ;;
+        3) 
+            download_sing-box old_release 
+            CONFIG_FILE="/root/sbox/sbconfig_server.json"
+            new_version=$old_release_version
+            ;;
+        4) 
+            download_sing-box old_prerelease 
+            CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+            new_version=$old_prerelease_version
+            ;;
+        *) 
+            echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"
+            exit 1
+            ;;
     esac
+
+    # 更新软链接指向新版本
+    ln -sf "/root/sbox/latest_version/sing-box-$new_version" /root/sbox/sing-box
+    echo -e "\e[1;3;32m✔ sing-box 已切换到版本: $new_version\e[0m"
 
     # 切换版本完成，调用 setup_services 启动服务
     setup_services
     echo -e "\e[1;3;32m=== sing-box 版本切换成功 ===\e[0m"
 }
+
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
