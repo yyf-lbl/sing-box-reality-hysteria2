@@ -529,7 +529,6 @@ switch_kernel() {
 
     echo -e "\e[1;3;32m✔ sing-box 版本切换成功！\e[0m"
 }
-
 #生成协议链接
 show_client_configuration() {
     # 检查配置文件是否存在
