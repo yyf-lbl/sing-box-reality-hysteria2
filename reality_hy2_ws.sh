@@ -430,7 +430,8 @@ download_sing-box() {
 
     # 下载并设置执行权限
  echo -e "\e[1;3;32m正在下载: $url\e[0m"
-
+echo "DEBUG: package = ${package}"
+echo "DEBUG: url = ${url}"
 if curl -L --fail -o "/root/${package}" "$url"; then
     echo "✅ 下载成功: /root/${package}"
 
