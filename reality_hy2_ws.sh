@@ -3,22 +3,27 @@
 add_alias() {
     config_file=$1
     alias_names=("a" "5")
-    [ ! -f "$config_file" ] || touch "$config_file"
+
+    # 如果文件不存在，则创建
+    [ -f "$config_file" ] || touch "$config_file"
+
     for alias_name in "${alias_names[@]}"; do
         if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
-        #   echo "Adding alias $alias_name to $config_file"
-         #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
-            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"  
- fi
+            printf "alias %s='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'\n" "$alias_name" >> "$config_file"
+            echo -e "\e[1;3;32m✔ 快捷指令已创建: $alias_name\e[0m"
+        fi
     done
+
+    # 立即生效
     . "$config_file"
 }
-config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")  
+
+config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")  
 for config_file in "${config_files[@]}"; do
     add_alias "$config_file"
 done
 # 重新加载 .bashrc
-     source /root/.bashrc
+    exec bash
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
@@ -433,6 +438,7 @@ download_sing-box() {
 
     # 下载并设置执行权限
     echo -e "\e[1;3;32m下载 sing-box 版本: $latest_version\e[0m"
+     sleep 2
     if curl -sLo "/root/${package}" "$url"; then
         if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
             tar -xzf "/root/${package}" -C /root
@@ -449,7 +455,7 @@ download_sing-box() {
 
     # 软链接到 sing-box 目录
     ln -sf "$target_path" /root/sbox/sing-box
-    echo -e "\e[1;3;32m✔ 成功切换到 $version_type 版本\e[0m"
+     #echo -e "\e[1;3;32m=== sing-box版本切换成功 ===\e[0m"
 }
 #切换内核
 switch_kernel() {
@@ -462,29 +468,31 @@ switch_kernel() {
     echo -e "\e[1;3;33m2. 最新测试版\e[0m"
     echo -e "\e[1;3;32m3. 旧正式版\e[0m"
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
-    read -p $'\e[1;3;33m请输入选项 (1-4): \e[0m' version_choice
-
-   
-    echo -e "\e[1;3;33m sing-box 正在切换中...\e[0m"
-  sleep 2
+    read -p $'\e[1;3;31m请输入选项 (1-4): \e[0m' version_choice
+    echo -e "\e[1;35m======================\e[0m"
     # 选择要下载的版本
    case $version_choice in
         1) 
+            echo -e "\e[1;3;32m 最新正式版正在切换中...\e[0m"
+            sleep 1
             download_sing-box latest_release
             CONFIG_FILE="/root/sbox/sbconfig1_server.json" 
             version_type="latest_release"
             ;;
         2)
+            echo -e "\e[1;3;33m 最新测试版正在切换中...\e[0m"
             download_sing-box latest_prerelease
             CONFIG_FILE="/root/sbox/sbconfig1_server.json"
             version_type="latest_prerelease"
             ;;
         3)
+            echo -e "\e[1;3;32m 旧正式版正在切换中...\e[0m"
             download_sing-box old_release
             CONFIG_FILE="/root/sbox/sbconfig_server.json"
             version_type="old_release"
             ;;
         4)
+            echo -e "\e[1;3;33m 旧测试版正在切换中...\e[0m"
             download_sing-box old_prerelease
             CONFIG_FILE="/root/sbox/sbconfig1_server.json"
             version_type="old_prerelease"
@@ -522,14 +530,14 @@ switch_kernel() {
     # 创建新的软链接
    # echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
     ln -sf "$target_path" /root/sbox/sing-box
-
+     current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
+    echo -e "\e[1;3;32m=== 已切换为:$current_version ===\e[0m"
+    echo ""
     # 启动服务
     setup_services "$CONFIG_FILE" || {
         echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
         exit 1
     }
-
-    echo -e "\e[1;3;32m=== sing-box 版本切换成功 ===\e[0m"
 }
 #生成协议链接
 show_client_configuration() {
