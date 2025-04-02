@@ -1,27 +1,32 @@
 #!/bin/bash  
 # 创建快捷指令
 # 定义 alias 命令
-ALIAS_CMD="alias a='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'"
-ALIAS_CMD2="alias 5='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'"
+add_aliases() {
+    ALIAS_CMD="alias a='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'"
+    ALIAS_CMD2="alias 5='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'"
 
-# 检测当前 shell 类型
-if [[ $SHELL == *"zsh"* ]]; then
-    SHELL_RC="$HOME/.zshrc"
-else
-    SHELL_RC="$HOME/.bashrc"
-fi
+    # 检测当前 shell 类型
+    if [[ $SHELL == *"zsh"* ]]; then
+        SHELL_RC="$HOME/.zshrc"
+    else
+        SHELL_RC="$HOME/.bashrc"
+    fi
 
-# 检查 alias 是否已存在，避免重复添加
-if ! grep -q "alias a=" "$SHELL_RC"; then
-    echo "$ALIAS_CMD" >> "$SHELL_RC"
-fi
+    # 检查 alias 是否已存在，避免重复添加
+    if ! grep -q "alias a=" "$SHELL_RC"; then
+        echo "$ALIAS_CMD" >> "$SHELL_RC"
+    fi
 
-if ! grep -q "alias 5=" "$SHELL_RC"; then
-    echo "$ALIAS_CMD2" >> "$SHELL_RC"
-fi
+    if ! grep -q "alias 5=" "$SHELL_RC"; then
+        echo "$ALIAS_CMD2" >> "$SHELL_RC"
+    fi
 
-# 使修改立即生效
-source "$SHELL_RC"
+    echo "快捷指令已添加！请运行以下命令以生效："
+    echo "source $SHELL_RC"
+}
+
+add_aliases
+
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
