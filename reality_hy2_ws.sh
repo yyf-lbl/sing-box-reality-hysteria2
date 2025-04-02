@@ -469,25 +469,28 @@ switch_kernel() {
    case $version_choice in
         1) 
             echo -e "\e[1;3;32m 最新正式版正在切换中...\e[0m"
-            sleep 1
+            sleep 2
             download_sing-box latest_release
             CONFIG_FILE="/root/sbox/sbconfig1_server.json" 
             version_type="latest_release"
             ;;
         2)
             echo -e "\e[1;3;33m 最新测试版正在切换中...\e[0m"
+            sleep 2
             download_sing-box latest_prerelease
             CONFIG_FILE="/root/sbox/sbconfig1_server.json"
             version_type="latest_prerelease"
             ;;
         3)
             echo -e "\e[1;3;32m 旧正式版正在切换中...\e[0m"
+            sleep 2
             download_sing-box old_release
             CONFIG_FILE="/root/sbox/sbconfig_server.json"
             version_type="old_release"
             ;;
         4)
             echo -e "\e[1;3;33m 旧测试版正在切换中...\e[0m"
+            sleep 2
             download_sing-box old_prerelease
             CONFIG_FILE="/root/sbox/sbconfig1_server.json"
             version_type="old_prerelease"
@@ -526,8 +529,8 @@ switch_kernel() {
    # echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
     ln -sf "$target_path" /root/sbox/sing-box
      current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    echo -e "\e[1;3;32m=== 已切换为:$current_version ===\e[0m"
-    echo ""
+    echo -e "\e[1;3;32m=== 已切换为:sing-box-$current_version ===\e[0m"
+    echo "======================"
     # 启动服务
     setup_services "$CONFIG_FILE" || {
         echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
