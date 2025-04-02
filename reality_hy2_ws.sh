@@ -9,7 +9,7 @@ add_aliases() {
     if [[ $SHELL == *"zsh"* ]]; then
         SHELL_RC="$HOME/.zshrc"
     else
-        SHELL_RC="$HOME/.bashrc"
+        SHELL_RC="~/.bashrc"
     fi
 
     # 检查标记是否存在，避免重复添加
@@ -24,7 +24,7 @@ add_aliases() {
    echo "$ALIAS_CMD2" >> "$SHELL_RC"
 
     # 让 alias 立即生效
-    source "$SHELL_RC"
+   source ~/.bashrc
 
   #  echo "✅ 快捷指令已成功添加并自动生效！现在你可以直接输入 'a' 或 '5' 来运行脚本。🚀"
 }
