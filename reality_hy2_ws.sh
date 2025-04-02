@@ -7,9 +7,9 @@ add_aliases() {
 
     # 检测当前 shell 类型
     if [[ $SHELL == *"zsh"* ]]; then
-        SHELL_RC="~/.zshrc"
+        SHELL_RC="$HOME/.zshrc"
     else
-        SHELL_RC="~/.bashrc"
+        SHELL_RC="$HOME/.bashrc"
     fi
 
     # 检查标记是否存在，避免重复添加
