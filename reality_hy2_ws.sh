@@ -19,9 +19,9 @@ add_aliases() {
     fi
 
     # 添加 alias 并写入标记
- #   echo "$MARKER" >> "$SHELL_RC"
-  #  echo "$ALIAS_CMD" >> "$SHELL_RC"
-  #  echo "$ALIAS_CMD2" >> "$SHELL_RC"
+   echo "$MARKER" >> "$SHELL_RC"
+    echo "$ALIAS_CMD" >> "$SHELL_RC"
+   echo "$ALIAS_CMD2" >> "$SHELL_RC"
 
     # 让 alias 立即生效
     source "$SHELL_RC"
