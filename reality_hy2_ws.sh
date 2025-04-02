@@ -22,15 +22,10 @@ add_aliases() {
    echo "$MARKER" >> "$SHELL_RC"
     echo "$ALIAS_CMD" >> "$SHELL_RC"
    echo "$ALIAS_CMD2" >> "$SHELL_RC"
-
-    # 让 alias 立即生效
-   source ~/.bashrc
-
-  #  echo "✅ 快捷指令已成功添加并自动生效！现在你可以直接输入 'a' 或 '5' 来运行脚本。🚀"
+   echo "✅ 快捷指令已成功添加并自动生效！现在你可以直接输入 'a' 或 '5' 来运行脚本。🚀"
 }
-
 add_aliases
-
+   source ~/.bashrc
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
