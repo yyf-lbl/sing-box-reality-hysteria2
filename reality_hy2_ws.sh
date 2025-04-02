@@ -8,12 +8,12 @@ add_alias() {
         if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
         #   echo "Adding alias $alias_name to $config_file"
          #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
-            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
+            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"  
  fi
     done
     . "$config_file"
 }
-config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
+config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")  
 for config_file in "${config_files[@]}"; do
     add_alias "$config_file"
 done
@@ -404,7 +404,7 @@ download_sing-box() {
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
-            echo -e "\e[1;3;32m已存在最新版本 sing-box-${latest_version} \e[0m"
+            echo -e "\e[1;3;32m已存在最新版本 sing-box-${latest_version}，跳过下载。\e[0m"
             return 0  # 如果文件已经存在，跳过下载
         fi
 
@@ -420,7 +420,7 @@ download_sing-box() {
 
         # 检查是否已经存在 sing-box 文件
         if [ -f "$target_path" ]; then
-            echo -e "\e[1;3;32m已存在旧版本 sing-box-${old_version} \e[0m"
+            echo -e "\e[1;3;32m已存在旧版本 sing-box-${old_version}，跳过下载。\e[0m"
             return 0  # 如果文件已经存在，跳过下载
         fi
     else
@@ -429,7 +429,7 @@ download_sing-box() {
     fi
 
     # 下载并设置执行权限
-    echo -e "\e[1;3;32m下载 sing-box 版本: $latest_version\e[0m"
+    echo -e "\e[1;3;32m下载 $version_type 版本: $latest_version\e[0m"
     if curl -sLo "/root/${package}" "$url"; then
         if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
             tar -xzf "/root/${package}" -C /root
