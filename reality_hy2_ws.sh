@@ -429,20 +429,25 @@ download_sing-box() {
     fi
 
     # 下载并设置执行权限
-    echo -e "\e[1;3;32m下载 $version_type 版本: $latest_version\e[0m"
-    if curl -sLo "/root/${package}" "$url"; then
-        if [[ "$version_type" == "latest_release" || "$version_type" == "latest_prerelease" ]]; then
-            tar -xzf "/root/${package}" -C /root
-            mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
-            rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
-        else
-            mv "/root/${package}" "$target_path"
-        fi
-        chmod +x "$target_path"
+ echo -e "\e[1;3;32m正在下载: $url\e[0m"
+
+if curl -L --fail -o "/root/${package}" "$url"; then
+    echo "✅ 下载成功: /root/${package}"
+
+    if [[ "$package" == *.tar.gz ]]; then
+        tar -xzf "/root/${package}" -C /root
+        mv "/root/sing-box-${latest_version}-linux-${arch}/sing-box" "$target_path"
+        rm -r "/root/${package}" "/root/sing-box-${latest_version}-linux-${arch}"
     else
-        echo -e "\e[1;3;31m下载失败，请检查网络连接。\e[0m"
-        exit 1
+        mv "/root/${package}" "$target_path"
     fi
+
+    chmod +x "$target_path"
+    echo "✅ 版本切换成功: $target_path"
+else
+    echo -e "\e[1;3;31m❌ 下载失败，请检查网络连接。\e[0m"
+    exit 1
+fi
 
     # 软链接到 sing-box 目录
     ln -sf "$target_path" /root/sbox/sing-box
