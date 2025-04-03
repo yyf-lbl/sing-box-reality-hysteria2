@@ -507,7 +507,8 @@ switch_kernel() {
 
     # 删除旧的软链接（如果存在）
     if [ -L /root/sbox/sing-box ]; then
-        echo -e "\e[1;3;32m删除旧的软链接...\e[0m"
+        echo -e "\e[1;3;32m正在切换sing-box内核...\e[0m"
+        sleep 2
         rm -f /root/sbox/sing-box
     fi
 
@@ -539,7 +540,7 @@ switch_kernel() {
     fi
 
     # 创建新的软链接
-    echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
+   # echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
     ln -sf "$target_path" /root/sbox/sing-box
 
     # 输出切换结果
