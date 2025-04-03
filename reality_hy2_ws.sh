@@ -457,7 +457,7 @@ download_sing-box() {
 }
 #切换内核
 switch_kernel() {
- # 检测当前 sing-box 版本
+    # 检测当前 sing-box 版本
     current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
     echo -e "\e[1;3;32m=== 当前正在运行 sing-box 版本: $current_version ===\e[0m"
     echo ""
@@ -468,35 +468,36 @@ switch_kernel() {
     echo -e "\e[1;3;33m4. 旧测试版\e[0m"
     read -p $'\e[1;3;31m请输入选项 (1-4): \e[0m' version_choice
     echo -e "\e[1;35m======================\e[0m"
+
     # 选择要下载的版本
-   case $version_choice in
+    case $version_choice in
         1) 
             echo -e "\e[1;3;32m 最新正式版正在切换中...\e[0m"
             sleep 2
             download_sing-box latest_release
-            CONFIG_FILE="/root/sbox/sbconfig1_server.json" 
             version_type="latest_release"
+            target_version="$latest_version"  # 假设你已经有了 latest_version 变量
             ;;
         2)
             echo -e "\e[1;3;33m 最新测试版正在切换中...\e[0m"
             sleep 2
             download_sing-box latest_prerelease
-            CONFIG_FILE="/root/sbox/sbconfig2_server.json"
             version_type="latest_prerelease"
+            target_version="$latest_version"  # 假设你已经有了 latest_version 变量
             ;;
         3)
             echo -e "\e[1;3;32m 旧正式版正在切换中...\e[0m"
             sleep 2
             download_sing-box old_release
-            CONFIG_FILE="/root/sbox/sbconfig_server.json"
             version_type="old_release"
+            target_version="$old_version"  # 假设你已经定义了 old_version
             ;;
         4)
             echo -e "\e[1;3;33m 旧测试版正在切换中...\e[0m"
             sleep 2
             download_sing-box old_prerelease
-            CONFIG_FILE="/root/sbox/sbconfig1_server.json"
             version_type="old_prerelease"
+            target_version="$old_version"  # 假设你已经定义了 old_version
             ;;
         *)
             echo -e "\e[1;3;31m无效选择，请输入 1-4 之间的数字。\e[0m"
@@ -504,16 +505,25 @@ switch_kernel() {
             ;;
     esac
 
+    # 删除旧的软链接（如果存在）
+    if [ -L /root/sbox/sing-box ]; then
+        echo -e "\e[1;3;32m删除旧的软链接...\e[0m"
+        rm -f /root/sbox/sing-box
+    fi
+
+    # 根据版本号选择配置文件
+    if [[ "$(printf '%s\n' "$target_version" "1.12.0" | sort -V | head -n1)" == "1.12.0" ]]; then
+        CONFIG_FILE="/root/sbox/sbconfig2_server.json"
+    elif [[ "$(printf '%s\n' "$target_version" "1.10.2" | sort -V | head -n1)" == "1.10.2" && "$target_version" != "1.10.2" ]]; then
+        CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+    else
+        CONFIG_FILE="/root/sbox/sbconfig_server.json"
+    fi
+
     # 确保配置文件存在
     if [ ! -f "$CONFIG_FILE" ]; then
         echo -e "\e[1;3;31m错误: 找不到配置文件 $CONFIG_FILE\e[0m"
         exit 1
-    fi
-
-    # 删除旧的软链接（如果存在）
-    if [ -L /root/sbox/sing-box ]; then
-       # echo -e "\e[1;3;32m删除旧的软链接...\e[0m"
-        rm -f /root/sbox/sing-box
     fi
 
     # 根据版本类型设置目标路径
@@ -529,11 +539,14 @@ switch_kernel() {
     fi
 
     # 创建新的软链接
-   # echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
+    echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
     ln -sf "$target_path" /root/sbox/sing-box
-     current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
-    echo -e "\e[1;3;32m=== 已切换为:sing-box-$current_version ===\e[0m"
+
+    # 输出切换结果
+    current_version=$(/root/sbox/sing-box version 2>/dev/null | head -n 1 | awk '{print $NF}')
+    echo -e "\e[1;3;32m=== 已切换为: sing-box-$current_version ===\e[0m"
     echo "======================"
+
     # 启动服务
     setup_services "$CONFIG_FILE" || {
         echo -e "\e[1;3;31m服务启动失败！请检查日志。\e[0m"
