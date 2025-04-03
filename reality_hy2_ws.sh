@@ -1,38 +1,24 @@
 #!/bin/bash  
-
-add_aliases() {
-    ALIAS_CMD="alias a='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'"
-    ALIAS_CMD2="alias 5='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'"
-    MARKER="# ALIASES_ADDED"
-
-    # 检测当前 shell 类型
-    if [[ $SHELL == *"zsh"* ]]; then
-        SHELL_RC="$HOME/.zshrc"
-    else
-        SHELL_RC="$HOME/.bashrc"
-    fi
-
-    # 检查标记是否存在，避免重复添加
-    if grep -q "$MARKER" "$SHELL_RC"; then
-        echo "✅ 快捷指令已存在，无需重复添加。"
-        return
-    fi
-
-    # 添加 alias 并写入标记（静默执行）
-    {
-        echo "$MARKER"
-        echo "$ALIAS_CMD"
-        echo "$ALIAS_CMD2"
-    } >> "$SHELL_RC"
-
-    # 让 alias 立即生效
-    source "$SHELL_RC"
-
-    echo "✅ 快捷指令已成功添加并自动生效！现在你可以直接输入 'a' 或 '5' 来运行脚本。🚀"
+# 创建快捷指令
+add_alias() {
+    config_file=$1
+    alias_names=("a" "5")
+    [ ! -f "$config_file" ] || touch "$config_file"
+    for alias_name in "${alias_names[@]}"; do
+        if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
+        #   echo "Adding alias $alias_name to $config_file"
+         #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
+            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
+ fi
+    done
+    . "$config_file"
 }
-
-add_aliases
-
+config_files=("/root/.bashrc" "/root/.profile" "/root/.bash_profile")
+for config_file in "${config_files[@]}"; do
+    add_alias "$config_file"
+done
+# 重新加载 .bashrc
+     source /root/.bashrc
 # 文本文字从左到右依次延时逐个显示
 print_with_delay() {
     local message="$1"
