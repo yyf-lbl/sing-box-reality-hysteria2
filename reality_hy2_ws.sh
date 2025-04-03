@@ -8,7 +8,7 @@ add_alias() {
         if ! grep -q "alias $alias_name=" "$config_file" 2>/dev/null; then  
         #   echo "Adding alias $alias_name to $config_file"
          #   echo -e "\e[1;3;31m快捷指令已创建 a或5\e[0m"
-            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyfalbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
+            echo "alias $alias_name='bash <(curl -fsSL https://github.com/yyf-lbl/sing-box-reality-hysteria2/raw/main/reality_hy2_ws.sh)'" >> "$config_file"
  fi
     done
     . "$config_file"
@@ -186,7 +186,7 @@ EOF
 restart_singbox() {
     # 获取 sing-box 配置文件路径
     SBOX_DIR="/root/sbox"
-    CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+
     SING_BOX_BIN="$SBOX_DIR/sing-box"
 
     # 检查 sing-box 是否安装
@@ -198,11 +198,14 @@ restart_singbox() {
     # 获取 sing-box 版本
     SING_BOX_VERSION=$("$SING_BOX_BIN" version 2>/dev/null | head -n1 | grep -oP '\d+\.\d+\.\d+')
 
-    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
-        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
-    else
-        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
-    fi
+    if [[ "$(printf '%s\n' "1.12.0" "$SING_BOX_VERSION" | sort -V | head -n1)" == "1.12.0" ]]; then
+    CONFIG_FILE="$SBOX_DIR/sbconfig2_server.json"
+elif [[ "$(printf '%s\n' "1.10.2" "$SING_BOX_VERSION" | sort -V | head -n1)" == "1.10.2" && "$SING_BOX_VERSION" != "1.10.2" ]]; then
+    CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+else
+    CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+fi
+
 
     echo -e "\e[1;3;35m正在重启sing-box服务...\e[0m"
     sleep 2
@@ -478,7 +481,7 @@ switch_kernel() {
             echo -e "\e[1;3;33m 最新测试版正在切换中...\e[0m"
             sleep 2
             download_sing-box latest_prerelease
-            CONFIG_FILE="/root/sbox/sbconfig1_server.json"
+            CONFIG_FILE="/root/sbox/sbconfig2_server.json"
             version_type="latest_prerelease"
             ;;
         3)
@@ -1135,6 +1138,196 @@ config="{
   }
 }"
 
+config2="{
+  \"log\": {
+    \"disabled\": false,
+    \"level\": \"info\",
+    \"output\": \"/root/sbox/sb.log\",
+    \"timestamp\": true
+  },
+ 
+  \"dns\": {
+    \"servers\": [
+      {
+        \"tag\": \"cloudflare-doh\",
+        \"type\": \"https\",
+        \"server\": \"1.1.1.1\",
+        \"path\": \"/dns-query\",
+       
+        \"detour\": \"direct\",
+        \"domain_resolver\": {
+          \"type\": \"udp\",
+          \"server\": \"223.5.5.5\",
+          \"strategy\": \"ipv4_only\"
+        }
+      },
+      {
+        \"tag\": \"google-dot\",
+        \"type\": \"tls\",
+        \"server\": \"8.8.8.8\",
+      
+        \"detour\": \"direct\",
+        \"domain_resolver\": {
+          \"type\": \"udp\",
+          \"server\": \"223.5.5.5\",
+          \"strategy\": \"ipv4_only\"
+        }
+      },
+      {
+        \"tag\": \"quad9-doh\",
+        \"type\": \"https\",
+        \"server\": \"9.9.9.9\",
+        \"path\": \"/dns-query\",
+    
+        \"detour\": \"direct\",
+        \"domain_resolver\": {
+          \"type\": \"udp\",
+          \"server\": \"223.5.5.5\",
+          \"strategy\": \"ipv4_only\"
+        }
+      }
+    ],
+    \"rules\": [
+      {
+        \"domain_suffix\": [\"google.com\", \"youtube.com\", \"gstatic.com\"],
+        \"server\": \"google-dot\"
+      },
+      {
+        \"domain_suffix\": [\"cloudflare.com\", \"cloudflareresolve.com\"],
+        \"server\": \"cloudflare-doh\"
+      },
+      {
+        \"domain_suffix\": [\"quad9.net\", \"pch.net\"],
+        \"server\": \"quad9-doh\"
+      }
+    ],
+    \"final\": \"$fastest_dns\",
+    \"strategy\": \"ipv4_only\",
+    \"disable_cache\": false,
+    \"disable_expire\": false,
+    \"independent_cache\": true
+  },
+
+  \"inbounds\": [ ],
+  \"outbounds\": [
+  {
+    \"type\": \"direct\",
+    \"tag\": \"direct\",
+    \"domain_resolver\": \"cloudflare-doh\", 
+    \"domain_strategy\": \"ipv4_only\"   
+  }
+],
+  \"endpoints\": [
+    {
+      \"type\": \"wireguard\",
+      \"tag\": \"warp-ep\",
+      \"mtu\": 1280,
+      \"address\": [
+        \"172.16.0.2/32\",
+        \"2606:4700:110:8a36:df92:102a:9602:fa18/128\"
+      ],
+      \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
+      \"peers\": [
+        {
+          \"address\": \"engage.cloudflareclient.com\",
+          \"port\": 2408,
+          \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
+          \"allowed_ips\": [
+            \"0.0.0.0/0\",
+            \"::/0\"
+          ],
+          \"reserved\": [
+            6,
+            146,
+            6
+          ]
+        }
+      ]
+    }
+  ],
+  \"route\": {
+    \"default_domain_resolver\": \"cloudflare-doh\", 
+    \"rule_set\": [
+      {
+        \"tag\": \"geosite-openai\",
+        \"type\": \"remote\",
+        \"format\": \"binary\",
+        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
+        \"update_interval\": \"1d\"
+      }
+    ],
+    \"rules\": [
+      {
+        \"action\": \"sniff\"
+      },
+      {
+        \"action\": \"resolve\",
+        \"domain\": [
+          \"api.statsig.com\",
+          \"browser-intake-datadoghq.com\",
+          \"cdn.openai.com\",
+          \"chat.openai.com\",
+          \"auth.openai.com\",
+          \"chat.openai.com.cdn.cloudflare.net\",
+          \"ios.chat.openai.com\",
+          \"o33249.ingest.sentry.io\",
+          \"openai-api.arkoselabs.com\",
+          \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
+          \"openaicomproductionae4b.blob.core.windows.net\",
+          \"production-openaicom-storage.azureedge.net\",
+          \"static.cloudflareinsights.com\"
+        ],
+        \"domain_suffix\": [
+          \".algolia.net\",
+          \".auth0.com\",
+          \".chatgpt.com\",
+          \".challenges.cloudflare.com\",
+          \".client-api.arkoselabs.com\",
+          \".events.statsigapi.net\",
+          \".featuregates.org\",
+          \".identrust.com\",
+          \".intercom.io\",
+          \".intercomcdn.com\",
+          \".launchdarkly.com\",
+          \".oaistatic.com\",
+          \".oaiusercontent.com\",
+          \".observeit.net\",
+          \".openai.com\",
+          \".openaiapi-site.azureedge.net\",
+          \".openaicom.imgix.net\",
+          \".segment.io\",
+          \".sentry.io\",
+          \".stripe.com\"
+        ],
+        \"strategy\": \"prefer_ipv4\"
+      },
+      {
+        \"action\": \"resolve\",
+        \"rule_set\": [
+          \"geosite-openai\"
+        ],
+        \"strategy\": \"prefer_ipv6\"
+      },
+      {
+        \"domain\": [
+          \"api.openai.com\"
+        ],
+        \"rule_set\": [
+          \"geosite-openai\"
+        ],
+        \"outbound\": \"warp-ep\"
+      }
+    ]
+  },
+  \"experimental\": {
+    \"cache_file\": {
+      \"enabled\": true,
+      \"path\": \"/root/sbox/cache.db\",
+      \"cache_id\": \"mycacheid\",
+      \"store_fakeip\": true
+    }
+  }
+}"
     for choice in $choices; do
         case $choice in
             1)
@@ -1210,6 +1403,34 @@ fi
                         }
                     }]')
                     config1=$(echo "$config1" | jq --arg listen_port "$listen_port" \
+                    --arg server_name "$server_name" \
+                    --arg private_key "$private_key" \
+                    --arg short_id "$short_id" \
+                    --arg uuid "$uuid" \
+                    '.inbounds += [{
+                        "type": "vless",
+                        "tag": "vless-in",
+                        "listen": "::",
+                        "listen_port": ($listen_port | tonumber),
+                        "users": [{
+                            "uuid": $uuid,
+                            "flow": "xtls-rprx-vision"
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "server_name": $server_name,
+                            "reality": {
+                                "enabled": true,
+                                "handshake": {
+                                    "server": $server_name,
+                                    "server_port": 443
+                                },
+                                "private_key": $private_key,
+                                "short_id": [$short_id]
+                            }
+                        }
+                    }]')
+                     config2=$(echo "$config2" | jq --arg listen_port "$listen_port" \
                     --arg server_name "$server_name" \
                     --arg private_key "$private_key" \
                     --arg short_id "$short_id" \
@@ -1384,6 +1605,23 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
+                    config2=$(echo "$config2" | jq --arg vmess_port "$vmess_port" \
+                    --arg vmess_uuid "$vmess_uuid" \
+                    --arg ws_path "$ws_path" \
+                    '.inbounds += [{
+                        "type": "vmess",
+                        "tag": "vmess-in",
+                        "listen": "::",
+                        "listen_port": ($vmess_port | tonumber),
+                        "users": [{
+                            "uuid": $vmess_uuid
+                        }],
+                        "transport": {
+                            "type": "ws",
+                            "path": $ws_path,
+                            "early_data_header_name": "Sec-WebSocket-Protocol"
+                        }
+                    }]')
                 ;;
             3)
                 show_notice "★ ★ ★ 开始配置Hysteria2协议 ★ ★ ★"
@@ -1431,6 +1669,23 @@ fi
                         }
                     }]')
                     config1=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
+                    --arg hy_password "$hy_password" \
+                    '.inbounds += [{
+                        "type": "hysteria2",
+                        "tag": "hy2-in",
+                        "listen": "::",
+                        "listen_port": ($hy_listen_port | tonumber),
+                        "users": [{
+                            "password": $hy_password
+                        }],
+                        "tls": {
+                            "enabled": true,
+                            "alpn": ["h3"],
+                            "certificate_path": "/root/self-cert/cert.pem",
+                            "key_path": "/root/self-cert/private.key"
+                        }
+                    }]')
+                    config2=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
                         "type": "hysteria2",
@@ -1521,6 +1776,26 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
+        config2=$(echo "$config2" | jq --arg tuic_listen_port "$tuic_listen_port" \
+        --arg tuic_password "$tuic_password" \
+        --arg tuic_uuid "$tuic_uuid" \
+        '.inbounds += [{
+            "type": "tuic",
+            "tag": "tuic-in",
+            "listen": "::",
+            "listen_port": ($tuic_listen_port | tonumber),
+            "users": [{
+                "uuid": $tuic_uuid,
+                "password": $tuic_password
+            }],
+            "congestion_control": "bbr",
+            "tls": {
+                "enabled": true,
+                "alpn": ["h3"],
+                "certificate_path": "/root/self-cert/cert.pem",
+                "key_path": "/root/self-cert/private.key"
+            }
+        }]')
     ;;
               *)
                 echo "无效选择: $choice"
@@ -1529,6 +1804,7 @@ fi
     done
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "$config1" > /root/sbox/sbconfig1_server.json
+    echo "$config2" > /root/sbox/sbconfig1_server.json
    # echo "配置文件已生成：/root/sbox/sbconfig_server.json"
    # echo "配置文件已生成：/root/sbox/sbconfig1_server.json"
 }
@@ -1553,13 +1829,13 @@ else
    exit 1
 fi
     # 选择配置文件（按照版本自动适配）
-    if [[ "$SING_BOX_VERSION" > "1.10.2" ]]; then
-        CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
-    else
-        CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
-    fi
- 
-
+  if [[ "$(printf '%s\n' "1.12.0" "$SING_BOX_VERSION" | sort -V | head -n1)" == "1.12.0" ]]; then
+    CONFIG_FILE="$SBOX_DIR/sbconfig2_server.json"
+elif [[ "$(printf '%s\n' "1.10.2" "$SING_BOX_VERSION" | sort -V | head -n1)" == "1.10.2" && "$SING_BOX_VERSION" != "1.10.2" ]]; then
+    CONFIG_FILE="$SBOX_DIR/sbconfig1_server.json"
+else
+    CONFIG_FILE="$SBOX_DIR/sbconfig_server.json"
+fi
     # 获取 vmess 端口（如果有）
     VMESS_PORT=$(jq -r '.inbounds[] | select(.type == "vmess") | .listen_port' "$CONFIG_FILE")
 
@@ -1649,6 +1925,8 @@ reinstall_sing_box() {
     [ -f /etc/systemd/system/cloudflared.service ] && rm /etc/systemd/system/cloudflared.service
     [ -f /etc/systemd/system/sing-box.service ] && rm /etc/systemd/system/sing-box.service   
     [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig_server.json
+    [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig1_server.json
+    [ -f /root/sbox/sbconfig_server.json ] && rm /root/sbox/sbconfig2_server.json
     [ -f /root/sbox/cloudflared-linux ] && rm /root/sbox/cloudflared-linux
     [ -f /root/sbox/public.key.b64 ] && rm /root/sbox/public.key.b64
     [ -f /root/sbox/argo.txt.b64 ] && rm /root/sbox/argo.txt.b64
@@ -1850,6 +2128,7 @@ modify_vless() {
     config_files=(
         "/root/sbox/sbconfig_server.json"
         "/root/sbox/sbconfig1_server.json"
+        "/root/sbox/sbconfig2_server.json"
     )
 
     # 获取当前 VLESS 监听端口（从第一个配置文件获取）
@@ -1921,6 +2200,7 @@ modify_hysteria2() {
     config_files=(
         "/root/sbox/sbconfig_server.json"
         "/root/sbox/sbconfig1_server.json"
+        "/root/sbox/sbconfig2_server.json"
     )
 
     # 获取当前 Hysteria2 监听端口（从第一个配置文件获取）
@@ -1983,6 +2263,7 @@ modify_tuic() {
     config_files=(
         "/root/sbox/sbconfig_server.json"
         "/root/sbox/sbconfig1_server.json"
+        "/root/sbox/sbconfig2_server.json"
     )
 
     # 获取当前 TUIC 监听端口（从第一个配置文件获取）
