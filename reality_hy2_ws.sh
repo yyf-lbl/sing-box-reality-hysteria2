@@ -1810,7 +1810,7 @@ config2=$(echo "$config2" | jq --arg tuic_listen_port "$tuic_listen_port" \
     done
     echo "$config" > /root/sbox/sbconfig_server.json
     echo "$config1" > /root/sbox/sbconfig1_server.json
-    echo "$config2" > /root/sbox/sbconfig1_server.json
+    echo "$config2" > /root/sbox/sbconfig2_server.json
    # echo "配置文件已生成：/root/sbox/sbconfig_server.json"
    # echo "配置文件已生成：/root/sbox/sbconfig1_server.json"
 }
