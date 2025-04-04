@@ -1657,7 +1657,7 @@ fi
                 openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${hy_server_name}"
                 echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
                 echo ""
-                config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
+    config=$(echo "$config" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
                         "type": "hysteria2",
@@ -1674,7 +1674,7 @@ fi
                             "key_path": "/root/self-cert/private.key"
                         }
                     }]')
-                    config1=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
+     config1=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
                         "type": "hysteria2",
@@ -1691,7 +1691,7 @@ fi
                             "key_path": "/root/self-cert/private.key"
                         }
                     }]')
-                    config2=$(echo "$config1" | jq --arg hy_listen_port "$hy_listen_port" \
+        config2=$(echo "$config2" | jq --arg hy_listen_port "$hy_listen_port" \
                     --arg hy_password "$hy_password" \
                     '.inbounds += [{
                         "type": "hysteria2",
@@ -1742,7 +1742,7 @@ fi
     openssl req -new -x509 -days 36500 -key /root/self-cert/private.key -out /root/self-cert/cert.pem -subj "/CN=${tuic_server_name}"
     echo -e "\e[1;3;32m自签证书已生成成功\e[0m"
     echo ""
-    config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
+config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
         --arg tuic_uuid "$tuic_uuid" \
         '.inbounds += [{
@@ -1762,7 +1762,7 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
-        config1=$(echo "$config1" | jq --arg tuic_listen_port "$tuic_listen_port" \
+config1=$(echo "$config1" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
         --arg tuic_uuid "$tuic_uuid" \
         '.inbounds += [{
@@ -1782,7 +1782,7 @@ fi
                 "key_path": "/root/self-cert/private.key"
             }
         }]')
-        config2=$(echo "$config2" | jq --arg tuic_listen_port "$tuic_listen_port" \
+config2=$(echo "$config2" | jq --arg tuic_listen_port "$tuic_listen_port" \
         --arg tuic_password "$tuic_password" \
         --arg tuic_uuid "$tuic_uuid" \
         '.inbounds += [{
