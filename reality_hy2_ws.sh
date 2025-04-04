@@ -1190,7 +1190,7 @@ config2="{
         \"server\": \"quad9\"
       }
     ],
-    \"final\": \"cloudflare\",
+    \"final\": \"$fastest_dns\",
     \"strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
@@ -1222,7 +1222,7 @@ config2="{
     }
   ],
   \"route\": {
-    \"default_domain_resolver\": \"cloudflare\",
+    \"default_domain_resolver\": \"$fastest_dns\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-openai\",
@@ -1594,7 +1594,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
-                    config1=$(echo "$config1" | jq --arg vmess_port "$vmess_port" \
+config1=$(echo "$config1" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
                     '.inbounds += [{
@@ -1611,7 +1611,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                             "early_data_header_name": "Sec-WebSocket-Protocol"
                         }
                     }]')
-                    config2=$(echo "$config2" | jq --arg vmess_port "$vmess_port" \
+config2=$(echo "$config2" | jq --arg vmess_port "$vmess_port" \
                     --arg vmess_uuid "$vmess_uuid" \
                     --arg ws_path "$ws_path" \
                     '.inbounds += [{
