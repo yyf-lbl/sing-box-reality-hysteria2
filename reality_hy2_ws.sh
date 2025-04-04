@@ -539,7 +539,7 @@ switch_kernel() {
     fi
 
     # 创建新的软链接
-    echo -e "\e[1;3;32m创建新的软链接指向: $target_path\e[0m"
+    echo -e "\e[1;3;32m正在创建新的软链接......\e[0m"
     ln -sf "$target_path" /root/sbox/sing-box
 
     # 输出切换结果
