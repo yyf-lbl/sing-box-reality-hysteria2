@@ -1245,10 +1245,11 @@ config2="{
     ],
     \"rules\": [
       {
-         \"api.statsig.com\",
-         \"browser-intake-datadoghq.com\",
-         \"chat.openai.com.cdn.cloudflare.net\",
-         \"static.cloudflareinsights.com\"
+        \"domain\": [
+          \"api.statsig.com\",
+          \"browser-intake-datadoghq.com\",
+          \"chat.openai.com.cdn.cloudflare.net\",
+          \"static.cloudflareinsights.com\"
         ],
         \"domain_suffix\": [
           \".netflix.com\",
