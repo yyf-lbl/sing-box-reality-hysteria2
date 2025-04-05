@@ -1163,17 +1163,20 @@ config2="{
       {
         \"tag\": \"cloudflare\",
         \"type\": \"udp\",
-        \"server\": \"1.1.1.1\"
+        \"server\": \"1.1.1.1\",
+        \"detour\": \"direct\"
       },
       {
         \"tag\": \"google\",
         \"type\": \"udp\",
-        \"server\": \"8.8.8.8\"
+        \"server\": \"8.8.8.8\",
+        \"detour\": \"direct\"
       },
       {
         \"tag\": \"quad9\",
         \"type\": \"udp\",
-        \"server\": \"9.9.9.9\"
+        \"server\": \"9.9.9.9\",
+        \"detour\": \"direct\"
       }
     ],
     \"rules\": [
@@ -1190,7 +1193,7 @@ config2="{
         \"server\": \"quad9\"
       }
     ],
-    \"final\": \"$fastest_dns\",
+    \"final\": \"cloudflare\",
     \"strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
@@ -1208,21 +1211,29 @@ config2="{
       \"type\": \"wireguard\",
       \"tag\": \"warp-ep\",
       \"mtu\": 1420,
-      \"address\": [\"172.16.0.2/32\"],
+      \"address\": [
+        \"172.16.0.2/32\"
+      ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peers\": [
         {
           \"address\": \"engage.cloudflareclient.com\",
           \"port\": 2408,
           \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-          \"allowed_ips\": [\"0.0.0.0/0\"],
-          \"reserved\": [6, 146, 6]
+          \"allowed_ips\": [
+            \"0.0.0.0/0\"
+          ],
+          \"reserved\": [
+            6,
+            146,
+            6
+          ]
         }
       ]
     }
   ],
   \"route\": {
-    \"default_domain_resolver\": \"$fastest_dns\",
+    \"default_domain_resolver\": \"cloudflare\",
     \"rule_set\": [
       {
         \"tag\": \"geosite-openai\",
@@ -1230,33 +1241,17 @@ config2="{
         \"format\": \"binary\",
         \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
         \"update_interval\": \"1d\"
-      },
-      {
-        \"tag\": \"geosite-cn\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs\",
-        \"update_interval\": \"1d\"
-      },
-      {
-        \"tag\": \"geoip-cn\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs\",
-        \"update_interval\": \"1d\"
-      },
-      {
-        \"tag\": \"ad-block\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/adblock.srs\",
-        \"update_interval\": \"1d\"
       }
     ],
     \"rules\": [
       {
-        \"action\": \"resolve\",
         \"domain\": [
+          \"netflix.com\",
+          \"openai.com\",
+          \"youtube.com\",
+          \"facebook.com\",
+          \"twitter.com\",
+          \"instagram.com\",
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
           \"cdn.openai.com\",
@@ -1269,10 +1264,15 @@ config2="{
           \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
           \"openaicomproductionae4b.blob.core.windows.net\",
           \"production-openaicom-storage.azureedge.net\",
-          \"static.cloudflareinsights.com\",
-          \"api.openai.com\"
+          \"static.cloudflareinsights.com\"
         ],
         \"domain_suffix\": [
+          \".netflix.com\",
+          \".openai.com\",
+          \".youtube.com\",
+          \".facebook.com\",
+          \".twitter.com\",
+          \".instagram.com\",
           \".algolia.net\",
           \".auth0.com\",
           \".chatgpt.com\",
@@ -1287,41 +1287,16 @@ config2="{
           \".oaistatic.com\",
           \".oaiusercontent.com\",
           \".observeit.net\",
-          \".openai.com\",
           \".openaiapi-site.azureedge.net\",
           \".openaicom.imgix.net\",
           \".segment.io\",
           \".sentry.io\",
           \".stripe.com\"
         ],
-        \"strategy\": \"prefer_ipv4\"
-      },
-      {
-        \"action\": \"resolve\",
-        \"rule_set\": [\"geosite-openai\"],
-        \"strategy\": \"prefer_ipv4\"
-      },
-      {
-        \"rule_set\": [\"geosite-openai\"],
         \"outbound\": \"warp-ep\"
       },
       {
-        \"rule_set\": [\"geosite-cn\"],
         \"outbound\": \"direct\"
-      },
-      {
-        \"rule_set\": [\"geoip-cn\"],
-        \"outbound\": \"direct\"
-      },
-      {
-        \"rule_set\": [\"ad-block\"],
-        \"outbound\": \"block\"
-      },
-      {
-        \"action\": \"sniff\"
-      },
-      {
-        \"outbound\": \"warp-ep\"
       }
     ]
   },
