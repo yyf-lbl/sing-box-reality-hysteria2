@@ -1342,7 +1342,7 @@ fi
                     '.inbounds += [{
                         "type": "vless",
                         "tag": "vless-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($listen_port | tonumber),
                         "users": [{
                             "uuid": $uuid,
@@ -1370,7 +1370,7 @@ fi
                     '.inbounds += [{
                         "type": "vless",
                         "tag": "vless-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($listen_port | tonumber),
                         "users": [{
                             "uuid": $uuid,
@@ -1398,7 +1398,7 @@ fi
                     '.inbounds += [{
                         "type": "vless",
                         "tag": "vless-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($listen_port | tonumber),
                         "users": [{
                             "uuid": $uuid,
@@ -1537,7 +1537,7 @@ config=$(echo "$config" | jq --arg vmess_port "$vmess_port" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($vmess_port | tonumber),
                         "users": [{
                             "uuid": $vmess_uuid
@@ -1554,7 +1554,7 @@ config1=$(echo "$config1" | jq --arg vmess_port "$vmess_port" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($vmess_port | tonumber),
                         "users": [{
                             "uuid": $vmess_uuid
@@ -1571,7 +1571,7 @@ config2=$(echo "$config2" | jq --arg vmess_port "$vmess_port" \
                     '.inbounds += [{
                         "type": "vmess",
                         "tag": "vmess-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($vmess_port | tonumber),
                         "users": [{
                             "uuid": $vmess_uuid
@@ -1616,7 +1616,7 @@ fi
                     '.inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($hy_listen_port | tonumber),
                         "users": [{
                             "password": $hy_password
@@ -1633,7 +1633,7 @@ fi
                     '.inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($hy_listen_port | tonumber),
                         "users": [{
                             "password": $hy_password
@@ -1650,7 +1650,7 @@ fi
                     '.inbounds += [{
                         "type": "hysteria2",
                         "tag": "hy2-in",
-                        "listen": "::",
+                        "listen": "0.0.0.0",
                         "listen_port": ($hy_listen_port | tonumber),
                         "users": [{
                             "password": $hy_password
@@ -1702,7 +1702,7 @@ config=$(echo "$config" | jq --arg tuic_listen_port "$tuic_listen_port" \
         '.inbounds += [{
             "type": "tuic",
             "tag": "tuic-in",
-            "listen": "::",
+            "listen": "0.0.0.0",
             "listen_port": ($tuic_listen_port | tonumber),
             "users": [{
                 "uuid": $tuic_uuid,
@@ -1722,7 +1722,7 @@ config1=$(echo "$config1" | jq --arg tuic_listen_port "$tuic_listen_port" \
         '.inbounds += [{
             "type": "tuic",
             "tag": "tuic-in",
-            "listen": "::",
+            "listen": "0.0.0.0",
             "listen_port": ($tuic_listen_port | tonumber),
             "users": [{
                 "uuid": $tuic_uuid,
@@ -1742,7 +1742,7 @@ config2=$(echo "$config2" | jq --arg tuic_listen_port "$tuic_listen_port" \
         '.inbounds += [{
             "type": "tuic",
             "tag": "tuic-in",
-            "listen": "::",
+            "listen": "0.0.0.0",
             "listen_port": ($tuic_listen_port | tonumber),
             "users": [{
                 "uuid": $tuic_uuid,
