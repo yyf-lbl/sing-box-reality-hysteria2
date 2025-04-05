@@ -1245,26 +1245,10 @@ config2="{
     ],
     \"rules\": [
       {
-        \"domain\": [
-          \"netflix.com\",
-          \"openai.com\",
-          \"youtube.com\",
-          \"facebook.com\",
-          \"twitter.com\",
-          \"instagram.com\",
-          \"api.statsig.com\",
-          \"browser-intake-datadoghq.com\",
-          \"cdn.openai.com\",
-          \"chat.openai.com\",
-          \"auth.openai.com\",
-          \"chat.openai.com.cdn.cloudflare.net\",
-          \"ios.chat.openai.com\",
-          \"o33249.ingest.sentry.io\",
-          \"openai-api.arkoselabs.com\",
-          \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
-          \"openaicomproductionae4b.blob.core.windows.net\",
-          \"production-openaicom-storage.azureedge.net\",
-          \"static.cloudflareinsights.com\"
+         \"api.statsig.com\",
+         \"browser-intake-datadoghq.com\",
+         \"chat.openai.com.cdn.cloudflare.net\",
+         \"static.cloudflareinsights.com\"
         ],
         \"domain_suffix\": [
           \".netflix.com\",
