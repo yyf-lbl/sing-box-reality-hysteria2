@@ -1193,7 +1193,7 @@ config2="{
         \"server\": \"quad9\"
       }
     ],
-    \"final\": \"cloudflare\",
+    \"final\": \"$fastest_dns\",
     \"strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
@@ -1203,7 +1203,7 @@ config2="{
     {
       \"type\": \"direct\",
       \"tag\": \"direct\",
-      \"domain_resolver\": \"cloudflare\"
+      \"domain_resolver\": \"$fastest_dns\"
     }
   ],
   \"endpoints\": [
