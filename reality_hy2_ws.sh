@@ -1126,7 +1126,7 @@ config="{
       {
         \"action\": \"resolve\",
         \"rule_set\": [\"geosite-openai\"],
-        \"strategy\": \"prefer_ipv6\"
+        \"strategy\": \"prefer_ipv4\"
       },
       {
         \"domain\": [\"api.openai.com\"],
