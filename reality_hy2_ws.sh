@@ -941,18 +941,6 @@ config="{
         ],
         \"outbound\": \"wireguard-ipv4-only-out\"
       },
-        {
-          \"domain_suffix\": [
-              \"microsoft.com\",
-              \"msftauth.net\",
-              \"msidentity.com\",
-              \"live.com\",
-            \"windows.com\",
-             \"windowsupdate.com\",
-             \"delivery.mp.microsoft.com\"
-        ],
-                 \"outbound\": \"direct\"
-    },
       {
         \"domain\": [
           \"api.statsig.com\",
@@ -1098,18 +1086,7 @@ config="{
       {
         \"action\": \"sniff\"
       },
-        {
-          \"domain_suffix\": [
-              \"microsoft.com\",
-              \"msftauth.net\",
-              \"msidentity.com\",
-              \"live.com\",
-            \"windows.com\",
-             \"windowsupdate.com\",
-             \"delivery.mp.microsoft.com\"
-        ],
-                 \"outbound\": \"direct\"
-    },
+        
       {
         \"action\": \"resolve\",
      \"domain\": [
@@ -1262,18 +1239,6 @@ config2="{
       }
     ],
     \"rules\": [
-     {
-          \"domain_suffix\": [
-              \"microsoft.com\",
-              \"msftauth.net\",
-              \"msidentity.com\",
-              \"live.com\",
-            \"windows.com\",
-             \"windowsupdate.com\",
-             \"delivery.mp.microsoft.com\"
-        ],
-                 \"outbound\": \"direct\"
-    },
       {
         \"domain\": [
           \"api.statsig.com\",
