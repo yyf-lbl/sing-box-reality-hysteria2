@@ -996,7 +996,8 @@ config="{
     }
   }
 } "
-  config1="{
+
+config1="{
   \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
@@ -1086,16 +1087,15 @@ config="{
       {
         \"action\": \"sniff\"
       },
-        
       {
         \"action\": \"resolve\",
-     \"domain\": [
+        \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
           \"chat.openai.com.cdn.cloudflare.net\",
           \"static.cloudflareinsights.com\"
         ],
-     \"domain_suffix\": [
+        \"domain_suffix\": [
           \".netflix.com\",
           \".openai.com\",
           \".youtube.com\",
@@ -1228,16 +1228,16 @@ config2="{
     }
   ],
   \"rules\": [
-      { \"action\": \"sniff\" },      
+      { \"action\": \"sniff\" },
       {
         \"action\": \"resolve\",
-     \"domain\": [
+        \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
           \"chat.openai.com.cdn.cloudflare.net\",
           \"static.cloudflareinsights.com\"
         ],
-     \"domain_suffix\": [
+        \"domain_suffix\": [
           \".netflix.com\",
           \".openai.com\",
           \".youtube.com\",
@@ -1276,12 +1276,11 @@ config2="{
         \"rule_set\": [\"geosite-openai\"],
         \"outbound\": \"warp-ep\"
       }
-    ]
-  },
+    ],
   \"experimental\": {
     \"cache_file\": {
       \"enabled\": true,
-      \"path\": \"\/root\/sbox\/cache.db\",
+      \"path\": \"/root/sbox/cache.db\",
       \"cache_id\": \"mycacheid\",
       \"store_fakeip\": true
     }
