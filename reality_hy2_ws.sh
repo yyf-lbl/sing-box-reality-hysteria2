@@ -995,9 +995,9 @@ config="{
       \"store_fakeip\": true
     }
   }
-} "
+}"
 
-config1="{
+  config1="{
   \"log\": {
     \"disabled\": false,
     \"level\": \"info\",
@@ -1055,9 +1055,10 @@ config1="{
     {
       \"type\": \"wireguard\",
       \"tag\": \"warp-ep\",
-      \"mtu\": 1420,
+      \"mtu\": 1280,
       \"address\": [
-        \"172.16.0.2\/32\"
+        \"172.16.0.2\/32\",
+        \"2606:4700:110:8a36:df92:102a:9602:fa18\/128\"
       ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peers\": [
@@ -1066,7 +1067,8 @@ config1="{
           \"port\": 2408,
           \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5\/1SUtzH0JuVo51h2wPfgyo=\",
           \"allowed_ips\": [
-            \"0.0.0.0\/0\"
+            \"0.0.0.0\/0\",
+            \"::\/0\"
           ],
           \"reserved\": [6, 146, 6]
         }
@@ -1092,16 +1094,19 @@ config1="{
         \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
+          \"cdn.openai.com\",
+          \"chat.openai.com\",
+          \"auth.openai.com\",
           \"chat.openai.com.cdn.cloudflare.net\",
+          \"ios.chat.openai.com\",
+          \"o33249.ingest.sentry.io\",
+          \"openai-api.arkoselabs.com\",
+          \"openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net\",
+          \"openaicomproductionae4b.blob.core.windows.net\",
+          \"production-openaicom-storage.azureedge.net\",
           \"static.cloudflareinsights.com\"
         ],
         \"domain_suffix\": [
-          \".netflix.com\",
-          \".openai.com\",
-          \".youtube.com\",
-          \".facebook.com\",
-          \".twitter.com\",
-          \".instagram.com\",
           \".algolia.net\",
           \".auth0.com\",
           \".chatgpt.com\",
@@ -1116,6 +1121,7 @@ config1="{
           \".oaistatic.com\",
           \".oaiusercontent.com\",
           \".observeit.net\",
+          \".openai.com\",
           \".openaiapi-site.azureedge.net\",
           \".openaicom.imgix.net\",
           \".segment.io\",
@@ -1127,7 +1133,7 @@ config1="{
       {
         \"action\": \"resolve\",
         \"rule_set\": [\"geosite-openai\"],
-        \"strategy\": \"prefer_ipv4\"
+        \"strategy\": \"prefer_ipv6\"
       },
       {
         \"domain\": [\"api.openai.com\"],
@@ -1227,10 +1233,19 @@ config2="{
       ]
     }
   ],
-  \"rules\": [
-      { \"action\": \"sniff\" },
+  \"route\": {
+    \"default_domain_resolver\": \"cloudflare\",
+    \"rule_set\": [
       {
-        \"action\": \"resolve\",
+        \"tag\": \"geosite-openai\",
+        \"type\": \"remote\",
+        \"format\": \"binary\",
+        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
+        \"update_interval\": \"1d\"
+      }
+    ],
+    \"rules\": [
+      {
         \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
@@ -1264,19 +1279,13 @@ config2="{
           \".sentry.io\",
           \".stripe.com\"
         ],
-        \"strategy\": \"prefer_ipv4\"
-      },
-      {
-        \"action\": \"resolve\",
-        \"rule_set\": [\"geosite-openai\"],
-        \"strategy\": \"prefer_ipv4\"
-      },
-      {
-        \"domain\": [\"api.openai.com\"],
-        \"rule_set\": [\"geosite-openai\"],
         \"outbound\": \"warp-ep\"
+      },
+      {
+        \"outbound\": \"direct\"
       }
-    ],
+    ]
+  },
   \"experimental\": {
     \"cache_file\": {
       \"enabled\": true,
