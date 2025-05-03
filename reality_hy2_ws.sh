@@ -1227,26 +1227,17 @@ config2="{
       ]
     }
   ],
-  \"route\": {
-    \"default_domain_resolver\": \"cloudflare\",
-    \"rule_set\": [
+  \"rules\": [
+      { \"action\": \"sniff\" },      
       {
-        \"tag\": \"geosite-openai\",
-        \"type\": \"remote\",
-        \"format\": \"binary\",
-        \"url\": \"https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/openai.srs\",
-        \"update_interval\": \"1d\"
-      }
-    ],
-    \"rules\": [
-      {
-        \"domain\": [
+        \"action\": \"resolve\",
+     \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
           \"chat.openai.com.cdn.cloudflare.net\",
           \"static.cloudflareinsights.com\"
         ],
-        \"domain_suffix\": [
+     \"domain_suffix\": [
           \".netflix.com\",
           \".openai.com\",
           \".youtube.com\",
@@ -1273,17 +1264,24 @@ config2="{
           \".sentry.io\",
           \".stripe.com\"
         ],
-        \"outbound\": \"warp-ep\"
+        \"strategy\": \"prefer_ipv4\"
       },
       {
-        \"outbound\": \"direct\"
+        \"action\": \"resolve\",
+        \"rule_set\": [\"geosite-openai\"],
+        \"strategy\": \"prefer_ipv4\"
+      },
+      {
+        \"domain\": [\"api.openai.com\"],
+        \"rule_set\": [\"geosite-openai\"],
+        \"outbound\": \"warp-ep\"
       }
     ]
   },
   \"experimental\": {
     \"cache_file\": {
       \"enabled\": true,
-      \"path\": \"/root/sbox/cache.db\",
+      \"path\": \"\/root\/sbox\/cache.db\",
       \"cache_id\": \"mycacheid\",
       \"store_fakeip\": true
     }
