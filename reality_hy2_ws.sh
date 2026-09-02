@@ -867,7 +867,7 @@ config="{
       }
     ],
     \"final\": \"$fastest_dns\",  
-    \"query_strategy\": \"prefer_ipv4\",
+    \"strategy\": \"prefer_ipv4\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
@@ -1014,7 +1014,7 @@ config1="{
       { \"domain_suffix\": \"quad9.net\", \"server\": \"quad9\" }
     ],
     \"final\": \"$fastest_dns\",
-    \"query_strategy\": \"ipv4_only\",
+    \"strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
@@ -1110,7 +1110,7 @@ config2="{
       { \"domain_suffix\": \"quad9.net\", \"server\": \"quad9\" }
     ],
     \"final\": \"$fastest_dns\",
-    \"query_strategy\": \"ipv4_only\",
+    \"strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
