@@ -853,43 +853,29 @@ config="{
       {
         \"tag\": \"cloudflare\",
         \"address\": \"https://1.1.1.1/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       },
       {
         \"tag\": \"google\",
         \"address\": \"tls://8.8.8.8\",
-        \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       },
       {
         \"tag\": \"quad9\",
         \"address\": \"https://9.9.9.9/dns-query\",
-        \"strategy\": \"prefer_ipv4\",
         \"detour\": \"direct\"
       }
     ],
-        \"final\": \"$fastest_dns\",  
-        \"strategy\": \"prefer_ipv4\",
-        \"disable_cache\": false,
-        \"disable_expire\": false
+    \"final\": \"$fastest_dns\",  
+    \"query_strategy\": \"prefer_ipv4\",
+    \"disable_cache\": false,
+    \"disable_expire\": false
   },
   \"inbounds\": [],
- \"outbounds\": [
-    {
-      \"type\": \"direct\",
-      \"tag\": \"direct\"
-    },
-    {
-      \"type\": \"direct\",
-      \"tag\": \"direct-ipv4-prefer-out\",
-      \"domain_strategy\": \"prefer_ipv4\"
-    },
-    {
-      \"type\": \"direct\",
-      \"tag\": \"direct-ipv4-only-out\",
-      \"domain_strategy\": \"ipv4_only\"
-    },
+  \"outbounds\": [
+    { \"type\": \"direct\", \"tag\": \"direct\" },
+    { \"type\": \"direct\", \"tag\": \"direct-ipv4-prefer-out\", \"domain_strategy\": \"prefer_ipv4\" },
+    { \"type\": \"direct\", \"tag\": \"direct-ipv4-only-out\", \"domain_strategy\": \"ipv4_only\" },
     {
       \"type\": \"wireguard\",
       \"tag\": \"wireguard-out\",
@@ -936,12 +922,12 @@ config="{
     ],
     \"rules\": [
       {
-        \"rule_set\": [
-          \"geosite-netflix\"
-        ],
+        \"action\": \"route\",
+        \"rule_set\": [ \"geosite-netflix\" ],
         \"outbound\": \"wireguard-ipv4-only-out\"
       },
       {
+        \"action\": \"route\",
         \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
@@ -1009,38 +995,26 @@ config1="{
       {
         \"tag\": \"cloudflare\",
         \"address\": \"https:\/\/1.1.1.1\/dns-query\",
-        \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       },
       {
         \"tag\": \"google\",
         \"address\": \"tls:\/\/8.8.8.8\",
-        \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       },
       {
         \"tag\": \"quad9\",
         \"address\": \"https:\/\/9.9.9.9\/dns-query\",
-        \"strategy\": \"ipv4_only\",
         \"detour\": \"direct\"
       }
     ],
     \"rules\": [
-      {
-        \"domain_suffix\": \"google.com\",
-        \"server\": \"google\"
-      },
-      {
-        \"domain_suffix\": \"cloudflare.com\",
-        \"server\": \"cloudflare\"
-      },
-      {
-        \"domain_suffix\": \"quad9.net\",
-        \"server\": \"quad9\"
-      }
+      { \"domain_suffix\": \"google.com\", \"server\": \"google\" },
+      { \"domain_suffix\": \"cloudflare.com\", \"server\": \"cloudflare\" },
+      { \"domain_suffix\": \"quad9.net\", \"server\": \"quad9\" }
     ],
     \"final\": \"$fastest_dns\",
-    \"strategy\": \"ipv4_only\",
+    \"query_strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
@@ -1056,18 +1030,14 @@ config1="{
       \"type\": \"wireguard\",
       \"tag\": \"warp-ep\",
       \"mtu\": 1420,
-      \"address\": [
-        \"172.16.0.2\/32\"
-      ],
+      \"address\": [ \"172.16.0.2\/32\" ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peers\": [
         {
           \"address\": \"engage.cloudflareclient.com\",
           \"port\": 2408,
           \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5\/1SUtzH0JuVo51h2wPfgyo=\",
-          \"allowed_ips\": [
-            \"0.0.0.0\/0\"
-          ],
+          \"allowed_ips\": [ \"0.0.0.0\/0\" ],
           \"reserved\": [6, 146, 6]
         }
       ]
@@ -1084,52 +1054,27 @@ config1="{
       }
     ],
     \"rules\": [
-      {
-        \"action\": \"sniff\"
-      },
+      { \"action\": \"sniff\" },
       {
         \"action\": \"resolve\",
-     \"domain\": [
+        \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
           \"chat.openai.com.cdn.cloudflare.net\",
           \"static.cloudflareinsights.com\"
         ],
-     \"domain_suffix\": [
-          \".netflix.com\",
-          \".openai.com\",
-          \".youtube.com\",
-          \".facebook.com\",
-          \".twitter.com\",
-          \".instagram.com\",
-          \".algolia.net\",
-          \".auth0.com\",
-          \".chatgpt.com\",
-          \".challenges.cloudflare.com\",
-          \".client-api.arkoselabs.com\",
-          \".events.statsigapi.net\",
-          \".featuregates.org\",
-          \".identrust.com\",
-          \".intercom.io\",
-          \".intercomcdn.com\",
-          \".launchdarkly.com\",
-          \".oaistatic.com\",
-          \".oaiusercontent.com\",
-          \".observeit.net\",
-          \".openaiapi-site.azureedge.net\",
-          \".openaicom.imgix.net\",
-          \".segment.io\",
-          \".sentry.io\",
-          \".stripe.com\"
+        \"domain_suffix\": [
+          \".netflix.com\",\".openai.com\",\".youtube.com\",\".facebook.com\",\".twitter.com\",\".instagram.com\",\".algolia.net\",\".auth0.com\",\".chatgpt.com\",\".challenges.cloudflare.com\",\".client-api.arkoselabs.com\",\".events.statsigapi.net\",\".featuregates.org\",\".identrust.com\",\".intercom.io\",\".intercomcdn.com\",\".launchdarkly.com\",\".oaistatic.com\",\".oaiusercontent.com\",\".observeit.net\",\".openaiapi-site.azureedge.net\",\".openaicom.imgix.net\",\".segment.io\",\".sentry.io\",\".stripe.com\"
         ],
-        \"strategy\": \"prefer_ipv4\"
+        \"domain_strategy\": \"prefer_ipv4\"
       },
       {
         \"action\": \"resolve\",
         \"rule_set\": [\"geosite-openai\"],
-        \"strategy\": \"prefer_ipv4\"
+        \"domain_strategy\": \"prefer_ipv4\"
       },
       {
+        \"action\": \"route\",
         \"domain\": [\"api.openai.com\"],
         \"rule_set\": [\"geosite-openai\"],
         \"outbound\": \"warp-ep\"
@@ -1155,41 +1100,17 @@ config2="{
   },
   \"dns\": {
     \"servers\": [
-      {
-        \"tag\": \"cloudflare\",
-        \"type\": \"udp\",
-        \"server\": \"1.1.1.1\",
-        \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"google\",
-        \"type\": \"udp\",
-        \"server\": \"8.8.8.8\",
-        \"detour\": \"direct\"
-      },
-      {
-        \"tag\": \"quad9\",
-        \"type\": \"udp\",
-        \"server\": \"9.9.9.9\",
-        \"detour\": \"direct\"
-      }
+      { \"tag\": \"cloudflare\", \"type\": \"udp\", \"server\": \"1.1.1.1\", \"detour\": \"direct\" },
+      { \"tag\": \"google\", \"type\": \"udp\", \"server\": \"8.8.8.8\", \"detour\": \"direct\" },
+      { \"tag\": \"quad9\", \"type\": \"udp\", \"server\": \"9.9.9.9\", \"detour\": \"direct\" }
     ],
     \"rules\": [
-      {
-        \"domain_suffix\": \"google.com\",
-        \"server\": \"google\"
-      },
-      {
-        \"domain_suffix\": \"cloudflare.com\",
-        \"server\": \"cloudflare\"
-      },
-      {
-        \"domain_suffix\": \"quad9.net\",
-        \"server\": \"quad9\"
-      }
+      { \"domain_suffix\": \"google.com\", \"server\": \"google\" },
+      { \"domain_suffix\": \"cloudflare.com\", \"server\": \"cloudflare\" },
+      { \"domain_suffix\": \"quad9.net\", \"server\": \"quad9\" }
     ],
     \"final\": \"$fastest_dns\",
-    \"strategy\": \"ipv4_only\",
+    \"query_strategy\": \"ipv4_only\",
     \"disable_cache\": false,
     \"disable_expire\": false
   },
@@ -1206,23 +1127,15 @@ config2="{
       \"type\": \"wireguard\",
       \"tag\": \"warp-ep\",
       \"mtu\": 1420,
-      \"address\": [
-        \"172.16.0.2/32\"
-      ],
+      \"address\": [ \"172.16.0.2/32\" ],
       \"private_key\": \"gBthRjevHDGyV0KvYwYE52NIPy29sSrVr6rcQtYNcXA=\",
       \"peers\": [
         {
           \"address\": \"engage.cloudflareclient.com\",
           \"port\": 2408,
           \"public_key\": \"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=\",
-          \"allowed_ips\": [
-            \"0.0.0.0/0\"
-          ],
-          \"reserved\": [
-            6,
-            146,
-            6
-          ]
+          \"allowed_ips\": [ \"0.0.0.0/0\" ],
+          \"reserved\": [ 6, 146, 6 ]
         }
       ]
     }
@@ -1240,6 +1153,7 @@ config2="{
     ],
     \"rules\": [
       {
+        \"action\": \"route\",
         \"domain\": [
           \"api.statsig.com\",
           \"browser-intake-datadoghq.com\",
@@ -1247,35 +1161,12 @@ config2="{
           \"static.cloudflareinsights.com\"
         ],
         \"domain_suffix\": [
-          \".netflix.com\",
-          \".openai.com\",
-          \".youtube.com\",
-          \".facebook.com\",
-          \".twitter.com\",
-          \".instagram.com\",
-          \".algolia.net\",
-          \".auth0.com\",
-          \".chatgpt.com\",
-          \".challenges.cloudflare.com\",
-          \".client-api.arkoselabs.com\",
-          \".events.statsigapi.net\",
-          \".featuregates.org\",
-          \".identrust.com\",
-          \".intercom.io\",
-          \".intercomcdn.com\",
-          \".launchdarkly.com\",
-          \".oaistatic.com\",
-          \".oaiusercontent.com\",
-          \".observeit.net\",
-          \".openaiapi-site.azureedge.net\",
-          \".openaicom.imgix.net\",
-          \".segment.io\",
-          \".sentry.io\",
-          \".stripe.com\"
+          \".netflix.com\",\".openai.com\",\".youtube.com\",\".facebook.com\",\".twitter.com\",\".instagram.com\",\".algolia.net\",\".auth0.com\",\".chatgpt.com\",\".challenges.cloudflare.com\",\".client-api.arkoselabs.com\",\".events.statsigapi.net\",\".featuregates.org\",\".identrust.com\",\".intercom.io\",\".intercomcdn.com\",\".launchdarkly.com\",\".oaistatic.com\",\".oaiusercontent.com\",\".observeit.net\",\".openaiapi-site.azureedge.net\",\".openaicom.imgix.net\",\".segment.io\",\".sentry.io\",\".stripe.com\"
         ],
         \"outbound\": \"warp-ep\"
       },
       {
+        \"action\": \"route\",
         \"outbound\": \"direct\"
       }
     ]
